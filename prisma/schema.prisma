@@ -1,0 +1,401 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  COMPANY_ADMIN
+  COMPANY_USER
+}
+
+enum VehicleType {
+  PALLET_8
+  PALLET_18
+  PALLET_21
+  TRAILER
+  OTHER
+}
+
+enum FuelType {
+  ELECTRIC
+  BIOGAS
+  DIESEL
+  GAS
+}
+
+enum ListingStatus {
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+  CLOSED
+}
+
+enum TransactionType {
+  BOOKING_PAYMENT
+  REFUND
+  COMMISSION
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  passwordHash          String
+  role                  Role
+  companyId             String
+  firstName             String
+  lastName              String
+  phone                 String
+  emailVerified         Boolean   @default(false)
+  verificationToken     String?
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  company               Company   @relation(fields: [companyId], references: [id])
+  sentMessages          Message[]
+  auditLogs             AuditLog[]
+
+  @@index([email])
+  @@index([companyId])
+}
+
+model Company {
+  id                  String    @id @default(uuid())
+  name                String
+  organizationNumber  String    @unique
+  businessAddress     String
+  city                String
+  postalCode          String
+  fylke               String
+  kommune             String
+  vatRegistered       Boolean
+  description         String?
+  verified            Boolean   @default(false)
+  verifiedAt          DateTime?
+  verifiedBy          String?
+  aggregatedRating    Float?
+  totalRatings        Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  users               User[]
+  vehicleListings     VehicleListing[]
+  driverListings      DriverListing[]
+  bookingsAsRenter    Booking[] @relation("RenterCompany")
+  bookingsAsProvider  Booking[] @relation("ProviderCompany")
+  ratingsReceived     Rating[]  @relation("ProviderRatings")
+  ratingsGiven        Rating[]  @relation("RenterRatings")
+
+  @@index([organizationNumber])
+  @@index([verified])
+}
+
+model VehicleListing {
+  id                    String        @id @default(uuid())
+  companyId             String
+  title                 String
+  description           String
+  vehicleType           VehicleType
+  capacity              Int
+  fuelType              FuelType
+  city                  String
+  fylke                 String
+  kommune               String
+  latitude              Float?
+  longitude             Float?
+  hourlyRate            Float?
+  dailyRate             Float?
+  deposit               Float?
+  currency              String        @default("NOK")
+  withDriver            Boolean
+  withDriverCost        Float?
+  withoutDriver         Boolean
+  photos                String[]
+  tags                  String[]
+  status                ListingStatus @default(ACTIVE)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  company               Company       @relation(fields: [companyId], references: [id])
+  bookings              Booking[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([fylke])
+  @@index([kommune])
+}
+
+model DriverListing {
+  id                  String        @id @default(uuid())
+  companyId           String
+  name                String
+  licenseClass        String
+  languages           String[]
+  backgroundSummary   String?
+  hourlyRate          Float?
+  dailyRate           Float?
+  currency            String        @default("NOK")
+  verified            Boolean       @default(false)
+  verifiedAt          DateTime?
+  verifiedBy          String?
+  licenseDocumentPath String?
+  aggregatedRating    Float?
+  totalRatings        Int           @default(0)
+  status              ListingStatus @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  company             Company       @relation(fields: [companyId], references: [id])
+  bookings            Booking[]
+  ratings             Rating[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([verified])
+}
+
+model Booking {
+  id                    String        @id @default(uuid())
+  bookingNumber         String        @unique
+  renterCompanyId       String
+  providerCompanyId     String
+  vehicleListingId      String?
+  driverListingId       String?
+  status                BookingStatus
+  startDate             DateTime
+  endDate               DateTime
+  durationHours         Int?
+  durationDays          Int?
+  providerRate          Float
+  platformCommission    Float
+  platformCommissionRate Float
+  taxes                 Float
+  taxRate               Float
+  total                 Float
+  currency              String        @default("NOK")
+  contractPdfPath       String?
+  requestedAt           DateTime      @default(now())
+  respondedAt           DateTime?
+  expiresAt             DateTime
+  completedAt           DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  renterCompany         Company       @relation("RenterCompany", fields: [renterCompanyId], references: [id])
+  providerCompany       Company       @relation("ProviderCompany", fields: [providerCompanyId], references: [id])
+  vehicleListing        VehicleListing? @relation(fields: [vehicleListingId], references: [id])
+  driverListing         DriverListing?  @relation(fields: [driverListingId], references: [id])
+  rating                Rating?
+  transactions          Transaction[]
+  messageThread         MessageThread?
+  dispute               Dispute?
+
+  @@index([renterCompanyId])
+  @@index([providerCompanyId])
+  @@index([status])
+  @@index([bookingNumber])
+}
+
+model Rating {
+  id                  String    @id @default(uuid())
+  bookingId           String    @unique
+  renterCompanyId     String
+  providerCompanyId   String
+  driverListingId     String?
+  companyStars        Int
+  companyReview       String?
+  driverStars         Int?
+  driverReview        String?
+  providerResponse    String?
+  providerRespondedAt DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  booking             Booking   @relation(fields: [bookingId], references: [id])
+  renterCompany       Company   @relation("RenterRatings", fields: [renterCompanyId], references: [id])
+  providerCompany     Company   @relation("ProviderRatings", fields: [providerCompanyId], references: [id])
+  driverListing       DriverListing? @relation(fields: [driverListingId], references: [id])
+
+  @@index([providerCompanyId])
+  @@index([driverListingId])
+}
+
+model MessageThread {
+  id            String    @id @default(uuid())
+  bookingId     String    @unique
+  participants  String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  booking       Booking   @relation(fields: [bookingId], references: [id])
+  messages      Message[]
+
+  @@index([bookingId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  threadId  String
+  senderId  String
+  content   String
+  readBy    String[]
+  createdAt DateTime @default(now())
+
+  thread    MessageThread @relation(fields: [threadId], references: [id])
+  sender    User          @relation(fields: [senderId], references: [id])
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  bookingId String
+  type      TransactionType
+  amount    Float
+  currency  String            @default("NOK")
+  status    TransactionStatus
+  metadata  Json?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  booking   Booking           @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([type])
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  adminUserId String
+  action     String
+  entityType String
+  entityId   String
+  changes    Json?
+  reason     String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  adminUser  User     @relation(fields: [adminUserId], references: [id])
+
+  @@index([adminUserId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model PlatformConfig {
+  id                    String   @id @default(uuid())
+  commissionRate        Float
+  taxRate               Float
+  bookingTimeoutHours   Int
+  defaultCurrency       String   @default("NOK")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_ACCEPTED
+  BOOKING_DECLINED
+  BOOKING_EXPIRED
+  BOOKING_COMPLETED
+  MESSAGE_RECEIVED
+  RATING_RECEIVED
+  COMPANY_VERIFIED
+  DRIVER_VERIFIED
+  LISTING_SUSPENDED
+  DISPUTE_RAISED
+  DISPUTE_RESOLVED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+
+model NotificationPreferences {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  emailEnabled        Boolean  @default(true)
+  inAppEnabled        Boolean  @default(true)
+  bookingUpdates      Boolean  @default(true)
+  messages            Boolean  @default(true)
+  ratings             Boolean  @default(true)
+  marketing           Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Notification {
+  id          String             @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  metadata    Json?
+  channels    NotificationChannel[]
+  read        Boolean            @default(false)
+  readAt      DateTime?
+  createdAt   DateTime           @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+enum DisputeStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model Dispute {
+  id                String        @id @default(uuid())
+  bookingId         String        @unique
+  raisedBy          String
+  reason            String
+  description       String?
+  status            DisputeStatus @default(OPEN)
+  resolution        String?
+  refundAmount      Float?
+  notes             String?
+  resolvedBy        String?
+  resolvedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([raisedBy])
+}

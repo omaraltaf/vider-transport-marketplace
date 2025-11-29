@@ -1,0 +1,41 @@
+# Code Owners for Vider Transport Marketplace
+# 
+# These owners will be automatically requested for review when someone 
+# opens a pull request that modifies code in the specified paths.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# Uncomment and add GitHub usernames/teams
+# * @your-username @your-team
+
+# Backend code
+/src/ @backend-team
+/prisma/ @backend-team
+
+# Frontend code
+/frontend/ @frontend-team
+
+# CI/CD workflows
+/.github/ @devops-team
+
+# Configuration files
+*.json @devops-team
+*.yml @devops-team
+*.yaml @devops-team
+.env.example @devops-team
+
+# Documentation
+*.md @documentation-team
+
+# Database migrations
+/prisma/migrations/ @backend-team @devops-team
+
+# API specifications
+/src/openapi/ @backend-team @api-team
+
+# Security-sensitive files
+/src/middleware/auth.middleware.ts @security-team
+/src/services/auth.service.ts @security-team
+/src/services/authorization.service.ts @security-team
+/src/config/env.ts @security-team @devops-team
