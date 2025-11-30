@@ -67,44 +67,13 @@ export default function Navbar() {
                 >
                   Dashboard
                 </Link>
-                <Menu as="div" className="relative inline-flex items-center">
-                  <MenuButton 
-                    className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                    aria-label="My Listings menu"
-                    aria-haspopup="true"
-                  >
-                    My Listings
-                    <svg className="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </MenuButton>
-                  <MenuItems className="absolute top-full left-0 z-10 mt-2 w-48 origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                    <MenuItem>
-                      {({ active }) => (
-                        <Link
-                          to="/listings/vehicles"
-                          className={`${
-                            active ? 'bg-gray-100' : ''
-                          } block px-4 py-2 text-sm text-gray-700`}
-                        >
-                          Vehicle Listings
-                        </Link>
-                      )}
-                    </MenuItem>
-                    <MenuItem>
-                      {({ active }) => (
-                        <Link
-                          to="/listings/drivers"
-                          className={`${
-                            active ? 'bg-gray-100' : ''
-                          } block px-4 py-2 text-sm text-gray-700`}
-                        >
-                          Driver Listings
-                        </Link>
-                      )}
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
+                <Link
+                  to="/listings/vehicles"
+                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-900 hover:border-gray-300"
+                  role="menuitem"
+                >
+                  My Listings
+                </Link>
                 <Link
                   to="/search"
                   className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
@@ -320,14 +289,7 @@ export default function Navbar() {
                   className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Vehicle Listings
-                </Link>
-                <Link
-                  to="/listings/drivers"
-                  className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-800"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Driver Listings
+                  My Listings
                 </Link>
                 <Link
                   to="/search"

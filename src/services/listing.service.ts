@@ -296,20 +296,98 @@ export class ListingService {
   /**
    * Get vehicle listing by ID
    */
-  async getVehicleListingById(listingId: string): Promise<VehicleListing | null> {
-    return prisma.vehicleListing.findUnique({
+  async getVehicleListingById(listingId: string): Promise<any | null> {
+    const listing = await prisma.vehicleListing.findUnique({
       where: { id: listingId },
+      include: {
+        company: true,
+      },
     });
+
+    if (!listing) {
+      return null;
+    }
+
+    // Transform flat database structure to nested frontend structure
+    return {
+      id: listing.id,
+      companyId: listing.companyId,
+      title: listing.title,
+      description: listing.description,
+      vehicleType: listing.vehicleType,
+      capacity: listing.capacityPallets,
+      fuelType: listing.fuelType,
+      location: {
+        city: listing.city,
+        fylke: listing.fylke,
+        kommune: listing.kommune,
+        coordinates: listing.latitude && listing.longitude 
+          ? [listing.latitude, listing.longitude] 
+          : undefined,
+      },
+      pricing: {
+        hourlyRate: listing.hourlyRate || undefined,
+        dailyRate: listing.dailyRate || undefined,
+        deposit: listing.deposit || undefined,
+        currency: listing.currency,
+      },
+      serviceOfferings: {
+        withDriver: listing.withDriver,
+        withDriverCost: listing.withDriverCost || undefined,
+        withoutDriver: listing.withoutDriver,
+      },
+      photos: listing.photos,
+      tags: listing.tags,
+      status: listing.status,
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
+      company: listing.company,
+    };
   }
 
   /**
    * Get all vehicle listings for a company
    */
-  async getCompanyVehicleListings(companyId: string): Promise<VehicleListing[]> {
-    return prisma.vehicleListing.findMany({
+  async getCompanyVehicleListings(companyId: string): Promise<any[]> {
+    const listings = await prisma.vehicleListing.findMany({
       where: { companyId },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Transform flat database structure to nested frontend structure
+    return listings.map(listing => ({
+      id: listing.id,
+      companyId: listing.companyId,
+      title: listing.title,
+      description: listing.description,
+      vehicleType: listing.vehicleType,
+      capacity: listing.capacityPallets,
+      fuelType: listing.fuelType,
+      location: {
+        city: listing.city,
+        fylke: listing.fylke,
+        kommune: listing.kommune,
+        coordinates: listing.latitude && listing.longitude 
+          ? [listing.latitude, listing.longitude] 
+          : undefined,
+      },
+      pricing: {
+        hourlyRate: listing.hourlyRate || undefined,
+        dailyRate: listing.dailyRate || undefined,
+        deposit: listing.deposit || undefined,
+        currency: listing.currency,
+      },
+      serviceOfferings: {
+        withDriver: listing.withDriver,
+        withDriverCost: listing.withDriverCost || undefined,
+        withoutDriver: listing.withoutDriver,
+      },
+      photos: listing.photos,
+      tags: listing.tags,
+      status: listing.status,
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
+    }));
   }
 
   /**
@@ -582,20 +660,69 @@ export class ListingService {
   /**
    * Get driver listing by ID
    */
-  async getDriverListingById(listingId: string): Promise<DriverListing | null> {
-    return prisma.driverListing.findUnique({
+  async getDriverListingById(listingId: string): Promise<any | null> {
+    const listing = await prisma.driverListing.findUnique({
       where: { id: listingId },
+      include: {
+        company: true,
+      },
     });
+
+    if (!listing) {
+      return null;
+    }
+
+    // Transform flat database structure to nested frontend structure
+    return {
+      id: listing.id,
+      companyId: listing.companyId,
+      name: listing.name,
+      backgroundSummary: listing.backgroundSummary,
+      licenseClass: listing.licenseClass,
+      languages: listing.languages,
+      verified: listing.verified,
+      pricing: {
+        hourlyRate: listing.hourlyRate || undefined,
+        dailyRate: listing.dailyRate || undefined,
+        currency: listing.currency,
+      },
+      status: listing.status,
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
+      company: listing.company,
+    };
   }
 
   /**
    * Get all driver listings for a company
    */
-  async getCompanyDriverListings(companyId: string): Promise<DriverListing[]> {
-    return prisma.driverListing.findMany({
+  async getCompanyDriverListings(companyId: string): Promise<any[]> {
+    const listings = await prisma.driverListing.findMany({
       where: { companyId },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Transform flat database structure to nested frontend structure
+    return listings.map(listing => ({
+      id: listing.id,
+      companyId: listing.companyId,
+      name: listing.name,
+      licenseClass: listing.licenseClass,
+      languages: listing.languages,
+      backgroundSummary: listing.backgroundSummary || undefined,
+      pricing: {
+        hourlyRate: listing.hourlyRate || undefined,
+        dailyRate: listing.dailyRate || undefined,
+        currency: listing.currency,
+      },
+      verified: listing.verified,
+      verifiedAt: listing.verifiedAt?.toISOString(),
+      aggregatedRating: listing.aggregatedRating || undefined,
+      totalRatings: listing.totalRatings,
+      status: listing.status,
+      createdAt: listing.createdAt.toISOString(),
+      updatedAt: listing.updatedAt.toISOString(),
+    }));
   }
 
   /**

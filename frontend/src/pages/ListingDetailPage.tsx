@@ -55,21 +55,22 @@ export default function ListingDetailPage() {
     endDate: '',
     durationType: 'days' as 'hours' | 'days',
     durationValue: 1,
+    includeDriver: false,
   });
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown | null>(null);
   const [calculatingCost, setCalculatingCost] = useState(false);
 
-  // Fetch listing details
+  // Fetch listing details (Phase 1: Vehicles only)
   const { data: listing, isLoading, error } = useQuery({
     queryKey: ['listing', type, id],
     queryFn: async () => {
+      // Phase 1: Only support vehicle listings
       if (type === 'vehicle') {
         return apiClient.get<ListingWithCompany>(`/listings/vehicles/${id}`);
-      } else {
-        return apiClient.get<DriverListingWithCompany>(`/listings/drivers/${id}`);
       }
+      throw new Error('Only vehicle listings are supported in Phase 1');
     },
-    enabled: !!type && !!id,
+    enabled: !!type && !!id && type === 'vehicle',
   });
 
   // Fetch ratings for the listing
@@ -86,9 +87,23 @@ export default function ListingDetailPage() {
     enabled: !!listing,
   });
 
+
+
   // Calculate costs when booking data changes
   const calculateCosts = async () => {
-    if (!bookingData.startDate || !bookingData.endDate || !listing) {
+    if (!bookingData.startDate || !listing) {
+      return;
+    }
+
+    // For daily rentals, require end date
+    if (bookingData.durationType === 'days' && !bookingData.endDate) {
+      alert('Please select an end date for daily rental');
+      return;
+    }
+
+    // For hourly rentals, require number of hours
+    if (bookingData.durationType === 'hours' && bookingData.durationValue < 1) {
+      alert('Please enter number of hours');
       return;
     }
 
@@ -98,19 +113,25 @@ export default function ListingDetailPage() {
         [bookingData.durationType === 'hours' ? 'hours' : 'days']: bookingData.durationValue,
       };
 
+      const payload: any = {
+        listingId: id,
+        listingType: type,
+        duration,
+      };
+
+      // Note: Driver selection removed for Phase 1
+      // Vehicles can be booked with/without driver based on listing's service offerings
+
       const response = await apiClient.post<CostBreakdown>(
         '/bookings/calculate-costs',
-        {
-          listingId: id,
-          listingType: type,
-          duration,
-        },
+        payload,
         token || undefined
       );
 
       setCostBreakdown(response);
     } catch (err) {
       console.error('Error calculating costs:', err);
+      alert('Failed to calculate costs. Please try again.');
     } finally {
       setCalculatingCost(false);
     }
@@ -138,40 +159,69 @@ export default function ListingDetailPage() {
       return;
     }
 
-    if (!bookingData.startDate || !bookingData.endDate) {
-      alert('Please select start and end dates');
+    if (!bookingData.startDate) {
+      alert('Please select a start date');
       return;
     }
 
-    const bookingRequest = {
+    if (bookingData.durationType === 'days' && !bookingData.endDate) {
+      alert('Please select an end date');
+      return;
+    }
+
+    // Calculate end date for hourly rentals
+    let endDate: Date;
+    if (bookingData.durationType === 'hours') {
+      const start = new Date(bookingData.startDate);
+      endDate = new Date(start.getTime() + bookingData.durationValue * 60 * 60 * 1000);
+    } else {
+      endDate = new Date(bookingData.endDate);
+    }
+
+    const bookingRequest: any = {
       renterCompanyId: user.companyId,
       providerCompanyId: (listing as any).companyId,
-      [type === 'vehicle' ? 'vehicleListingId' : 'driverListingId']: id,
+      vehicleListingId: id, // Phase 1: Only vehicle bookings
       startDate: new Date(bookingData.startDate).toISOString(),
-      endDate: new Date(bookingData.endDate).toISOString(),
+      endDate: endDate.toISOString(),
       [bookingData.durationType === 'hours' ? 'durationHours' : 'durationDays']: bookingData.durationValue,
     };
+
+    // Note: Driver selection removed for Phase 1
 
     createBookingMutation.mutate(bookingRequest);
   };
 
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
     setBookingData(prev => ({ ...prev, [field]: value }));
+    setCostBreakdown(null); // Reset cost when dates change
 
-    // Calculate duration when both dates are set
-    if (field === 'endDate' && bookingData.startDate && value) {
-      const start = new Date(bookingData.startDate);
-      const end = new Date(value);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setBookingData(prev => ({ ...prev, durationValue: diffDays, durationType: 'days' }));
-    } else if (field === 'startDate' && bookingData.endDate && value) {
-      const start = new Date(value);
-      const end = new Date(bookingData.endDate);
-      const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      setBookingData(prev => ({ ...prev, durationValue: diffDays, durationType: 'days' }));
+    // For days mode, calculate duration when both dates are set
+    if (bookingData.durationType === 'days') {
+      if (field === 'endDate' && bookingData.startDate && value) {
+        const start = new Date(bookingData.startDate);
+        const end = new Date(value);
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1); // +1 to include both start and end day
+        setBookingData(prev => ({ ...prev, durationValue: diffDays }));
+      } else if (field === 'startDate' && bookingData.endDate && value) {
+        const start = new Date(value);
+        const end = new Date(bookingData.endDate);
+        const diffTime = end.getTime() - start.getTime();
+        const diffDays = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1); // +1 to include both start and end day
+        setBookingData(prev => ({ ...prev, durationValue: diffDays }));
+      }
     }
+  };
+
+  const handleDurationTypeChange = (newType: 'hours' | 'days') => {
+    setBookingData(prev => ({
+      ...prev,
+      durationType: newType,
+      durationValue: 1,
+      endDate: newType === 'hours' ? '' : prev.endDate, // Clear end date for hours
+    }));
+    setCostBreakdown(null); // Reset cost when changing duration type
   };
 
   if (isLoading) {
@@ -531,6 +581,21 @@ export default function ListingDetailPage() {
                 </button>
               ) : (
                 <form onSubmit={handleBookingSubmit} className="space-y-4">
+                  {/* Duration Type Selection - Show First */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Rental Type
+                    </label>
+                    <select
+                      value={bookingData.durationType}
+                      onChange={(e) => handleDurationTypeChange(e.target.value as 'hours' | 'days')}
+                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                      <option value="days">Daily Rental</option>
+                      <option value="hours">Hourly Rental</option>
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Start Date
@@ -545,57 +610,64 @@ export default function ListingDetailPage() {
                     />
                   </div>
 
+                  {/* End Date - Only show for daily rentals */}
+                  {bookingData.durationType === 'days' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={bookingData.endDate}
+                        onChange={(e) => handleDateChange('endDate', e.target.value)}
+                        min={bookingData.startDate || new Date().toISOString().split('T')[0]}
+                        required
+                        className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      />
+                    </div>
+                  )}
+
+                  {/* Duration Input */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      End Date
+                      {bookingData.durationType === 'hours' ? 'Number of Hours' : 'Number of Days'}
                     </label>
                     <input
-                      type="date"
-                      value={bookingData.endDate}
-                      onChange={(e) => handleDateChange('endDate', e.target.value)}
-                      min={bookingData.startDate || new Date().toISOString().split('T')[0]}
+                      type="number"
+                      value={bookingData.durationValue}
+                      onChange={(e) => {
+                        setBookingData((prev) => ({ ...prev, durationValue: Number(e.target.value) }));
+                        setCostBreakdown(null); // Reset cost when duration changes
+                      }}
+                      min="1"
                       required
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      readOnly={bookingData.durationType === 'days' && !!bookingData.endDate}
+                      className={`w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${
+                        bookingData.durationType === 'days' && bookingData.endDate ? 'bg-gray-100' : ''
+                      }`}
+                      title={bookingData.durationType === 'days' && bookingData.endDate ? 'Automatically calculated from start and end dates' : ''}
                     />
+                    {bookingData.durationType === 'days' && bookingData.endDate && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Automatically calculated from selected dates
+                      </p>
+                    )}
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Duration
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="number"
-                        value={bookingData.durationValue}
-                        onChange={(e) =>
-                          setBookingData((prev) => ({ ...prev, durationValue: Number(e.target.value) }))
-                        }
-                        min="1"
-                        required
-                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      />
-                      <select
-                        value={bookingData.durationType}
-                        onChange={(e) =>
-                          setBookingData((prev) => ({
-                            ...prev,
-                            durationType: e.target.value as 'hours' | 'days',
-                          }))
-                        }
-                        className="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                      >
-                        <option value="hours">Hours</option>
-                        <option value="days">Days</option>
-                      </select>
-                    </div>
-                  </div>
+                  {/* Phase 1: Driver selection removed - vehicles show "with/without driver" in service offerings */}
 
                   <button
                     type="button"
                     onClick={calculateCosts}
-                    disabled={calculatingCost || !bookingData.startDate || !bookingData.endDate}
+                    disabled={
+                      calculatingCost || 
+                      !bookingData.startDate || 
+                      (bookingData.durationType === 'days' && !bookingData.endDate) ||
+                      (bookingData.durationType === 'hours' && bookingData.durationValue < 1)
+                    }
                     className="w-full bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50"
                   >
+
                     {calculatingCost ? 'Calculating...' : 'Calculate Cost'}
                   </button>
 

@@ -1,11 +1,81 @@
 import { Router, Request, Response } from 'express';
 import { bookingService } from '../services/booking.service';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticate } from '../middleware/auth.middleware';
 import { authorizationService } from '../services/authorization.service';
 import { logError } from '../utils/logging.utils';
-import { applyRateLimit } from '../middleware/rate-limit.middleware';
+import { bookingRateLimiter } from '../middleware/rate-limit.middleware';
+import { prisma } from '../config/database';
 
 const router = Router();
+
+/**
+ * Calculate booking costs
+ * POST /api/bookings/calculate-costs
+ * Note: No authentication required for cost calculation
+ */
+router.post(
+  '/calculate-costs',
+  async (req: Request, res: Response) => {
+    try {
+      const { listingId, listingType, duration, includeDriver, driverListingId } = req.body;
+
+      if (!listingId || !listingType || !duration) {
+        return res.status(400).json({
+          error: {
+            code: 'INVALID_REQUEST',
+            message: 'Missing required fields: listingId, listingType, duration',
+            requestId: req.id,
+          },
+        });
+      }
+
+      // Calculate costs for the main listing
+      let costs = await bookingService.calculateCosts(
+        listingId,
+        listingType as 'vehicle' | 'driver',
+        duration
+      );
+
+      // If booking a vehicle with a driver, add driver costs
+      if (listingType === 'vehicle' && includeDriver && driverListingId) {
+        const driverCosts = await bookingService.calculateCosts(
+          driverListingId,
+          'driver',
+          duration
+        );
+
+        costs.providerRate += driverCosts.providerRate;
+        costs.platformCommission += driverCosts.platformCommission;
+        costs.taxes += driverCosts.taxes;
+        costs.total += driverCosts.total;
+      }
+
+      res.json(costs);
+    } catch (error) {
+      logError({ error: error as Error, request: req });
+
+      const errorMessage = (error as Error).message;
+
+      if (errorMessage === 'LISTING_NOT_FOUND') {
+        return res.status(404).json({
+          error: {
+            code: 'LISTING_NOT_FOUND',
+            message: 'Listing not found',
+            requestId: req.id,
+          },
+        });
+      }
+
+      res.status(500).json({
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Failed to calculate costs',
+          requestId: req.id,
+        },
+      });
+    }
+  }
+);
 
 /**
  * Create a booking request
@@ -13,18 +83,21 @@ const router = Router();
  */
 router.post(
   '/',
-  authenticateToken,
-  applyRateLimit('booking'),
+  authenticate,
+  bookingRateLimiter,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -104,17 +177,20 @@ router.post(
  */
 router.get(
   '/',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -143,17 +219,20 @@ router.get(
  */
 router.get(
   '/:id',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -203,17 +282,20 @@ router.get(
  */
 router.post(
   '/:id/accept',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -284,17 +366,20 @@ router.post(
  */
 router.post(
   '/:id/decline',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -357,17 +442,20 @@ router.post(
  */
 router.post(
   '/:id/propose-terms',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });
@@ -425,17 +513,20 @@ router.post(
  */
 router.get(
   '/:id/contract',
-  authenticateToken,
+  authenticate,
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user.userId;
-      const user = await authorizationService.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
 
-      if (!user) {
+      if (!user || !user.companyId) {
         return res.status(401).json({
           error: {
             code: 'UNAUTHORIZED',
-            message: 'User not found',
+            message: 'User not found or not associated with a company',
             requestId: req.id,
           },
         });

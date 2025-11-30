@@ -551,10 +551,41 @@ router.post('/drivers', authenticate, async (req: Request, res: Response): Promi
 /**
  * GET /api/listings/drivers
  * Get all driver listings for the authenticated user's company
+ * Or get drivers for a specific company (via companyId query param) - no auth required for browsing
  */
-router.get('/drivers', authenticate, async (req: Request, res: Response): Promise<void> => {
+router.get('/drivers', async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user.userId;
+    const { companyId } = req.query;
+
+    // If companyId is provided, fetch drivers for that company (for booking purposes)
+    if (companyId && typeof companyId === 'string') {
+      const listings = await listingService.getCompanyDriverListings(companyId);
+      res.status(200).json(listings);
+      return;
+    }
+
+    // Otherwise, require authentication and fetch user's company drivers
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) {
+      res.status(401).json({
+        error: {
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'Authentication token is required',
+        },
+      });
+      return;
+    }
+
+    const userId = (req as any).user?.userId;
+    if (!userId) {
+      res.status(401).json({
+        error: {
+          code: 'AUTHENTICATION_REQUIRED',
+          message: 'Authentication token is required',
+        },
+      });
+      return;
+    }
 
     // Get user's company
     const user = await getUserWithCompany(userId);

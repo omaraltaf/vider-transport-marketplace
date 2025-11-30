@@ -447,8 +447,8 @@ export class BookingService {
   /**
    * Get booking by ID
    */
-  async getBookingById(bookingId: string): Promise<Booking | null> {
-    return prisma.booking.findUnique({
+  async getBookingById(bookingId: string): Promise<any | null> {
+    const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
         renterCompany: true,
@@ -457,13 +457,66 @@ export class BookingService {
         driverListing: true,
       },
     });
+
+    if (!booking) {
+      return null;
+    }
+
+    // Transform flat database structure to nested frontend structure
+    return {
+      id: booking.id,
+      bookingNumber: booking.bookingNumber,
+      renterCompanyId: booking.renterCompanyId,
+      providerCompanyId: booking.providerCompanyId,
+      vehicleListingId: booking.vehicleListingId || undefined,
+      driverListingId: booking.driverListingId || undefined,
+      status: booking.status,
+      startDate: booking.startDate.toISOString(),
+      endDate: booking.endDate.toISOString(),
+      duration: {
+        hours: booking.durationHours || undefined,
+        days: booking.durationDays || undefined,
+      },
+      costs: {
+        providerRate: booking.providerRate,
+        platformCommission: booking.platformCommission,
+        platformCommissionRate: booking.platformCommissionRate,
+        taxes: booking.taxes,
+        taxRate: booking.taxRate,
+        total: booking.total,
+        currency: booking.currency,
+      },
+      contractPdfPath: booking.contractPdfPath || undefined,
+      requestedAt: booking.requestedAt.toISOString(),
+      respondedAt: booking.respondedAt?.toISOString(),
+      expiresAt: booking.expiresAt.toISOString(),
+      completedAt: booking.completedAt?.toISOString(),
+      createdAt: booking.createdAt.toISOString(),
+      updatedAt: booking.updatedAt.toISOString(),
+      // Include related entities
+      renterCompany: booking.renterCompany,
+      providerCompany: booking.providerCompany,
+      vehicleListing: booking.vehicleListing ? {
+        id: booking.vehicleListing.id,
+        title: booking.vehicleListing.title,
+        vehicleType: booking.vehicleListing.vehicleType,
+        capacity: booking.vehicleListing.capacityPallets,
+        photos: booking.vehicleListing.photos,
+      } : undefined,
+      driverListing: booking.driverListing ? {
+        id: booking.driverListing.id,
+        name: booking.driverListing.name,
+        licenseClass: booking.driverListing.licenseClass,
+        languages: booking.driverListing.languages,
+      } : undefined,
+    };
   }
 
   /**
    * Get bookings for a company (as renter or provider)
    */
-  async getCompanyBookings(companyId: string): Promise<Booking[]> {
-    return prisma.booking.findMany({
+  async getCompanyBookings(companyId: string): Promise<any[]> {
+    const bookings = await prisma.booking.findMany({
       where: {
         OR: [
           { renterCompanyId: companyId },
@@ -478,6 +531,55 @@ export class BookingService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // Transform flat database structure to nested frontend structure
+    return bookings.map(booking => ({
+      id: booking.id,
+      bookingNumber: booking.bookingNumber,
+      renterCompanyId: booking.renterCompanyId,
+      providerCompanyId: booking.providerCompanyId,
+      vehicleListingId: booking.vehicleListingId || undefined,
+      driverListingId: booking.driverListingId || undefined,
+      status: booking.status,
+      startDate: booking.startDate.toISOString(),
+      endDate: booking.endDate.toISOString(),
+      duration: {
+        hours: booking.durationHours || undefined,
+        days: booking.durationDays || undefined,
+      },
+      costs: {
+        providerRate: booking.providerRate,
+        platformCommission: booking.platformCommission,
+        platformCommissionRate: booking.platformCommissionRate,
+        taxes: booking.taxes,
+        taxRate: booking.taxRate,
+        total: booking.total,
+        currency: booking.currency,
+      },
+      contractPdfPath: booking.contractPdfPath || undefined,
+      requestedAt: booking.requestedAt.toISOString(),
+      respondedAt: booking.respondedAt?.toISOString(),
+      expiresAt: booking.expiresAt.toISOString(),
+      completedAt: booking.completedAt?.toISOString(),
+      createdAt: booking.createdAt.toISOString(),
+      updatedAt: booking.updatedAt.toISOString(),
+      // Include related entities
+      renterCompany: booking.renterCompany,
+      providerCompany: booking.providerCompany,
+      vehicleListing: booking.vehicleListing ? {
+        id: booking.vehicleListing.id,
+        title: booking.vehicleListing.title,
+        vehicleType: booking.vehicleListing.vehicleType,
+        capacity: booking.vehicleListing.capacityPallets,
+        photos: booking.vehicleListing.photos,
+      } : undefined,
+      driverListing: booking.driverListing ? {
+        id: booking.driverListing.id,
+        name: booking.driverListing.name,
+        licenseClass: booking.driverListing.licenseClass,
+        languages: booking.driverListing.languages,
+      } : undefined,
+    }));
   }
 
   /**
