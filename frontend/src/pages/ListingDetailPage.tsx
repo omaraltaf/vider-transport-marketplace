@@ -259,8 +259,8 @@ export default function ListingDetailPage() {
   }
 
   const isVehicle = type === 'vehicle';
-  const vehicleListing = isVehicle ? (listing as ListingWithCompany) : null;
-  const driverListing = !isVehicle ? (listing as DriverListingWithCompany) : null;
+  const vehicleListing = isVehicle ? (listing as any) : null;
+  const driverListing = !isVehicle ? (listing as any) : null;
   const company = (listing as any).company;
 
   return (
