@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "bash build.sh",
-    "postbuild": "prisma migrate deploy",
-    "start": "node dist/index.js",
+    "start": "npx prisma migrate deploy && node dist/index.js",
     "test": "vitest --run",
     "test:watch": "vitest",
     "lint": "eslint src --ext .ts",
