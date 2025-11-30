@@ -13,7 +13,7 @@ export function createApp(): Application {
 
   // Middleware
   app.use(cors({
-    origin: config.FRONTEND_URL,
+    origin: '*',
     credentials: true,
   }));
   app.use(express.json());
