@@ -15,10 +15,6 @@ interface ListingWithCompany extends VehicleListing {
   company: Company;
 }
 
-interface DriverListingWithCompany extends DriverListing {
-  company: Company;
-}
-
 interface Rating {
   id: string;
   companyStars: number;
@@ -294,7 +290,7 @@ export default function ListingDetailPage() {
                 </div>
                 {vehicleListing.photos.length > 1 && (
                   <div className="p-4 flex gap-2 overflow-x-auto">
-                    {vehicleListing.photos.map((photo, index) => (
+                    {vehicleListing.photos.map((photo: any, index: any) => (
                       <button
                         key={index}
                         onClick={() => setSelectedPhoto(index)}
@@ -404,7 +400,7 @@ export default function ListingDetailPage() {
                 <div className="mt-6">
                   <h3 className="text-sm font-medium text-gray-500 mb-2">Features</h3>
                   <div className="flex flex-wrap gap-2">
-                    {vehicleListing.tags.map((tag) => (
+                    {vehicleListing.tags.map((tag: any) => (
                       <span
                         key={tag}
                         className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
