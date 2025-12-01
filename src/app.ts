@@ -114,6 +114,9 @@ export function createApp(): Application {
   
   const seedRoutes = require('./routes/seed.routes').default;
   app.use('/api/seed', seedRoutes);
+  
+  const debugRoutes = require('./routes/debug.routes').default;
+  app.use('/api/debug', debugRoutes);
 
   // 404 handler
   app.use((req: Request, res: Response) => {
