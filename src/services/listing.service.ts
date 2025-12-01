@@ -334,6 +334,8 @@ export class ListingService {
       serviceOfferings: {
         withDriver: listing.withDriver,
         withDriverCost: listing.withDriverCost || undefined,
+        withDriverHourlyRate: listing.withDriverHourlyRate || undefined,
+        withDriverDailyRate: listing.withDriverDailyRate || undefined,
         withoutDriver: listing.withoutDriver,
       },
       photos: listing.photos,
@@ -380,6 +382,8 @@ export class ListingService {
       serviceOfferings: {
         withDriver: listing.withDriver,
         withDriverCost: listing.withDriverCost || undefined,
+        withDriverHourlyRate: listing.withDriverHourlyRate || undefined,
+        withDriverDailyRate: listing.withDriverDailyRate || undefined,
         withoutDriver: listing.withoutDriver,
       },
       photos: listing.photos,

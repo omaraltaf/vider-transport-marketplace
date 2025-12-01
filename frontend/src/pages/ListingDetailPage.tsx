@@ -536,6 +536,26 @@ export default function ListingDetailPage() {
                         </span>
                       </div>
                     )}
+                    {vehicleListing.serviceOfferings.withDriver && (
+                      <>
+                        {vehicleListing.serviceOfferings.withDriverHourlyRate && (
+                          <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                            <span className="text-sm text-gray-600">Driver Hourly Rate:</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              +{vehicleListing.serviceOfferings.withDriverHourlyRate} {vehicleListing.pricing.currency}/hr
+                            </span>
+                          </div>
+                        )}
+                        {vehicleListing.serviceOfferings.withDriverDailyRate && (
+                          <div className="flex justify-between">
+                            <span className="text-sm text-gray-600">Driver Daily Rate:</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              +{vehicleListing.serviceOfferings.withDriverDailyRate} {vehicleListing.pricing.currency}/day
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
                 {!isVehicle && driverListing && (
