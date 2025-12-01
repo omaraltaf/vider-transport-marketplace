@@ -1,6 +1,82 @@
 # Deployment Status
 
-## Current Status: ✅ Configuration Fixed - Awaiting Railway Deployment
+## Current Status: 🔧 MIGRATION ISSUE - FIX REQUIRED
+
+Last Updated: December 1, 2024 01:30 UTC
+
+## Critical Issue
+
+**Migration `20251201011147_add_driver_rates` is marked as FAILED in production database.**
+
+### Error
+```
+Error: P3009
+migrate found failed migrations in the target database
+The `20251201011147_add_driver_rates` migration started at 2025-12-01 01:14:14.552557 UTC failed
+```
+
+### Root Cause
+The migration tried to add columns (`withDriverHourlyRate`, `withDriverDailyRate`) that already exist in the database (we added them manually earlier). This caused the migration to fail, and now Prisma won't run any deployments until this is resolved.
+
+### Solution
+
+**You need to manually mark the migration as successful in the database.**
+
+#### Quick Fix (Recommended)
+
+Run this script:
+```bash
+./scripts/fix-migration-via-cli.sh
+```
+
+Or manually via Railway CLI:
+```bash
+railway connect postgres
+```
+
+Then run:
+```sql
+-- Delete the failed migration record
+DELETE FROM "_prisma_migrations" 
+WHERE migration_name = '20251201011147_add_driver_rates';
+
+-- Insert it as successfully completed
+INSERT INTO "_prisma_migrations" (
+  id,
+  checksum,
+  finished_at,
+  migration_name,
+  logs,
+  rolled_back_at,
+  started_at,
+  applied_steps_count
+) VALUES (
+  gen_random_uuid(),
+  'e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5',
+  NOW(),
+  '20251201011147_add_driver_rates',
+  NULL,
+  NULL,
+  NOW(),
+  1
+);
+```
+
+#### After Fixing
+
+Trigger a redeploy:
+```bash
+git commit --allow-empty -m "Trigger redeploy after migration fix"
+git push origin main
+```
+
+### Detailed Documentation
+
+See `MIGRATION_FIX_GUIDE.md` for complete instructions and alternative methods.
+
+---
+
+## Previous Status: ✅ Configuration Fixed
 
 ### What We Fixed
 
@@ -24,7 +100,7 @@
 
 5. **Database Migrations**
    - ✅ Migrations exist in `prisma/migrations/`
-   - ✅ Will run automatically via `postbuild` script
+   - ⚠️ Migration marked as failed - needs manual fix
 
 ### Deployment URLs
 
@@ -88,52 +164,13 @@ Once Railway deployment completes:
    - [ ] Check Railway PostgreSQL → Data tab
    - [ ] Verify tables exist (User, Company, VehicleListing, etc.)
 
-### Next Steps
+### Files Created for Migration Fix
 
-1. **Wait for Railway to finish deploying** (2-3 minutes)
-2. **Check Railway deployment logs** for any errors
-3. **Test the health endpoint** to confirm backend is running
-4. **Test the Vercel frontend** to confirm CORS is fixed
-5. **If issues persist**, check Railway logs and environment variables
-
-### Troubleshooting
-
-If deployment still fails:
-
-1. **Check Railway Logs**
-   - Railway → Your Project → Backend Service → Deployments → Latest → View Logs
-   - Look for error messages
-
-2. **Verify Environment Variables**
-   - All required variables must be set
-   - JWT_SECRET must be at least 32 characters
-   - FRONTEND_URL must match Vercel URL exactly
-
-3. **Check Database Connection**
-   - Verify PostgreSQL service is running
-   - Check DATABASE_URL is correct
-
-4. **Manual Migration** (if needed)
-   ```bash
-   export DATABASE_URL="<railway-postgres-url>"
-   npx prisma migrate deploy
-   ```
-
-### Files Modified
-
-- `tsconfig.json` - Fixed TypeScript configuration
-- `package.json` - Fixed build scripts
-- `railway.json` - Added Railway configuration
-- `frontend/.env.production` - Fixed API URL
-- `src/app.ts` - Improved CORS configuration
-
-### Documentation Created
-
-- `RAILWAY_ENV_SETUP.md` - Environment variable setup guide
-- `RAILWAY_TROUBLESHOOTING.md` - Comprehensive troubleshooting guide
-- `DEPLOYMENT_STATUS.md` - This file
+- `scripts/fix-failed-migration.sql` - SQL to fix the migration
+- `scripts/fix-migration-via-cli.sh` - Automated fix script
+- `MIGRATION_FIX_GUIDE.md` - Complete troubleshooting guide
 
 ---
 
-**Last Updated:** December 1, 2024
-**Status:** Awaiting Railway deployment completion
+**Last Updated:** December 1, 2024 01:30 UTC
+**Status:** Waiting for manual migration fix before deployment can succeed
