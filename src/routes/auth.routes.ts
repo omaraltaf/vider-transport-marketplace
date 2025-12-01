@@ -43,7 +43,7 @@ router.post('/register', async (req: Request, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
     
-    const result = await authService.register(data);
+    const result = await authService.register(data as any);
     
     res.status(201).json({
       message: 'Registration successful. Please check your email to verify your account.',

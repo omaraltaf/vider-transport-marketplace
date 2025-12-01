@@ -500,7 +500,7 @@ export class BookingService {
         id: booking.vehicleListing.id,
         title: booking.vehicleListing.title,
         vehicleType: booking.vehicleListing.vehicleType,
-        capacity: booking.vehicleListing.capacityPallets,
+        capacity: booking.vehicleListing.capacity,
         photos: booking.vehicleListing.photos,
       } : undefined,
       driverListing: booking.driverListing ? {
@@ -570,7 +570,7 @@ export class BookingService {
         id: booking.vehicleListing.id,
         title: booking.vehicleListing.title,
         vehicleType: booking.vehicleListing.vehicleType,
-        capacity: booking.vehicleListing.capacityPallets,
+        capacity: booking.vehicleListing.capacity,
         photos: booking.vehicleListing.photos,
       } : undefined,
       driverListing: booking.driverListing ? {

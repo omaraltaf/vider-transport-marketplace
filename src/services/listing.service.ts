@@ -315,7 +315,7 @@ export class ListingService {
       title: listing.title,
       description: listing.description,
       vehicleType: listing.vehicleType,
-      capacity: listing.capacityPallets,
+      capacity: listing.capacity,
       fuelType: listing.fuelType,
       location: {
         city: listing.city,
@@ -361,7 +361,7 @@ export class ListingService {
       title: listing.title,
       description: listing.description,
       vehicleType: listing.vehicleType,
-      capacity: listing.capacityPallets,
+      capacity: listing.capacity,
       fuelType: listing.fuelType,
       location: {
         city: listing.city,
@@ -875,7 +875,7 @@ export class ListingService {
 
       // Apply date range filter (check for booking conflicts)
       if (filters.dateRange) {
-        const availableListings: VehicleListing[] = [];
+        const availableListings: typeof allVehicleListings = [];
         for (const listing of allVehicleListings) {
           const hasConflict = await this.hasBookingConflict(
             listing.id,
@@ -967,7 +967,7 @@ export class ListingService {
 
       // Apply date range filter (check for booking conflicts)
       if (filters.dateRange) {
-        const availableListings: DriverListing[] = [];
+        const availableListings: typeof allDriverListings = [];
         for (const listing of allDriverListings) {
           const hasConflict = await this.hasDriverBookingConflict(
             listing.id,

@@ -24,7 +24,6 @@ router.post(
           error: {
             code: 'INVALID_REQUEST',
             message: 'Missing required fields: listingId, listingType, duration',
-            requestId: req.id,
           },
         });
       }
@@ -61,7 +60,6 @@ router.post(
           error: {
             code: 'LISTING_NOT_FOUND',
             message: 'Listing not found',
-            requestId: req.id,
           },
         });
       }
@@ -70,7 +68,6 @@ router.post(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to calculate costs',
-          requestId: req.id,
         },
       });
     }
@@ -98,7 +95,6 @@ router.post(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -135,7 +131,6 @@ router.post(
           error: {
             code: 'SELF_BOOKING_NOT_ALLOWED',
             message: 'Cannot book your own company listings',
-            requestId: req.id,
           },
         });
       }
@@ -145,7 +140,6 @@ router.post(
           error: {
             code: 'CROSS_COMPANY_VEHICLE_DRIVER_NOT_ALLOWED',
             message: 'Vehicle and driver must be from the same company',
-            requestId: req.id,
           },
         });
       }
@@ -155,7 +149,6 @@ router.post(
           error: {
             code: 'LISTING_UNAVAILABLE',
             message: 'The requested listing is not available for the selected dates',
-            requestId: req.id,
           },
         });
       }
@@ -164,7 +157,6 @@ router.post(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to create booking request',
-          requestId: req.id,
         },
       });
     }
@@ -191,7 +183,6 @@ router.get(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -206,7 +197,6 @@ router.get(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to fetch bookings',
-          requestId: req.id,
         },
       });
     }
@@ -233,7 +223,6 @@ router.get(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -245,7 +234,6 @@ router.get(
           error: {
             code: 'BOOKING_NOT_FOUND',
             message: 'Booking not found',
-            requestId: req.id,
           },
         });
       }
@@ -256,7 +244,6 @@ router.get(
           error: {
             code: 'FORBIDDEN',
             message: 'You do not have access to this booking',
-            requestId: req.id,
           },
         });
       }
@@ -269,7 +256,6 @@ router.get(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to fetch booking',
-          requestId: req.id,
         },
       });
     }
@@ -296,7 +282,6 @@ router.post(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -314,7 +299,6 @@ router.post(
           error: {
             code: 'BOOKING_NOT_FOUND',
             message: 'Booking not found',
-            requestId: req.id,
           },
         });
       }
@@ -324,7 +308,6 @@ router.post(
           error: {
             code: 'FORBIDDEN',
             message: 'Only the provider can accept this booking',
-            requestId: req.id,
           },
         });
       }
@@ -334,7 +317,6 @@ router.post(
           error: {
             code: 'INVALID_BOOKING_STATUS',
             message: 'Booking cannot be accepted in its current status',
-            requestId: req.id,
           },
         });
       }
@@ -344,7 +326,6 @@ router.post(
           error: {
             code: 'BOOKING_EXPIRED',
             message: 'This booking request has expired',
-            requestId: req.id,
           },
         });
       }
@@ -353,7 +334,6 @@ router.post(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to accept booking',
-          requestId: req.id,
         },
       });
     }
@@ -380,7 +360,6 @@ router.post(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -400,7 +379,6 @@ router.post(
           error: {
             code: 'BOOKING_NOT_FOUND',
             message: 'Booking not found',
-            requestId: req.id,
           },
         });
       }
@@ -410,7 +388,6 @@ router.post(
           error: {
             code: 'FORBIDDEN',
             message: 'Only the provider can decline this booking',
-            requestId: req.id,
           },
         });
       }
@@ -420,7 +397,6 @@ router.post(
           error: {
             code: 'INVALID_BOOKING_STATUS',
             message: 'Booking cannot be declined in its current status',
-            requestId: req.id,
           },
         });
       }
@@ -429,7 +405,6 @@ router.post(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to decline booking',
-          requestId: req.id,
         },
       });
     }
@@ -456,7 +431,6 @@ router.post(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -481,7 +455,6 @@ router.post(
           error: {
             code: 'BOOKING_NOT_FOUND',
             message: 'Booking not found',
-            requestId: req.id,
           },
         });
       }
@@ -491,7 +464,6 @@ router.post(
           error: {
             code: 'FORBIDDEN',
             message: 'Only the provider can propose new terms',
-            requestId: req.id,
           },
         });
       }
@@ -500,7 +472,6 @@ router.post(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to propose new terms',
-          requestId: req.id,
         },
       });
     }
@@ -527,7 +498,6 @@ router.get(
           error: {
             code: 'UNAUTHORIZED',
             message: 'User not found or not associated with a company',
-            requestId: req.id,
           },
         });
       }
@@ -539,7 +509,6 @@ router.get(
           error: {
             code: 'BOOKING_NOT_FOUND',
             message: 'Booking not found',
-            requestId: req.id,
           },
         });
       }
@@ -550,7 +519,6 @@ router.get(
           error: {
             code: 'FORBIDDEN',
             message: 'You do not have access to this booking',
-            requestId: req.id,
           },
         });
       }
@@ -560,7 +528,6 @@ router.get(
           error: {
             code: 'CONTRACT_NOT_FOUND',
             message: 'Contract has not been generated yet',
-            requestId: req.id,
           },
         });
       }
@@ -574,7 +541,6 @@ router.get(
         error: {
           code: 'INTERNAL_ERROR',
           message: 'Failed to download contract',
-          requestId: req.id,
         },
       });
     }

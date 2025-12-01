@@ -204,7 +204,7 @@ export class AuthService {
           companyId: user.companyId,
         },
         this.JWT_SECRET,
-        { expiresIn: this.ACCESS_TOKEN_EXPIRATION }
+        { expiresIn: this.ACCESS_TOKEN_EXPIRATION } as jwt.SignOptions
       );
 
       return { accessToken };
@@ -306,11 +306,11 @@ export class AuthService {
   private generateTokens(payload: TokenPayload): AuthTokens {
     const accessToken = jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.ACCESS_TOKEN_EXPIRATION,
-    });
+    } as jwt.SignOptions);
 
     const refreshToken = jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.REFRESH_TOKEN_EXPIRATION,
-    });
+    } as jwt.SignOptions);
 
     return { accessToken, refreshToken };
   }

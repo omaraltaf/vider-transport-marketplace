@@ -14,7 +14,7 @@ router.use(authenticate);
  */
 router.get('/threads', async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const threads = await messagingService.getUserThreads(userId);
     
     res.json(threads);
@@ -24,7 +24,6 @@ router.get('/threads', async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch message threads',
-        requestId: req.id,
       },
     });
   }
@@ -37,7 +36,7 @@ router.get('/threads', async (req: Request, res: Response) => {
 router.get('/threads/:threadId', async (req: Request, res: Response) => {
   try {
     const { threadId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     
     const thread = await messagingService.getThreadById(threadId);
     
@@ -46,7 +45,6 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
         error: {
           code: 'THREAD_NOT_FOUND',
           message: 'Message thread not found',
-          requestId: req.id,
         },
       });
     }
@@ -57,7 +55,6 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
         error: {
           code: 'ACCESS_DENIED',
           message: 'You are not a participant in this thread',
-          requestId: req.id,
         },
       });
     }
@@ -69,7 +66,6 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch thread',
-        requestId: req.id,
       },
     });
   }
@@ -82,7 +78,7 @@ router.get('/threads/:threadId', async (req: Request, res: Response) => {
 router.get('/bookings/:bookingId/thread', async (req: Request, res: Response) => {
   try {
     const { bookingId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     
     const thread = await messagingService.getThreadByBookingId(bookingId);
     
@@ -91,7 +87,6 @@ router.get('/bookings/:bookingId/thread', async (req: Request, res: Response) =>
         error: {
           code: 'THREAD_NOT_FOUND',
           message: 'Message thread not found for this booking',
-          requestId: req.id,
         },
       });
     }
@@ -102,7 +97,6 @@ router.get('/bookings/:bookingId/thread', async (req: Request, res: Response) =>
         error: {
           code: 'ACCESS_DENIED',
           message: 'You are not a participant in this thread',
-          requestId: req.id,
         },
       });
     }
@@ -114,7 +108,6 @@ router.get('/bookings/:bookingId/thread', async (req: Request, res: Response) =>
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch thread',
-        requestId: req.id,
       },
     });
   }
@@ -128,14 +121,13 @@ router.post('/threads/:threadId/messages', async (req: Request, res: Response) =
   try {
     const { threadId } = req.params;
     const { content } = req.body;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     
     if (!content || typeof content !== 'string' || content.trim() === '') {
       return res.status(400).json({
         error: {
           code: 'INVALID_INPUT',
           message: 'Message content is required',
-          requestId: req.id,
         },
       });
     }
@@ -152,7 +144,6 @@ router.post('/threads/:threadId/messages', async (req: Request, res: Response) =
         error: {
           code: 'THREAD_NOT_FOUND',
           message: 'Message thread not found',
-          requestId: req.id,
         },
       });
     }
@@ -162,7 +153,6 @@ router.post('/threads/:threadId/messages', async (req: Request, res: Response) =
         error: {
           code: 'ACCESS_DENIED',
           message: 'You are not a participant in this thread',
-          requestId: req.id,
         },
       });
     }
@@ -171,7 +161,6 @@ router.post('/threads/:threadId/messages', async (req: Request, res: Response) =
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to send message',
-        requestId: req.id,
       },
     });
   }
@@ -184,7 +173,7 @@ router.post('/threads/:threadId/messages', async (req: Request, res: Response) =
 router.post('/:messageId/read', async (req: Request, res: Response) => {
   try {
     const { messageId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     
     await messagingService.markAsRead(messageId, userId);
     
@@ -198,7 +187,6 @@ router.post('/:messageId/read', async (req: Request, res: Response) => {
         error: {
           code: 'MESSAGE_NOT_FOUND',
           message: 'Message not found',
-          requestId: req.id,
         },
       });
     }
@@ -208,7 +196,6 @@ router.post('/:messageId/read', async (req: Request, res: Response) => {
         error: {
           code: 'ACCESS_DENIED',
           message: 'You are not a participant in this thread',
-          requestId: req.id,
         },
       });
     }
@@ -217,7 +204,6 @@ router.post('/:messageId/read', async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to mark message as read',
-        requestId: req.id,
       },
     });
   }
@@ -229,7 +215,7 @@ router.post('/:messageId/read', async (req: Request, res: Response) => {
  */
 router.get('/unread-count', async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const count = await messagingService.getUnreadCount(userId);
     
     res.json({ count });
@@ -239,7 +225,6 @@ router.get('/unread-count', async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch unread count',
-        requestId: req.id,
       },
     });
   }

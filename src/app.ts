@@ -118,7 +118,6 @@ export function createApp(): Application {
       error: {
         code: 'ROUTE_NOT_FOUND',
         message: 'The requested route does not exist',
-        requestId: req.id,
       },
     });
   });
@@ -141,7 +140,6 @@ export function createApp(): Application {
         message: config.NODE_ENV === 'production' 
           ? 'An internal error occurred' 
           : err.message,
-        requestId: req.id,
       },
     });
   });

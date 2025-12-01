@@ -16,7 +16,7 @@ const router = Router();
  */
 router.get('/preferences', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const preferences = await notificationService.getPreferences(userId);
 
@@ -39,7 +39,6 @@ router.get('/preferences', authenticate, async (req: Request, res: Response) => 
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch notification preferences',
-        requestId: req.id,
       },
     });
   }
@@ -51,7 +50,7 @@ router.get('/preferences', authenticate, async (req: Request, res: Response) => 
  */
 router.put('/preferences', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { emailEnabled, inAppEnabled, bookingUpdates, messages, ratings, marketing } = req.body;
 
     const preferences = await notificationService.updatePreferences(userId, {
@@ -70,7 +69,6 @@ router.put('/preferences', authenticate, async (req: Request, res: Response) => 
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to update notification preferences',
-        requestId: req.id,
       },
     });
   }
@@ -82,7 +80,7 @@ router.put('/preferences', authenticate, async (req: Request, res: Response) => 
  */
 router.get('/', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const unreadOnly = req.query.unreadOnly === 'true';
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
 
@@ -98,7 +96,6 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch notifications',
-        requestId: req.id,
       },
     });
   }
@@ -110,7 +107,7 @@ router.get('/', authenticate, async (req: Request, res: Response) => {
  */
 router.get('/unread-count', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const count = await notificationService.getUnreadCount(userId);
 
@@ -121,7 +118,6 @@ router.get('/unread-count', authenticate, async (req: Request, res: Response) =>
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to fetch unread count',
-        requestId: req.id,
       },
     });
   }
@@ -144,7 +140,6 @@ router.put('/:id/read', authenticate, async (req: Request, res: Response) => {
         error: {
           code: 'NOTIFICATION_NOT_FOUND',
           message: 'Notification not found',
-          requestId: req.id,
         },
       });
     }
@@ -154,7 +149,6 @@ router.put('/:id/read', authenticate, async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to mark notification as read',
-        requestId: req.id,
       },
     });
   }
@@ -166,7 +160,7 @@ router.put('/:id/read', authenticate, async (req: Request, res: Response) => {
  */
 router.put('/mark-all-read', authenticate, async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     await notificationService.markAllAsRead(userId);
 
@@ -177,7 +171,6 @@ router.put('/mark-all-read', authenticate, async (req: Request, res: Response) =
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Failed to mark all notifications as read',
-        requestId: req.id,
       },
     });
   }
