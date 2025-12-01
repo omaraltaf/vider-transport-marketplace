@@ -111,6 +111,9 @@ export function createApp(): Application {
   
   const gdprRoutes = require('./routes/gdpr.routes').default;
   app.use('/api/gdpr', gdprRoutes);
+  
+  const seedRoutes = require('./routes/seed.routes').default;
+  app.use('/api/seed', seedRoutes);
 
   // 404 handler
   app.use((req: Request, res: Response) => {
