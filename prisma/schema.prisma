@@ -133,6 +133,8 @@ model VehicleListing {
   currency              String        @default("NOK")
   withDriver            Boolean
   withDriverCost        Float?
+  withDriverHourlyRate  Float?
+  withDriverDailyRate   Float?
   withoutDriver         Boolean
   photos                String[]
   tags                  String[]

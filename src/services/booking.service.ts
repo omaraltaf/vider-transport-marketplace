@@ -20,6 +20,8 @@ export interface BookingRequestData {
 }
 
 export interface CostBreakdown {
+  vehicleRate?: number;
+  driverRate?: number;
   providerRate: number;
   platformCommission: number;
   platformCommissionRate: number;

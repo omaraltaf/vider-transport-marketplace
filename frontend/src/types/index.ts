@@ -58,6 +58,8 @@ export interface VehicleListing {
   serviceOfferings: {
     withDriver: boolean;
     withDriverCost?: number;
+    withDriverHourlyRate?: number;
+    withDriverDailyRate?: number;
     withoutDriver: boolean;
   };
   photos: string[];

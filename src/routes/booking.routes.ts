@@ -17,7 +17,7 @@ router.post(
   '/calculate-costs',
   async (req: Request, res: Response) => {
     try {
-      const { listingId, listingType, duration, includeDriver, driverListingId } = req.body;
+      const { listingId, listingType, duration, includeDriver } = req.body;
 
       if (!listingId || !listingType || !duration) {
         return res.status(400).json({
@@ -28,25 +28,47 @@ router.post(
         });
       }
 
-      // Calculate costs for the main listing
+      // Calculate costs for the vehicle
       let costs = await bookingService.calculateCosts(
         listingId,
         listingType as 'vehicle' | 'driver',
         duration
       );
 
-      // If booking a vehicle with a driver, add driver costs
-      if (listingType === 'vehicle' && includeDriver && driverListingId) {
-        const driverCosts = await bookingService.calculateCosts(
-          driverListingId,
-          'driver',
-          duration
-        );
+      // Store vehicle rate separately
+      costs.vehicleRate = costs.providerRate;
 
-        costs.providerRate += driverCosts.providerRate;
-        costs.platformCommission += driverCosts.platformCommission;
-        costs.taxes += driverCosts.taxes;
-        costs.total += driverCosts.total;
+      // If booking a vehicle with a driver, add driver costs from the vehicle listing
+      if (listingType === 'vehicle' && includeDriver) {
+        const vehicleListing = await prisma.vehicleListing.findUnique({
+          where: { id: listingId },
+        });
+
+        if (vehicleListing && vehicleListing.withDriver) {
+          let driverRate = 0;
+          
+          // Calculate driver rate based on duration type
+          if (duration.hours && vehicleListing.withDriverHourlyRate) {
+            driverRate = vehicleListing.withDriverHourlyRate * duration.hours;
+          } else if (duration.days && vehicleListing.withDriverDailyRate) {
+            driverRate = vehicleListing.withDriverDailyRate * duration.days;
+          }
+
+          // Add driver rate to costs
+          costs.driverRate = driverRate;
+          costs.providerRate += driverRate;
+          
+          // Recalculate commission and taxes with driver included
+          const config = await bookingService.getPlatformConfig();
+          const platformCommission = costs.providerRate * (config.commissionRate / 100);
+          const subtotal = costs.providerRate + platformCommission;
+          const taxes = subtotal * (config.taxRate / 100);
+          const total = subtotal + taxes;
+
+          costs.platformCommission = platformCommission;
+          costs.taxes = taxes;
+          costs.total = total;
+        }
       }
 
       res.json(costs);

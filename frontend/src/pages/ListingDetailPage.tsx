@@ -30,6 +30,8 @@ interface Rating {
 }
 
 interface CostBreakdown {
+  vehicleRate?: number;
+  driverRate?: number;
   providerRate: number;
   platformCommission: number;
   platformCommissionRate: number;
@@ -113,10 +115,8 @@ export default function ListingDetailPage() {
         listingId: id,
         listingType: type,
         duration,
+        includeDriver: bookingData.includeDriver,
       };
-
-      // Note: Driver selection removed for Phase 1
-      // Vehicles can be booked with/without driver based on listing's service offerings
 
       const response = await apiClient.post<CostBreakdown>(
         '/bookings/calculate-costs',
@@ -693,9 +693,14 @@ export default function ListingDetailPage() {
                             <span className="block text-sm font-medium text-gray-900">
                               With Driver
                             </span>
-                            {vehicleListing.serviceOfferings.withDriverCost && (
+                            {bookingData.durationType === 'hours' && vehicleListing.serviceOfferings.withDriverHourlyRate && (
                               <span className="block text-xs text-gray-500">
-                                +{vehicleListing.serviceOfferings.withDriverCost} {vehicleListing.pricing.currency} per {bookingData.durationType === 'hours' ? 'hour' : 'day'}
+                                +{vehicleListing.serviceOfferings.withDriverHourlyRate} {vehicleListing.pricing.currency} per hour
+                              </span>
+                            )}
+                            {bookingData.durationType === 'days' && vehicleListing.serviceOfferings.withDriverDailyRate && (
+                              <span className="block text-xs text-gray-500">
+                                +{vehicleListing.serviceOfferings.withDriverDailyRate} {vehicleListing.pricing.currency} per day
                               </span>
                             )}
                           </span>
@@ -724,8 +729,24 @@ export default function ListingDetailPage() {
                     <div className="border-t border-gray-200 pt-4 space-y-2">
                       <h4 className="text-sm font-semibold text-gray-900">Cost Breakdown</h4>
                       <div className="space-y-1 text-sm">
+                        {costBreakdown.vehicleRate !== undefined && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Vehicle Rate:</span>
+                            <span className="text-gray-900">
+                              {costBreakdown.vehicleRate.toFixed(2)} {costBreakdown.currency}
+                            </span>
+                          </div>
+                        )}
+                        {costBreakdown.driverRate !== undefined && costBreakdown.driverRate > 0 && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Driver Rate:</span>
+                            <span className="text-gray-900">
+                              {costBreakdown.driverRate.toFixed(2)} {costBreakdown.currency}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex justify-between">
-                          <span className="text-gray-600">Provider Rate:</span>
+                          <span className="text-gray-600">Subtotal:</span>
                           <span className="text-gray-900">
                             {costBreakdown.providerRate.toFixed(2)} {costBreakdown.currency}
                           </span>
