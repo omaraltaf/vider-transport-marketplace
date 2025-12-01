@@ -26,16 +26,40 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if force flag is set
+    const force = req.body.force === true;
+    
     // Check if data already exists
     const existingCompanies = await prisma.company.count();
-    if (existingCompanies > 0) {
+    if (existingCompanies > 0 && !force) {
       res.status(400).json({
         error: {
           code: 'ALREADY_SEEDED',
-          message: 'Database already contains data. Clear it first if you want to re-seed.',
+          message: 'Database already contains data. Add {"force": true} to the request body to clear and re-seed.',
         },
       });
       return;
+    }
+
+    // If force is true, clear existing data
+    if (force && existingCompanies > 0) {
+      console.log('🗑️  Clearing existing data...');
+      
+      // Delete in correct order to respect foreign key constraints
+      await prisma.message.deleteMany();
+      await prisma.messageThread.deleteMany();
+      await prisma.transaction.deleteMany();
+      await prisma.rating.deleteMany();
+      await prisma.booking.deleteMany();
+      await prisma.driverListing.deleteMany();
+      await prisma.vehicleListing.deleteMany();
+      await prisma.notification.deleteMany();
+      await prisma.auditLog.deleteMany();
+      await prisma.user.deleteMany();
+      await prisma.company.deleteMany();
+      await prisma.platformConfig.deleteMany();
+      
+      console.log('✓ Existing data cleared');
     }
 
     console.log('🌱 Starting database seed...');
