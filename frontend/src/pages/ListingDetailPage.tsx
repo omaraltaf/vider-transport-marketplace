@@ -181,9 +181,8 @@ export default function ListingDetailPage() {
       startDate: new Date(bookingData.startDate).toISOString(),
       endDate: endDate.toISOString(),
       [bookingData.durationType === 'hours' ? 'durationHours' : 'durationDays']: bookingData.durationValue,
+      includeDriver: bookingData.includeDriver,
     };
-
-    // Note: Driver selection removed for Phase 1
 
     createBookingMutation.mutate(bookingRequest);
   };
@@ -650,7 +649,60 @@ export default function ListingDetailPage() {
                     )}
                   </div>
 
-                  {/* Phase 1: Driver selection removed - vehicles show "with/without driver" in service offerings */}
+                  {/* Driver Selection - Only show if vehicle offers both options */}
+                  {isVehicle && vehicleListing && 
+                   vehicleListing.serviceOfferings.withDriver && 
+                   vehicleListing.serviceOfferings.withoutDriver && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Service Type
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                          <input
+                            type="radio"
+                            name="includeDriver"
+                            checked={!bookingData.includeDriver}
+                            onChange={() => {
+                              setBookingData((prev) => ({ ...prev, includeDriver: false }));
+                              setCostBreakdown(null); // Reset cost when driver option changes
+                            }}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                          />
+                          <span className="ml-3 flex-1">
+                            <span className="block text-sm font-medium text-gray-900">
+                              Without Driver
+                            </span>
+                            <span className="block text-xs text-gray-500">
+                              Self-drive rental
+                            </span>
+                          </span>
+                        </label>
+                        <label className="flex items-center p-3 border rounded-md cursor-pointer hover:bg-gray-50">
+                          <input
+                            type="radio"
+                            name="includeDriver"
+                            checked={bookingData.includeDriver}
+                            onChange={() => {
+                              setBookingData((prev) => ({ ...prev, includeDriver: true }));
+                              setCostBreakdown(null); // Reset cost when driver option changes
+                            }}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                          />
+                          <span className="ml-3 flex-1">
+                            <span className="block text-sm font-medium text-gray-900">
+                              With Driver
+                            </span>
+                            {vehicleListing.serviceOfferings.withDriverCost && (
+                              <span className="block text-xs text-gray-500">
+                                +{vehicleListing.serviceOfferings.withDriverCost} {vehicleListing.pricing.currency} per {bookingData.durationType === 'hours' ? 'hour' : 'day'}
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
 
                   <button
                     type="button"
