@@ -1,6 +1,6 @@
 # Production Dockerfile for Vider Transport Marketplace
 
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -21,7 +21,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build the application
-RUN npm run build
+RUN npm run build:docker
 
 # Production image
 FROM base AS runner

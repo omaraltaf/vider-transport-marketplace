@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "bash build.sh",
+    "build": "npx tsc",
+    "build:docker": "npx prisma generate && npx tsc",
     "start": "npx prisma db push --accept-data-loss && node dist/index.js",
     "test": "vitest --run",
     "test:watch": "vitest",
