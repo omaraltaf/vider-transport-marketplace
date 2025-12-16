@@ -9,11 +9,14 @@ declare global {
   namespace Express {
     interface Request {
       user?: {
-        userId: string;
+        id: string;           // Primary identifier (same as userId)
+        userId: string;       // Backward compatibility
         email: string;
         role: Role;
         companyId: string;
       };
+      sessionID?: string;     // For audit logging middleware
+      session?: any;          // For session-based middleware
     }
   }
 }
@@ -43,7 +46,8 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
 
     // Attach user info to request
     req.user = {
-      userId: payload.userId,
+      id: payload.userId,        // Primary identifier
+      userId: payload.userId,    // Backward compatibility
       email: payload.email,
       role: payload.role,
       companyId: payload.companyId,

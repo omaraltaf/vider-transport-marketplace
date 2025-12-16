@@ -21,6 +21,13 @@ export interface BookingRequestData {
   endDate: Date;
   durationHours?: number;
   durationDays?: number;
+  pickupLocation?: {
+    region?: string;
+    address?: string;
+    coordinates?: { lat: number; lng: number; };
+  };
+  paymentMethod?: string;
+  totalAmount?: number;
 }
 
 export interface CostBreakdown {

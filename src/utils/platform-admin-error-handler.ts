@@ -1,4 +1,4 @@
-import { Logger } from './logger';
+import { logger } from '../config/logger';
 import { PlatformAdminFallbackService } from '../services/platform-admin-fallback.service';
 
 /**

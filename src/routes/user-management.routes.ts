@@ -221,7 +221,7 @@ router.post('/admins', async (req: Request, res: Response) => {
     }
 
     const newAdmin = await platformAdminUserService.createPlatformAdmin(
-      { email, firstName, lastName, phone, permissions },
+      { email, firstName, lastName, phone },
       createdBy
     );
 

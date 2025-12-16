@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { Logger } from './logger';
+import { logger } from '../config/logger';
 
 /**
  * Database Performance Optimizer
@@ -256,7 +256,7 @@ export class DatabasePerformanceOptimizer {
             }),
             prisma.booking.aggregate({
               _count: { id: true },
-              where: { status: { in: ['CONFIRMED', 'COMPLETED'] } },
+              where: { status: { in: ['ACCEPTED', 'COMPLETED'] } },
             }),
             prisma.transaction.aggregate({
               _sum: { amount: true },

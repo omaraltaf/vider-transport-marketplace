@@ -106,7 +106,7 @@ export function requireGeographicAccess(options: GeographicRestrictionOptions) {
         await restrictionMonitoringService.logViolation({
           type: 'geographic',
           userId: (req.user as any)?.id,
-          sessionId: (req.session as any)?.id,
+          sessionId: req.session?.id || 'no-session',
           ipAddress: req.ip,
           userAgent: req.get('User-Agent'),
           region: regionInfo.region,

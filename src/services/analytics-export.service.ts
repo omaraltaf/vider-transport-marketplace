@@ -6,7 +6,7 @@
 import { Parser } from 'json2csv';
 import * as ExcelJS from 'exceljs';
 import nodemailer from 'nodemailer';
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { analyticsService } from './analytics.service';
 import { growthAnalyticsService } from './growth-analytics.service';
 import { geographicAnalyticsService } from './geographic-analytics.service';

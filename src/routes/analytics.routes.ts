@@ -5,6 +5,7 @@
 
 import { Router } from 'express';
 import { body, query, param, validationResult } from 'express-validator';
+import { PrismaClient } from '@prisma/client';
 import { analyticsService } from '../services/analytics.service';
 import { growthAnalyticsService } from '../services/growth-analytics.service';
 import { geographicAnalyticsService } from '../services/geographic-analytics.service';
@@ -13,6 +14,8 @@ import { analyticsExportService } from '../services/analytics-export.service';
 import { authenticate } from '../middleware/auth.middleware';
 import { requirePlatformAdmin } from '../middleware/platform-admin.middleware';
 import { logger } from '../config/logger';
+
+const prisma = new PrismaClient();
 
 const router = Router();
 
