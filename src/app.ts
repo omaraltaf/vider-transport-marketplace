@@ -89,6 +89,30 @@ export function createApp(): Application {
     res.send(openApiSpec);
   });
 
+  // API root endpoint
+  app.get('/api', (_req: Request, res: Response) => {
+    res.json({
+      name: 'Vider Transport Marketplace API',
+      version: '1.0.0',
+      status: 'operational',
+      timestamp: new Date().toISOString(),
+      documentation: '/api-docs',
+      endpoints: {
+        auth: '/api/auth',
+        companies: '/api/companies',
+        listings: '/api/listings',
+        bookings: '/api/bookings',
+        payments: '/api/payments',
+        ratings: '/api/ratings',
+        messages: '/api/messages',
+        notifications: '/api/notifications',
+        admin: '/api/admin',
+        platformAdmin: '/api/platform-admin',
+        health: '/health'
+      }
+    });
+  });
+
   // API routes
   const authRoutes = require('./routes/auth.routes').default;
   app.use('/api/auth', authRoutes);
