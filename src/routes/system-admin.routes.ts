@@ -1,9 +1,12 @@
 import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
 import { SystemConfigService } from '../services/system-config.service';
 import { BackupRecoveryService } from '../services/backup-recovery.service';
 import { ApiRateLimitingService } from '../services/api-rate-limiting.service';
 import { authenticate } from '../middleware/auth.middleware';
 import { requirePlatformAdmin } from '../middleware/platform-admin.middleware';
+
+const prisma = new PrismaClient();
 
 const router = Router();
 const systemConfigService = SystemConfigService.getInstance();

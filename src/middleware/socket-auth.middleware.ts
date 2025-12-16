@@ -51,17 +51,17 @@ export const authenticateSocket = async (socket: any, next: any) => {
         email: true,
         role: true,
         companyId: true,
-        isActive: true
+        emailVerified: true
       }
     });
 
-    if (!user || !user.isActive) {
-      logger.warn('WebSocket connection for inactive/non-existent user', { 
+    if (!user || !user.emailVerified) {
+      logger.warn('WebSocket connection for non-existent/unverified user', { 
         socketId: socket.id,
         userId: decoded.userId,
         ip: socket.handshake.address 
       });
-      return next(new Error('User not found or inactive'));
+      return next(new Error('User not found or not verified'));
     }
 
     // Attach user data to socket

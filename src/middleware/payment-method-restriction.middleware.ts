@@ -145,7 +145,7 @@ export function requirePaymentMethodAccess(options: PaymentMethodRestrictionOpti
         await restrictionMonitoringService.logViolation({
           type: 'payment_method',
           userId: (req.user as any)?.id,
-          sessionId: (req.session as any)?.id,
+          sessionId: req.session?.id || 'no-session',
           ipAddress: req.ip,
           userAgent: req.get('User-Agent'),
           region,

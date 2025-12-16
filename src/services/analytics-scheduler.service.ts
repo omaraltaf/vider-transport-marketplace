@@ -3,7 +3,7 @@
  * Handles scheduled metric calculations and cache warming
  */
 
-import cron from 'node-cron';
+import * as cron from 'node-cron';
 import { analyticsService } from './analytics.service';
 import { logger } from '../config/logger';
 

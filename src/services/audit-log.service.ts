@@ -72,24 +72,31 @@ export enum AuditSeverity {
 }
 
 export interface AuditLogEntry {
+  // Core Prisma fields
   id: string;
-  action: AuditAction;
-  severity: AuditSeverity;
+  action: string;
+  adminUserId: string;
+  entityType: string;
+  entityId: string;
+  changes: any;
+  reason?: string;
+  ipAddress?: string;
+  timestamp: Date;
+  
+  // Backward compatibility fields (derived from changes or mapped)
+  severity?: AuditSeverity;
   userId?: string;
   userEmail?: string;
   targetId?: string;
   targetType?: string;
-  description: string;
-  metadata: any;
-  ipAddress?: string;
+  description?: string;
+  metadata?: any;
   userAgent?: string;
   sessionId?: string;
-  timestamp: Date;
-  success: boolean;
+  success?: boolean;
   errorMessage?: string;
   duration?: number;
   resourcesAccessed?: string[];
-  companyId?: string;
 }
 
 export interface AuditLogQuery {
@@ -122,6 +129,37 @@ export interface AuditLogSummary {
 
 export class AuditLogService {
   /**
+   * Helper method to map Prisma AuditLog to AuditLogEntry interface
+   */
+  private mapPrismaToAuditLogEntry(auditEntry: any): AuditLogEntry {
+    return {
+      id: auditEntry.id,
+      action: auditEntry.action,
+      adminUserId: auditEntry.adminUserId,
+      entityType: auditEntry.entityType,
+      entityId: auditEntry.entityId,
+      changes: auditEntry.changes,
+      reason: auditEntry.reason,
+      ipAddress: auditEntry.ipAddress,
+      timestamp: auditEntry.createdAt,
+      // Map additional fields from changes JSON for backward compatibility
+      severity: (auditEntry.changes as any)?.severity,
+      userId: auditEntry.adminUserId,
+      userEmail: (auditEntry.changes as any)?.userEmail,
+      targetId: auditEntry.entityId,
+      targetType: auditEntry.entityType,
+      description: auditEntry.reason,
+      metadata: (auditEntry.changes as any)?.metadata || {},
+      userAgent: (auditEntry.changes as any)?.userAgent,
+      sessionId: (auditEntry.changes as any)?.sessionId,
+      success: (auditEntry.changes as any)?.success,
+      errorMessage: (auditEntry.changes as any)?.errorMessage,
+      duration: (auditEntry.changes as any)?.duration,
+      resourcesAccessed: (auditEntry.changes as any)?.resourcesAccessed || []
+    };
+  }
+
+  /**
    * Log an audit event
    */
   async logEvent(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>): Promise<AuditLogEntry> {
@@ -129,26 +167,27 @@ export class AuditLogService {
       const auditEntry = await prisma.auditLog.create({
         data: {
           action: entry.action,
-          severity: entry.severity,
-          userId: entry.userId,
-          userEmail: entry.userEmail,
-          targetId: entry.targetId,
-          targetType: entry.targetType,
-          description: entry.description,
-          metadata: entry.metadata || {},
-          ipAddress: entry.ipAddress,
-          userAgent: entry.userAgent,
-          sessionId: entry.sessionId,
-          success: entry.success,
-          errorMessage: entry.errorMessage,
-          duration: entry.duration,
-          resourcesAccessed: entry.resourcesAccessed || [],
-          companyId: entry.companyId,
-          timestamp: new Date()
+          adminUserId: entry.userId || entry.adminUserId || 'system',
+          entityType: entry.targetType || entry.entityType || 'unknown',
+          entityId: entry.targetId || entry.entityId || 'unknown',
+          changes: {
+            severity: entry.severity,
+            userEmail: entry.userEmail,
+            description: entry.description,
+            metadata: entry.metadata || {},
+            userAgent: entry.userAgent,
+            sessionId: entry.sessionId,
+            success: entry.success,
+            errorMessage: entry.errorMessage,
+            duration: entry.duration,
+            resourcesAccessed: entry.resourcesAccessed || []
+          },
+          reason: entry.description || entry.reason,
+          ipAddress: entry.ipAddress
         }
       });
 
-      return auditEntry as AuditLogEntry;
+      return this.mapPrismaToAuditLogEntry(auditEntry);
     } catch (error) {
       console.error('Failed to log audit event:', error);
       throw new Error('Audit logging failed');
@@ -296,10 +335,10 @@ export class AuditLogService {
 
     const where: any = {};
 
-    if (userId) where.userId = userId;
+    if (userId) where.adminUserId = userId;
     if (action) where.action = action;
     if (severity) where.severity = severity;
-    if (targetType) where.targetType = targetType;
+    if (targetType) where.entityType = targetType;
     if (success !== undefined) where.success = success;
     if (companyId) where.companyId = companyId;
     if (ipAddress) where.ipAddress = ipAddress;
@@ -372,10 +411,10 @@ export class AuditLogService {
       
       // Entries by user (top 10)
       prisma.auditLog.groupBy({
-        by: ['userId', 'userEmail'],
-        where: { ...where, userId: { not: null } },
-        _count: { userId: true },
-        orderBy: { _count: { userId: 'desc' } },
+        by: ['adminUserId'],
+        where: { ...where, adminUserId: { not: null } },
+        _count: { adminUserId: true },
+        orderBy: { _count: { adminUserId: 'desc' } },
         take: 10
       }),
       
@@ -385,8 +424,8 @@ export class AuditLogService {
       // Time range
       prisma.auditLog.aggregate({
         where,
-        _min: { timestamp: true },
-        _max: { timestamp: true }
+        _min: { createdAt: true },
+        _max: { createdAt: true }
       })
     ]);
 
@@ -437,14 +476,14 @@ export class AuditLogService {
   ): Promise<AuditLogEntry[]> {
     const logs = await prisma.auditLog.findMany({
       where: {
-        targetType,
-        targetId
+        entityType: targetType,
+        entityId: targetId
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit
     });
 
-    return logs as AuditLogEntry[];
+    return logs.map(this.mapPrismaToAuditLogEntry.bind(this));
   }
 
   /**
@@ -456,21 +495,21 @@ export class AuditLogService {
     endDate?: Date,
     limit: number = 100
   ): Promise<AuditLogEntry[]> {
-    const where: any = { userId };
+    const where: any = { adminUserId: userId };
     
     if (startDate || endDate) {
-      where.timestamp = {};
-      if (startDate) where.timestamp.gte = startDate;
-      if (endDate) where.timestamp.lte = endDate;
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = startDate;
+      if (endDate) where.createdAt.lte = endDate;
     }
 
     const logs = await prisma.auditLog.findMany({
       where,
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
       take: limit
     });
 
-    return logs as AuditLogEntry[];
+    return logs.map(this.mapPrismaToAuditLogEntry.bind(this));
   }
 
   /**
@@ -583,10 +622,10 @@ export class AuditLogService {
       prisma.auditLog.findMany({
         where: {
           timestamp: { gte: startDate },
-          userId: { not: null }
+          adminUserId: { not: null }
         },
-        select: { userId: true },
-        distinct: ['userId']
+        select: { adminUserId: true },
+        distinct: ['adminUserId']
       }),
       
       // Top actions
@@ -600,8 +639,8 @@ export class AuditLogService {
       
       // Daily activity (simplified - would need raw SQL for proper date grouping)
       prisma.auditLog.findMany({
-        where: { timestamp: { gte: startDate } },
-        select: { timestamp: true }
+        where: { createdAt: { gte: startDate } },
+        select: { createdAt: true }
       })
     ]);
 

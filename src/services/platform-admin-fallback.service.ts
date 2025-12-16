@@ -1,4 +1,4 @@
-import { Logger } from '../utils/logger';
+import { logger } from '../config/logger';
 
 /**
  * Platform Admin Fallback Service

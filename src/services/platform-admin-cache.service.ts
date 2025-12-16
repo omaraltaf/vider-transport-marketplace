@@ -1,5 +1,5 @@
-import { getRedisClient } from '../config/redis';
-import { Logger } from '../utils/logger';
+import { redis } from '../config/redis';
+import { logger as Logger } from '../config/logger';
 
 /**
  * Platform Admin Cache Service
@@ -9,8 +9,8 @@ import { Logger } from '../utils/logger';
  */
 export class PlatformAdminCacheService {
   private static instance: PlatformAdminCacheService;
-  private logger = new Logger('PlatformAdminCacheService');
-  private redis = getRedisClient();
+  private logger = Logger;
+  private redis = redis;
   
   // Cache performance metrics
   private metrics = {
