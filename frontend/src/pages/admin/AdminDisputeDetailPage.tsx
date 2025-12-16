@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminPanelPage from '../AdminPanelPage';
+import { Container, Card, Badge, Button, Stack, FormField, Textarea, Input, Spinner } from '../../design-system/components';
 
 interface Dispute {
   id: string;
@@ -106,17 +107,25 @@ export default function AdminDisputeDetailPage() {
 
   if (disputeLoading || bookingLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
+      <AdminPanelPage>
+        <Container >
+          <div className="flex items-center justify-center h-64">
+            <Spinner size="lg" />
+          </div>
+        </Container>
+      </AdminPanelPage>
     );
   }
 
   if (!dispute) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Dispute not found</p>
-      </div>
+      <AdminPanelPage>
+        <Container >
+          <div className="bg-error-50 border border-error-200 rounded-lg p-4">
+            <p className="text-error-800">Dispute not found</p>
+          </div>
+        </Container>
+      </AdminPanelPage>
     );
   }
 
@@ -124,213 +133,208 @@ export default function AdminDisputeDetailPage() {
 
   return (
     <AdminPanelPage>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate('/admin/disputes')}
-              className="text-gray-600 hover:text-gray-900"
+      <Container >
+        <Stack spacing="lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/admin/disputes')}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </Button>
+              <h1 className="text-2xl font-bold text-neutral-900">Dispute Details</h1>
+            </div>
+            <Badge
+              variant={
+                dispute.status === 'OPEN'
+                  ? 'warning'
+                  : dispute.status === 'RESOLVED'
+                  ? 'success'
+                  : 'default'
+              }
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">Dispute Details</h1>
+              {dispute.status}
+            </Badge>
           </div>
-        <span
-          className={`px-3 py-1 rounded-full text-sm font-medium ${
-            dispute.status === 'OPEN'
-              ? 'bg-yellow-100 text-yellow-800'
-              : dispute.status === 'RESOLVED'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}
-        >
-          {dispute.status}
-        </span>
-      </div>
 
-      {/* Dispute Information */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Dispute Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dispute ID</label>
-            <p className="text-sm text-gray-900">{dispute.id}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Created At</label>
-            <p className="text-sm text-gray-900">
-              {new Date(dispute.createdAt).toLocaleString('nb-NO')}
-            </p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Raised By</label>
-            <p className="text-sm text-gray-900">{dispute.raisedBy}</p>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
-            <p className="text-sm text-gray-900">{dispute.reason}</p>
-          </div>
-          {dispute.description && (
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <p className="text-sm text-gray-900 whitespace-pre-wrap">{dispute.description}</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Booking Information */}
-      {booking && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Related Booking</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Booking Number</label>
-              <p className="text-sm text-gray-900">{booking.bookingNumber}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <p className="text-sm text-gray-900">{booking.status}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Renter Company</label>
-              <p className="text-sm text-gray-900">{booking.renterCompany?.name || 'N/A'}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Provider Company</label>
-              <p className="text-sm text-gray-900">{booking.providerCompany?.name || 'N/A'}</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Rental Period</label>
-              <p className="text-sm text-gray-900">
-                {new Date(booking.startDate).toLocaleDateString('nb-NO')} -{' '}
-                {new Date(booking.endDate).toLocaleDateString('nb-NO')}
-              </p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
-              <p className="text-sm text-gray-900">
-                {booking.costs.total.toLocaleString('nb-NO', {
-                  style: 'currency',
-                  currency: booking.costs.currency,
-                })}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Resolution Information (if resolved) */}
-      {isResolved && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-green-900 mb-4">Resolution</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Resolution</label>
-              <p className="text-sm text-green-900 whitespace-pre-wrap">{dispute.resolution}</p>
-            </div>
-            {dispute.refundAmount && (
+          {/* Dispute Information */}
+          <Card padding="lg">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Dispute Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">Refund Amount</label>
-                <p className="text-sm text-green-900">
-                  {dispute.refundAmount.toLocaleString('nb-NO', {
-                    style: 'currency',
-                    currency: booking?.costs.currency || 'NOK',
-                  })}
+                <label className="block text-sm font-medium ds-text-gray-700 mb-1">Dispute ID</label>
+                <p className="text-sm text-neutral-900">{dispute.id}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium ds-text-gray-700 mb-1">Created At</label>
+                <p className="text-sm text-neutral-900">
+                  {new Date(dispute.createdAt).toLocaleString('nb-NO')}
                 </p>
               </div>
-            )}
-            {dispute.notes && (
               <div>
-                <label className="block text-sm font-medium text-green-700 mb-1">Notes</label>
-                <p className="text-sm text-green-900 whitespace-pre-wrap">{dispute.notes}</p>
+                <label className="block text-sm font-medium ds-text-gray-700 mb-1">Raised By</label>
+                <p className="text-sm text-neutral-900">{dispute.raisedBy}</p>
               </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-green-700 mb-1">Resolved At</label>
-              <p className="text-sm text-green-900">
-                {dispute.resolvedAt ? new Date(dispute.resolvedAt).toLocaleString('nb-NO') : 'N/A'}
-              </p>
+              <div>
+                <label className="block text-sm font-medium ds-text-gray-700 mb-1">Reason</label>
+                <p className="text-sm text-neutral-900">{dispute.reason}</p>
+              </div>
+              {dispute.description && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Description</label>
+                  <p className="text-sm text-neutral-900 whitespace-pre-wrap">{dispute.description}</p>
+                </div>
+              )}
             </div>
-          </div>
-        </div>
-      )}
+          </Card>
 
-      {/* Resolution Form (if not resolved) */}
-      {!isResolved && (
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Resolve Dispute</h2>
-          <form onSubmit={handleResolve} className="space-y-4">
-            <div>
-              <label htmlFor="resolution" className="block text-sm font-medium text-gray-700 mb-1">
-                Resolution <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                id="resolution"
-                value={resolution}
-                onChange={(e) => setResolution(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Describe the resolution..."
-                required
-              />
-            </div>
+          {/* Booking Information */}
+          {booking && (
+            <Card padding="lg">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Related Booking</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Booking Number</label>
+                  <p className="text-sm text-neutral-900">{booking.bookingNumber}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Status</label>
+                  <p className="text-sm text-neutral-900">{booking.status}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Renter Company</label>
+                  <p className="text-sm text-neutral-900">{booking.renterCompany?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Provider Company</label>
+                  <p className="text-sm text-neutral-900">{booking.providerCompany?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Rental Period</label>
+                  <p className="text-sm text-neutral-900">
+                    {new Date(booking.startDate).toLocaleDateString('nb-NO')} -{' '}
+                    {new Date(booking.endDate).toLocaleDateString('nb-NO')}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium ds-text-gray-700 mb-1">Total Amount</label>
+                  <p className="text-sm text-neutral-900">
+                    {booking.costs.total.toLocaleString('nb-NO', {
+                      style: 'currency',
+                      currency: booking.costs.currency,
+                    })}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          )}
 
-            <div>
-              <label htmlFor="refundAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                Refund Amount (optional)
-              </label>
-              <input
-                type="number"
-                id="refundAmount"
-                value={refundAmount}
-                onChange={(e) => setRefundAmount(e.target.value)}
-                min="0"
-                step="0.01"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="0.00"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Leave empty if no refund is issued
-              </p>
-            </div>
+          {/* Resolution Information (if resolved) */}
+          {isResolved && (
+            <Card padding="lg" className="bg-success-50 border border-success-200">
+              <h2 className="text-lg font-semibold text-success-900 mb-4">Resolution</h2>
+              <Stack spacing="md">
+                <div>
+                  <label className="block text-sm font-medium text-success-700 mb-1">Resolution</label>
+                  <p className="text-sm text-success-900 whitespace-pre-wrap">{dispute.resolution}</p>
+                </div>
+                {dispute.refundAmount && (
+                  <div>
+                    <label className="block text-sm font-medium text-success-700 mb-1">Refund Amount</label>
+                    <p className="text-sm text-success-900">
+                      {dispute.refundAmount.toLocaleString('nb-NO', {
+                        style: 'currency',
+                        currency: booking?.costs.currency || 'NOK',
+                      })}
+                    </p>
+                  </div>
+                )}
+                {dispute.notes && (
+                  <div>
+                    <label className="block text-sm font-medium text-success-700 mb-1">Notes</label>
+                    <p className="text-sm text-success-900 whitespace-pre-wrap">{dispute.notes}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-success-700 mb-1">Resolved At</label>
+                  <p className="text-sm text-success-900">
+                    {dispute.resolvedAt ? new Date(dispute.resolvedAt).toLocaleString('nb-NO') : 'N/A'}
+                  </p>
+                </div>
+              </Stack>
+            </Card>
+          )}
 
-            <div>
-              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
-                Internal Notes (optional)
-              </label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Add any internal notes..."
-              />
-            </div>
+          {/* Resolution Form (if not resolved) */}
+          {!isResolved && (
+            <Card padding="lg">
+              <h2 className="text-lg font-semibold text-neutral-900 mb-4">Resolve Dispute</h2>
+              <form onSubmit={handleResolve}>
+                <Stack spacing="md">
+                  <FormField
+                    label="Resolution"
+                    required
+                    helperText="Describe the resolution"
+                  >
+                    <Textarea
+                      value={resolution}
+                      onChange={setResolution}
+                      rows={4}
+                      placeholder="Describe the resolution..."
+                    />
+                  </FormField>
 
-            <div className="flex justify-end space-x-4">
-              <button
-                type="button"
-                onClick={() => navigate('/admin/disputes')}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={resolveMutation.isPending}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {resolveMutation.isPending ? 'Resolving...' : 'Resolve Dispute'}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-      </div>
+                  <FormField
+                    label="Refund Amount (optional)"
+                    helperText="Leave empty if no refund is issued"
+                  >
+                    <Input
+                      type="number"
+                      value={refundAmount}
+                      onChange={setRefundAmount}
+                      placeholder="0.00"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Internal Notes (optional)"
+                  >
+                    <Textarea
+                      value={notes}
+                      onChange={setNotes}
+                      rows={3}
+                      placeholder="Add any internal notes..."
+                    />
+                  </FormField>
+
+                  <div className="flex justify-end space-x-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="md"
+                      onClick={() => navigate('/admin/disputes')}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="md"
+                      loading={resolveMutation.isPending}
+                    >
+                      Resolve Dispute
+                    </Button>
+                  </div>
+                </Stack>
+              </form>
+            </Card>
+          )}
+        </Stack>
+      </Container>
     </AdminPanelPage>
   );
 }

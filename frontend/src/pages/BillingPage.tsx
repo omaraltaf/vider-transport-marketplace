@@ -9,6 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../services/api';
 import type { Transaction, Booking } from '../types';
 import Navbar from '../components/Navbar';
+import { Container, Card, Button, Badge, Spinner } from '../design-system/components';
+import { Download, FileText, Receipt, CreditCard, Calendar, DollarSign } from 'lucide-react';
 
 interface TransactionWithBooking extends Transaction {
   booking: Booking & {
@@ -47,8 +49,14 @@ export default function BillingPage() {
     });
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
-    return `${amount.toFixed(2)} ${currency}`;
+  // Using centralized currency utility
+  const formatCurrency = (amount: number, currency: string = 'NOK') => {
+    return new Intl.NumberFormat('no-NO', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2
+    }).format(amount);
   };
 
   const downloadInvoice = async (bookingId: string, bookingNumber: string) => {
@@ -105,16 +113,20 @@ export default function BillingPage() {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'neutral' => {
     switch (status) {
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+      case 'CLOSED':
+        return 'success';
       case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800';
+      case 'ACCEPTED':
+      case 'ACTIVE':
+        return 'warning';
       case 'FAILED':
-        return 'bg-red-100 text-red-800';
+      case 'CANCELLED':
+        return 'error';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'neutral';
     }
   };
 
@@ -144,301 +156,244 @@ export default function BillingPage() {
   const isLoading = bookingsLoading || transactionsLoading;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-page)' }}>
       <Navbar />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Billing & Invoices</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            View and download your invoices, receipts, and transaction history
-          </p>
-        </div>
-
-        {/* Tabs */}
-        <div className="mb-6">
-          <div className="sm:hidden">
-            <select
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value as any)}
-              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500"
-            >
-              <option value="invoices">Invoices</option>
-              <option value="receipts">Receipts</option>
-              <option value="transactions">Transactions</option>
-            </select>
+      <Container>
+        <div style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: 'var(--color-gray-900)', marginBottom: '0.25rem' }}>
+              Billing & Invoices
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+              View and download your invoices, receipts, and transaction history
+            </p>
           </div>
-          <div className="hidden sm:block">
-            <nav className="flex space-x-4" aria-label="Tabs">
-              <button
+
+          {/* Tabs */}
+          <Card padding="sm" style={{ marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <Button
+                variant={activeTab === 'invoices' ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setActiveTab('invoices')}
-                className={`${
-                  activeTab === 'invoices'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                } px-3 py-2 font-medium text-sm rounded-md`}
+                leftIcon={<FileText size={16} />}
               >
                 Invoices ({bookingsWithInvoices.length})
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={activeTab === 'receipts' ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setActiveTab('receipts')}
-                className={`${
-                  activeTab === 'receipts'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                } px-3 py-2 font-medium text-sm rounded-md`}
+                leftIcon={<Receipt size={16} />}
               >
                 Receipts ({bookingsWithReceipts.length})
-              </button>
-              <button
+              </Button>
+              <Button
+                variant={activeTab === 'transactions' ? 'primary' : 'ghost'}
+                size="sm"
                 onClick={() => setActiveTab('transactions')}
-                className={`${
-                  activeTab === 'transactions'
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-500 hover:text-gray-700'
-                } px-3 py-2 font-medium text-sm rounded-md`}
+                leftIcon={<CreditCard size={16} />}
               >
                 Transactions ({transactions?.length || 0})
-              </button>
-            </nav>
-          </div>
-        </div>
+              </Button>
+            </div>
+          </Card>
 
         {isLoading && (
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-            <p className="mt-2 text-sm text-gray-500">Loading billing information...</p>
-          </div>
+          <Card padding="lg">
+            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <Spinner size="lg" />
+              <p style={{ marginTop: '1rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                Loading billing information...
+              </p>
+            </div>
+          </Card>
         )}
 
         {/* Invoices Tab */}
         {!isLoading && activeTab === 'invoices' && (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <Card>
             {bookingsWithInvoices.length === 0 ? (
-              <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No invoices</h3>
-                <p className="mt-1 text-sm text-gray-500">
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <FileText size={48} style={{ margin: '0 auto', color: 'var(--color-gray-400)' }} />
+                <h3 style={{ marginTop: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-gray-900)' }}>
+                  No invoices
+                </h3>
+                <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
                   Invoices will appear here when bookings are confirmed.
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-200">
-                {bookingsWithInvoices.map((booking) => (
-                  <li key={booking.id} className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-indigo-600 truncate">
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {bookingsWithInvoices.map((booking, index) => (
+                  <div
+                    key={booking.id}
+                    style={{
+                      padding: '1rem 1.5rem',
+                      borderTop: index > 0 ? '1px solid var(--color-gray-200)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-primary-600)' }}>
                             Invoice for {booking.bookingNumber}
                           </p>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(booking.status)}`}>
-                              {booking.status}
-                            </span>
-                          </div>
+                          <Badge variant={getStatusBadgeVariant(booking.status)} size="sm">
+                            {booking.status}
+                          </Badge>
                         </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              Issued: {formatDate(booking.respondedAt || booking.createdAt)}
-                            </p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatCurrency(booking.costs.total, booking.costs.currency)}
-                            </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <Calendar size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>Issued: {formatDate(booking.respondedAt || booking.createdAt)}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <DollarSign size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>{formatCurrency(booking.costs.total, booking.costs.currency)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <button
-                          onClick={() => downloadInvoice(booking.id, booking.bookingNumber)}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                          <svg className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download
-                        </button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadInvoice(booking.id, booking.bookingNumber)}
+                        leftIcon={<Download size={16} />}
+                      >
+                        Download
+                      </Button>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
-          </div>
+          </Card>
         )}
 
         {/* Receipts Tab */}
         {!isLoading && activeTab === 'receipts' && (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <Card>
             {bookingsWithReceipts.length === 0 ? (
-              <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No receipts</h3>
-                <p className="mt-1 text-sm text-gray-500">
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <Receipt size={48} style={{ margin: '0 auto', color: 'var(--color-gray-400)' }} />
+                <h3 style={{ marginTop: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-gray-900)' }}>
+                  No receipts
+                </h3>
+                <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
                   Receipts will appear here when bookings are completed.
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-200">
-                {bookingsWithReceipts.map((booking) => (
-                  <li key={booking.id} className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-indigo-600 truncate">
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {bookingsWithReceipts.map((booking, index) => (
+                  <div
+                    key={booking.id}
+                    style={{
+                      padding: '1rem 1.5rem',
+                      borderTop: index > 0 ? '1px solid var(--color-gray-200)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-primary-600)' }}>
                             Receipt for {booking.bookingNumber}
                           </p>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(booking.status)}`}>
-                              {booking.status}
-                            </span>
-                          </div>
+                          <Badge variant={getStatusBadgeVariant(booking.status)} size="sm">
+                            {booking.status}
+                          </Badge>
                         </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              Completed: {formatDate(booking.completedAt || booking.createdAt)}
-                            </p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {formatCurrency(booking.costs.total, booking.costs.currency)}
-                            </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <Calendar size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>Completed: {formatDate(booking.completedAt || booking.createdAt)}</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <DollarSign size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>{formatCurrency(booking.costs.total, booking.costs.currency)}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="ml-4">
-                        <button
-                          onClick={() => downloadReceipt(booking.id, booking.bookingNumber)}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                        >
-                          <svg className="-ml-0.5 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                          </svg>
-                          Download
-                        </button>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadReceipt(booking.id, booking.bookingNumber)}
+                        leftIcon={<Download size={16} />}
+                      >
+                        Download
+                      </Button>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
-          </div>
+          </Card>
         )}
 
         {/* Transactions Tab */}
         {!isLoading && activeTab === 'transactions' && (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+          <Card>
             {!transactions || transactions.length === 0 ? (
-              <div className="text-center py-12">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No transactions</h3>
-                <p className="mt-1 text-sm text-gray-500">
+              <div style={{ textAlign: 'center', padding: '3rem' }}>
+                <CreditCard size={48} style={{ margin: '0 auto', color: 'var(--color-gray-400)' }} />
+                <h3 style={{ marginTop: '0.5rem', fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-gray-900)' }}>
+                  No transactions
+                </h3>
+                <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
                   Transaction history will appear here.
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-200">
-                {transactions.map((transaction) => (
-                  <li key={transaction.id} className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-gray-900">
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {transactions.map((transaction, index) => (
+                  <div
+                    key={transaction.id}
+                    style={{
+                      padding: '1rem 1.5rem',
+                      borderTop: index > 0 ? '1px solid var(--color-gray-200)' : 'none',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1, minWidth: '250px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                          <p style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--color-gray-900)' }}>
                             {getTransactionTypeLabel(transaction.type)}
                           </p>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(transaction.status)}`}>
-                              {transaction.status}
-                            </span>
-                          </div>
+                          <Badge variant={getStatusBadgeVariant(transaction.status)} size="sm">
+                            {transaction.status}
+                          </Badge>
                         </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              {transaction.booking?.bookingNumber || 'N/A'}
-                            </p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                              <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {formatDate(transaction.createdAt)}
-                            </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <FileText size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>{transaction.booking?.bookingNumber || 'N/A'}</span>
                           </div>
-                          <div className="mt-2 flex items-center text-sm text-gray-900 sm:mt-0">
-                            <span className="font-medium">
-                              {formatCurrency(transaction.amount, transaction.currency)}
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.875rem', color: 'var(--color-gray-600)' }}>
+                            <Calendar size={16} style={{ color: 'var(--color-gray-400)' }} />
+                            <span>{formatDate(transaction.createdAt)}</span>
                           </div>
-                        </div>
-                        {transaction.booking && (
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-500">
+                          {transaction.booking && (
+                            <div style={{ fontSize: '0.75rem', color: 'var(--color-gray-600)' }}>
                               {user?.companyId === transaction.booking.renterCompanyId
                                 ? `Provider: ${transaction.booking.providerCompany.name}`
                                 : `Renter: ${transaction.booking.renterCompany.name}`}
-                            </p>
-                          </div>
-                        )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-gray-900)' }}>
+                        {formatCurrency(transaction.amount, transaction.currency)}
                       </div>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
-          </div>
+          </Card>
         )}
-      </div>
+        </div>
+      </Container>
     </div>
   );
 }

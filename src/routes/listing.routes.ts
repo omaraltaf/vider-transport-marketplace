@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { ListingService } from '../services/listing.service';
 import { authenticate } from '../middleware/auth.middleware';
 import { AuthorizationService } from '../services/authorization.service';
+import { FeatureToggle } from '../middleware/feature-toggle.middleware';
+import { featureToggleService } from '../services/feature-toggle.service';
 import { logError } from '../utils/logging.utils';
 import multer from 'multer';
 import path from 'path';
@@ -178,6 +180,21 @@ router.post('/vehicles', authenticate, async (req: Request, res: Response): Prom
         },
       });
       return;
+    }
+
+    // Check feature toggle for without-driver listings
+    if (!req.body.withDriver) {
+      const withoutDriverEnabled = await featureToggleService.isFeatureEnabled(FeatureToggle.WITHOUT_DRIVER_LISTINGS);
+      if (!withoutDriverEnabled) {
+        res.status(403).json({
+          error: {
+            code: 'FEATURE_DISABLED',
+            message: 'Without-driver listings are currently disabled',
+            feature: 'withoutDriverListings',
+          },
+        });
+        return;
+      }
     }
 
     const listing = await listingService.createVehicleListing({

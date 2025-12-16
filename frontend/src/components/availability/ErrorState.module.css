@@ -1,0 +1,101 @@
+.errorState {
+  max-width: 500px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.errorIcon {
+  color: var(--color-error);
+  opacity: 0.8;
+}
+
+.errorText {
+  max-width: 400px;
+}
+
+.errorTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.errorMessage {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  margin: 0 0 0.5rem 0;
+}
+
+.errorSuggestion {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.errorActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .errorState {
+    margin: 1rem;
+    max-width: none;
+  }
+
+  .errorContent {
+    gap: 1.25rem;
+  }
+
+  .errorTitle {
+    font-size: 1rem;
+  }
+
+  .errorMessage {
+    font-size: 0.8125rem;
+  }
+
+  .errorSuggestion {
+    font-size: 0.75rem;
+  }
+
+  .errorActions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .errorActions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .errorIcon svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .errorTitle {
+    font-size: 0.9375rem;
+  }
+
+  .errorMessage {
+    font-size: 0.75rem;
+  }
+
+  .errorSuggestion {
+    font-size: 0.6875rem;
+  }
+}

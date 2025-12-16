@@ -1,0 +1,99 @@
+.stack {
+  display: flex;
+  width: 100%;
+}
+
+/* Direction */
+.direction-vertical {
+  flex-direction: column;
+}
+
+.direction-horizontal {
+  flex-direction: row;
+}
+
+/* Mobile: stack horizontal layouts vertically */
+@media (max-width: 768px) {
+  .direction-horizontal {
+    flex-direction: column;
+  }
+
+  /* Reset horizontal spacing to vertical spacing on mobile */
+  .direction-horizontal.spacing-0 > * + * { margin-left: 0; margin-top: 0; }
+  .direction-horizontal.spacing-1 > * + * { margin-left: 0; margin-top: 0.25rem; }
+  .direction-horizontal.spacing-2 > * + * { margin-left: 0; margin-top: 0.5rem; }
+  .direction-horizontal.spacing-3 > * + * { margin-left: 0; margin-top: 0.75rem; }
+  .direction-horizontal.spacing-4 > * + * { margin-left: 0; margin-top: 1rem; }
+  .direction-horizontal.spacing-5 > * + * { margin-left: 0; margin-top: 1.25rem; }
+  .direction-horizontal.spacing-6 > * + * { margin-left: 0; margin-top: 1.5rem; }
+  .direction-horizontal.spacing-8 > * + * { margin-left: 0; margin-top: 2rem; }
+  .direction-horizontal.spacing-10 > * + * { margin-left: 0; margin-top: 2.5rem; }
+  .direction-horizontal.spacing-12 > * + * { margin-left: 0; margin-top: 3rem; }
+}
+
+/* Spacing - vertical direction */
+.direction-vertical.spacing-0 > * + * { margin-top: 0; }
+.direction-vertical.spacing-1 > * + * { margin-top: 0.25rem; }  /* 4px */
+.direction-vertical.spacing-2 > * + * { margin-top: 0.5rem; }   /* 8px */
+.direction-vertical.spacing-3 > * + * { margin-top: 0.75rem; }  /* 12px */
+.direction-vertical.spacing-4 > * + * { margin-top: 1rem; }     /* 16px */
+.direction-vertical.spacing-5 > * + * { margin-top: 1.25rem; }  /* 20px */
+.direction-vertical.spacing-6 > * + * { margin-top: 1.5rem; }   /* 24px */
+.direction-vertical.spacing-8 > * + * { margin-top: 2rem; }     /* 32px */
+.direction-vertical.spacing-10 > * + * { margin-top: 2.5rem; }  /* 40px */
+.direction-vertical.spacing-12 > * + * { margin-top: 3rem; }    /* 48px */
+
+/* Spacing - horizontal direction */
+.direction-horizontal.spacing-0 > * + * { margin-left: 0; }
+.direction-horizontal.spacing-1 > * + * { margin-left: 0.25rem; }  /* 4px */
+.direction-horizontal.spacing-2 > * + * { margin-left: 0.5rem; }   /* 8px */
+.direction-horizontal.spacing-3 > * + * { margin-left: 0.75rem; }  /* 12px */
+.direction-horizontal.spacing-4 > * + * { margin-left: 1rem; }     /* 16px */
+.direction-horizontal.spacing-5 > * + * { margin-left: 1.25rem; }  /* 20px */
+.direction-horizontal.spacing-6 > * + * { margin-left: 1.5rem; }   /* 24px */
+.direction-horizontal.spacing-8 > * + * { margin-left: 2rem; }     /* 32px */
+.direction-horizontal.spacing-10 > * + * { margin-left: 2.5rem; }  /* 40px */
+.direction-horizontal.spacing-12 > * + * { margin-left: 3rem; }    /* 48px */
+
+/* Alignment (cross-axis) */
+.align-start {
+  align-items: flex-start;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.align-end {
+  align-items: flex-end;
+}
+
+.align-stretch {
+  align-items: stretch;
+}
+
+/* Justification (main-axis) */
+.justify-start {
+  justify-content: flex-start;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-around {
+  justify-content: space-around;
+}
+
+/* Wrapping */
+.wrap {
+  flex-wrap: wrap;
+}

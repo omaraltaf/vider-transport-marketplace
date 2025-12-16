@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,6 +5,493 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String              @id @default(uuid())
+  email                String              @unique
+  passwordHash         String
+  role                 Role
+  companyId            String
+  firstName            String
+  lastName             String
+  phone                String
+  emailVerified        Boolean             @default(false)
+  verificationToken    String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  isTemporaryPassword  Boolean             @default(false)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  auditLogs            AuditLog[]
+  availabilityBlocks   AvailabilityBlock[]
+  sentMessages         Message[]
+  recurringBlocks      RecurringBlock[]
+  company              Company             @relation(fields: [companyId], references: [id])
+
+  @@index([email])
+  @@index([companyId])
+}
+
+model Company {
+  id                 String           @id @default(uuid())
+  name               String
+  organizationNumber String           @unique
+  businessAddress    String
+  city               String
+  postalCode         String
+  fylke              String
+  kommune            String
+  vatRegistered      Boolean
+  description        String?
+  verified           Boolean          @default(false)
+  verifiedAt         DateTime?
+  verifiedBy         String?
+  aggregatedRating   Float?
+  totalRatings       Int              @default(0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  status             CompanyStatus    @default(PENDING_VERIFICATION)
+  suspendedAt        DateTime?
+  suspendedBy        String?
+  suspensionReason   String?
+  totalBookings      Int              @default(0)
+  totalRevenue       Float            @default(0)
+  verificationNotes  String?
+  bookingsAsProvider Booking[]        @relation("ProviderCompany")
+  bookingsAsRenter   Booking[]        @relation("RenterCompany")
+  driverListings     DriverListing[]
+  ratingsReceived    Rating[]         @relation("ProviderRatings")
+  ratingsGiven       Rating[]         @relation("RenterRatings")
+  users              User[]
+  vehicleListings    VehicleListing[]
+
+  @@index([organizationNumber])
+  @@index([verified])
+  @@index([status])
+}
+
+model VehicleListing {
+  id                   String        @id @default(uuid())
+  companyId            String
+  title                String
+  description          String
+  vehicleType          VehicleType
+  capacity             Int
+  fuelType             FuelType
+  city                 String
+  fylke                String
+  kommune              String
+  latitude             Float?
+  longitude            Float?
+  hourlyRate           Float?
+  dailyRate            Float?
+  deposit              Float?
+  currency             String        @default("NOK")
+  withDriver           Boolean
+  withDriverCost       Float?
+  withoutDriver        Boolean
+  photos               String[]
+  tags                 String[]
+  status               ListingStatus @default(ACTIVE)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  withDriverDailyRate  Float?
+  withDriverHourlyRate Float?
+  bookings             Booking[]
+  company              Company       @relation(fields: [companyId], references: [id])
+
+  @@index([companyId])
+  @@index([status])
+  @@index([fylke])
+  @@index([kommune])
+}
+
+model DriverListing {
+  id                  String        @id @default(uuid())
+  companyId           String
+  name                String
+  licenseClass        String
+  languages           String[]
+  backgroundSummary   String?
+  hourlyRate          Float?
+  dailyRate           Float?
+  currency            String        @default("NOK")
+  verified            Boolean       @default(false)
+  verifiedAt          DateTime?
+  verifiedBy          String?
+  licenseDocumentPath String?
+  aggregatedRating    Float?
+  totalRatings        Int           @default(0)
+  status              ListingStatus @default(ACTIVE)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  bookings            Booking[]
+  company             Company       @relation(fields: [companyId], references: [id])
+  ratings             Rating[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([verified])
+}
+
+model Booking {
+  id                     String          @id @default(uuid())
+  bookingNumber          String          @unique
+  renterCompanyId        String
+  providerCompanyId      String
+  vehicleListingId       String?
+  driverListingId        String?
+  status                 BookingStatus
+  startDate              DateTime
+  endDate                DateTime
+  durationHours          Int?
+  durationDays           Int?
+  providerRate           Float
+  platformCommission     Float
+  platformCommissionRate Float
+  taxes                  Float
+  taxRate                Float
+  total                  Float
+  currency               String          @default("NOK")
+  contractPdfPath        String?
+  requestedAt            DateTime        @default(now())
+  respondedAt            DateTime?
+  expiresAt              DateTime
+  completedAt            DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  driverListing          DriverListing?  @relation(fields: [driverListingId], references: [id])
+  providerCompany        Company         @relation("ProviderCompany", fields: [providerCompanyId], references: [id])
+  renterCompany          Company         @relation("RenterCompany", fields: [renterCompanyId], references: [id])
+  vehicleListing         VehicleListing? @relation(fields: [vehicleListingId], references: [id])
+  dispute                Dispute?
+  messageThread          MessageThread?
+  rating                 Rating?
+  transactions           Transaction[]
+
+  @@index([renterCompanyId])
+  @@index([providerCompanyId])
+  @@index([status])
+  @@index([bookingNumber])
+}
+
+model Rating {
+  id                  String         @id @default(uuid())
+  bookingId           String         @unique
+  renterCompanyId     String
+  providerCompanyId   String
+  driverListingId     String?
+  companyStars        Int
+  companyReview       String?
+  driverStars         Int?
+  driverReview        String?
+  providerResponse    String?
+  providerRespondedAt DateTime?
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+  booking             Booking        @relation(fields: [bookingId], references: [id])
+  driverListing       DriverListing? @relation(fields: [driverListingId], references: [id])
+  providerCompany     Company        @relation("ProviderRatings", fields: [providerCompanyId], references: [id])
+  renterCompany       Company        @relation("RenterRatings", fields: [renterCompanyId], references: [id])
+
+  @@index([providerCompanyId])
+  @@index([driverListingId])
+}
+
+model MessageThread {
+  id           String    @id @default(uuid())
+  bookingId    String    @unique
+  participants String[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
+  booking      Booking   @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+}
+
+model Message {
+  id        String        @id @default(uuid())
+  threadId  String
+  senderId  String
+  content   String
+  readBy    String[]
+  createdAt DateTime      @default(now())
+  sender    User          @relation(fields: [senderId], references: [id])
+  thread    MessageThread @relation(fields: [threadId], references: [id])
+
+  @@index([threadId])
+  @@index([senderId])
+}
+
+model Transaction {
+  id        String            @id @default(uuid())
+  bookingId String
+  type      TransactionType
+  amount    Float
+  currency  String            @default("NOK")
+  status    TransactionStatus
+  metadata  Json?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  booking   Booking           @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([type])
+  @@index([status])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  adminUserId String
+  action      String
+  entityType  String
+  entityId    String
+  changes     Json?
+  reason      String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  adminUser   User     @relation(fields: [adminUserId], references: [id])
+
+  @@index([adminUserId])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+model PlatformConfig {
+  id                     String                  @id @default(uuid())
+  commissionRate         Float
+  taxRate                Float
+  bookingTimeoutHours    Int
+  defaultCurrency        String                  @default("NOK")
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  activatedAt            DateTime?
+  activatedBy            String?
+  autoApprovalEnabled    Boolean                 @default(false)
+  hourlyBookings         Boolean                 @default(true)
+  instantBooking         Boolean                 @default(false)
+  isActive               Boolean                 @default(true)
+  maintenanceMode        Boolean                 @default(false)
+  maxBookingDuration     Int                     @default(30)
+  minBookingAdvance      Int                     @default(2)
+  recurringBookings      Boolean                 @default(true)
+  version                Int                     @default(1)
+  withoutDriverListings  Boolean                 @default(true)
+  configurationHistory   ConfigurationHistory[]
+  geographicRestrictions GeographicRestriction[]
+  paymentMethodConfigs   PaymentMethodConfig[]
+
+  @@index([isActive])
+  @@index([version])
+}
+
+model GeographicRestriction {
+  id              String          @id @default(uuid())
+  configId        String
+  restrictionType RestrictionType
+  region          String
+  regionType      RegionType
+  isBlocked       Boolean         @default(false)
+  reason          String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  config          PlatformConfig  @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([region, regionType])
+}
+
+model PaymentMethodConfig {
+  id                String         @id @default(uuid())
+  configId          String
+  paymentMethod     PaymentMethod
+  enabled           Boolean        @default(true)
+  minAmount         Float?
+  maxAmount         Float?
+  processingFee     Float?         @default(0)
+  processingFeeType FeeType        @default(PERCENTAGE)
+  supportedRegions  String[]
+  metadata          Json?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  config            PlatformConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([paymentMethod])
+}
+
+model ConfigurationHistory {
+  id         String         @id @default(uuid())
+  configId   String
+  version    Int
+  changes    Json
+  changeType ChangeType
+  reason     String?
+  changedBy  String
+  rollbackTo String?
+  createdAt  DateTime       @default(now())
+  config     PlatformConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId])
+  @@index([version])
+  @@index([createdAt])
+}
+
+model NotificationPreferences {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  emailEnabled   Boolean  @default(true)
+  inAppEnabled   Boolean  @default(true)
+  bookingUpdates Boolean  @default(true)
+  messages       Boolean  @default(true)
+  ratings        Boolean  @default(true)
+  marketing      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Notification {
+  id        String                @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  metadata  Json?
+  channels  NotificationChannel[]
+  read      Boolean               @default(false)
+  readAt    DateTime?
+  createdAt DateTime              @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model Dispute {
+  id           String        @id @default(uuid())
+  bookingId    String        @unique
+  raisedBy     String
+  reason       String
+  description  String?
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  refundAmount Float?
+  notes        String?
+  resolvedBy   String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  booking      Booking       @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([status])
+  @@index([raisedBy])
+}
+
+model AvailabilityBlock {
+  id               String          @id @default(uuid())
+  listingId        String
+  listingType      String
+  startDate        DateTime
+  endDate          DateTime
+  reason           String?
+  isRecurring      Boolean         @default(false)
+  recurringBlockId String?
+  createdBy        String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  creator          User            @relation(fields: [createdBy], references: [id])
+  recurringBlock   RecurringBlock? @relation(fields: [recurringBlockId], references: [id])
+
+  @@index([listingId, listingType])
+  @@index([startDate, endDate])
+  @@index([recurringBlockId])
+}
+
+model RecurringBlock {
+  id          String              @id @default(uuid())
+  listingId   String
+  listingType String
+  daysOfWeek  Int[]
+  startDate   DateTime
+  endDate     DateTime?
+  reason      String?
+  createdBy   String
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  instances   AvailabilityBlock[]
+  creator     User                @relation(fields: [createdBy], references: [id])
+
+  @@index([listingId, listingType])
+  @@index([startDate, endDate])
+}
+
+model SecurityEvent {
+  id                 String                @id @default(uuid())
+  eventType          SecurityEventType
+  threatLevel        ThreatLevel
+  title              String
+  description        String
+  userId             String?
+  userEmail          String?
+  ipAddress          String?
+  userAgent          String?
+  sessionId          String?
+  timestamp          DateTime              @default(now())
+  metadata           Json?
+  riskScore          Int
+  indicators         String[]
+  affectedResources  String[]
+  mitigationActions  String[]
+  status             SecurityAlertStatus   @default(OPEN)
+  assignedTo         String?
+  resolvedAt         DateTime?
+  resolutionNotes    String?
+  escalated          Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([eventType])
+  @@index([threatLevel])
+  @@index([status])
+  @@index([userId])
+  @@index([timestamp])
+}
+
+model SecurityAlert {
+  id                 String                @id @default(uuid())
+  alertType          SecurityAlertType
+  severity           ThreatLevel
+  status             SecurityAlertStatus   @default(OPEN)
+  userId             String?
+  userEmail          String?
+  title              String
+  description        String
+  metadata           Json?
+  indicators         String[]
+  affectedResources  String[]
+  mitigationActions  String[]
+  assignedTo         String?
+  acknowledgedAt     DateTime?
+  acknowledgedBy     String?
+  resolvedAt         DateTime?
+  resolvedBy         String?
+  resolution         String?
+  preventionMeasures String?
+  escalated          Boolean               @default(false)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  @@index([alertType])
+  @@index([severity])
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 enum Role {
@@ -59,268 +543,6 @@ enum TransactionStatus {
   FAILED
 }
 
-model User {
-  id                    String    @id @default(uuid())
-  email                 String    @unique
-  passwordHash          String
-  role                  Role
-  companyId             String
-  firstName             String
-  lastName              String
-  phone                 String
-  emailVerified         Boolean   @default(false)
-  verificationToken     String?
-  resetPasswordToken    String?
-  resetPasswordExpires  DateTime?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  company               Company   @relation(fields: [companyId], references: [id])
-  sentMessages          Message[]
-  auditLogs             AuditLog[]
-
-  @@index([email])
-  @@index([companyId])
-}
-
-model Company {
-  id                  String    @id @default(uuid())
-  name                String
-  organizationNumber  String    @unique
-  businessAddress     String
-  city                String
-  postalCode          String
-  fylke               String
-  kommune             String
-  vatRegistered       Boolean
-  description         String?
-  verified            Boolean   @default(false)
-  verifiedAt          DateTime?
-  verifiedBy          String?
-  aggregatedRating    Float?
-  totalRatings        Int       @default(0)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  users               User[]
-  vehicleListings     VehicleListing[]
-  driverListings      DriverListing[]
-  bookingsAsRenter    Booking[] @relation("RenterCompany")
-  bookingsAsProvider  Booking[] @relation("ProviderCompany")
-  ratingsReceived     Rating[]  @relation("ProviderRatings")
-  ratingsGiven        Rating[]  @relation("RenterRatings")
-
-  @@index([organizationNumber])
-  @@index([verified])
-}
-
-model VehicleListing {
-  id                    String        @id @default(uuid())
-  companyId             String
-  title                 String
-  description           String
-  vehicleType           VehicleType
-  capacity              Int
-  fuelType              FuelType
-  city                  String
-  fylke                 String
-  kommune               String
-  latitude              Float?
-  longitude             Float?
-  hourlyRate            Float?
-  dailyRate             Float?
-  deposit               Float?
-  currency              String        @default("NOK")
-  withDriver            Boolean
-  withDriverCost        Float?
-  withDriverHourlyRate  Float?
-  withDriverDailyRate   Float?
-  withoutDriver         Boolean
-  photos                String[]
-  tags                  String[]
-  status                ListingStatus @default(ACTIVE)
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-
-  company               Company       @relation(fields: [companyId], references: [id])
-  bookings              Booking[]
-
-  @@index([companyId])
-  @@index([status])
-  @@index([fylke])
-  @@index([kommune])
-}
-
-model DriverListing {
-  id                  String        @id @default(uuid())
-  companyId           String
-  name                String
-  licenseClass        String
-  languages           String[]
-  backgroundSummary   String?
-  hourlyRate          Float?
-  dailyRate           Float?
-  currency            String        @default("NOK")
-  verified            Boolean       @default(false)
-  verifiedAt          DateTime?
-  verifiedBy          String?
-  licenseDocumentPath String?
-  aggregatedRating    Float?
-  totalRatings        Int           @default(0)
-  status              ListingStatus @default(ACTIVE)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-
-  company             Company       @relation(fields: [companyId], references: [id])
-  bookings            Booking[]
-  ratings             Rating[]
-
-  @@index([companyId])
-  @@index([status])
-  @@index([verified])
-}
-
-model Booking {
-  id                    String        @id @default(uuid())
-  bookingNumber         String        @unique
-  renterCompanyId       String
-  providerCompanyId     String
-  vehicleListingId      String?
-  driverListingId       String?
-  status                BookingStatus
-  startDate             DateTime
-  endDate               DateTime
-  durationHours         Int?
-  durationDays          Int?
-  providerRate          Float
-  platformCommission    Float
-  platformCommissionRate Float
-  taxes                 Float
-  taxRate               Float
-  total                 Float
-  currency              String        @default("NOK")
-  contractPdfPath       String?
-  requestedAt           DateTime      @default(now())
-  respondedAt           DateTime?
-  expiresAt             DateTime
-  completedAt           DateTime?
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-
-  renterCompany         Company       @relation("RenterCompany", fields: [renterCompanyId], references: [id])
-  providerCompany       Company       @relation("ProviderCompany", fields: [providerCompanyId], references: [id])
-  vehicleListing        VehicleListing? @relation(fields: [vehicleListingId], references: [id])
-  driverListing         DriverListing?  @relation(fields: [driverListingId], references: [id])
-  rating                Rating?
-  transactions          Transaction[]
-  messageThread         MessageThread?
-  dispute               Dispute?
-
-  @@index([renterCompanyId])
-  @@index([providerCompanyId])
-  @@index([status])
-  @@index([bookingNumber])
-}
-
-model Rating {
-  id                  String    @id @default(uuid())
-  bookingId           String    @unique
-  renterCompanyId     String
-  providerCompanyId   String
-  driverListingId     String?
-  companyStars        Int
-  companyReview       String?
-  driverStars         Int?
-  driverReview        String?
-  providerResponse    String?
-  providerRespondedAt DateTime?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  booking             Booking   @relation(fields: [bookingId], references: [id])
-  renterCompany       Company   @relation("RenterRatings", fields: [renterCompanyId], references: [id])
-  providerCompany     Company   @relation("ProviderRatings", fields: [providerCompanyId], references: [id])
-  driverListing       DriverListing? @relation(fields: [driverListingId], references: [id])
-
-  @@index([providerCompanyId])
-  @@index([driverListingId])
-}
-
-model MessageThread {
-  id            String    @id @default(uuid())
-  bookingId     String    @unique
-  participants  String[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  booking       Booking   @relation(fields: [bookingId], references: [id])
-  messages      Message[]
-
-  @@index([bookingId])
-}
-
-model Message {
-  id        String   @id @default(uuid())
-  threadId  String
-  senderId  String
-  content   String
-  readBy    String[]
-  createdAt DateTime @default(now())
-
-  thread    MessageThread @relation(fields: [threadId], references: [id])
-  sender    User          @relation(fields: [senderId], references: [id])
-
-  @@index([threadId])
-  @@index([senderId])
-}
-
-model Transaction {
-  id        String            @id @default(uuid())
-  bookingId String
-  type      TransactionType
-  amount    Float
-  currency  String            @default("NOK")
-  status    TransactionStatus
-  metadata  Json?
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-
-  booking   Booking           @relation(fields: [bookingId], references: [id])
-
-  @@index([bookingId])
-  @@index([type])
-  @@index([status])
-}
-
-model AuditLog {
-  id         String   @id @default(uuid())
-  adminUserId String
-  action     String
-  entityType String
-  entityId   String
-  changes    Json?
-  reason     String?
-  ipAddress  String?
-  createdAt  DateTime @default(now())
-
-  adminUser  User     @relation(fields: [adminUserId], references: [id])
-
-  @@index([adminUserId])
-  @@index([entityType])
-  @@index([entityId])
-  @@index([createdAt])
-}
-
-model PlatformConfig {
-  id                    String   @id @default(uuid())
-  commissionRate        Float
-  taxRate               Float
-  bookingTimeoutHours   Int
-  defaultCurrency       String   @default("NOK")
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-}
-
 enum NotificationType {
   BOOKING_REQUEST
   BOOKING_ACCEPTED
@@ -334,43 +556,13 @@ enum NotificationType {
   LISTING_SUSPENDED
   DISPUTE_RAISED
   DISPUTE_RESOLVED
+  AVAILABILITY_CONFLICT
+  BOOKING_REJECTED_BLOCKED_DATES
 }
 
 enum NotificationChannel {
   EMAIL
   IN_APP
-}
-
-model NotificationPreferences {
-  id                  String   @id @default(uuid())
-  userId              String   @unique
-  emailEnabled        Boolean  @default(true)
-  inAppEnabled        Boolean  @default(true)
-  bookingUpdates      Boolean  @default(true)
-  messages            Boolean  @default(true)
-  ratings             Boolean  @default(true)
-  marketing           Boolean  @default(false)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-
-  @@index([userId])
-}
-
-model Notification {
-  id          String             @id @default(uuid())
-  userId      String
-  type        NotificationType
-  title       String
-  message     String
-  metadata    Json?
-  channels    NotificationChannel[]
-  read        Boolean            @default(false)
-  readAt      DateTime?
-  createdAt   DateTime           @default(now())
-
-  @@index([userId])
-  @@index([read])
-  @@index([createdAt])
 }
 
 enum DisputeStatus {
@@ -380,24 +572,88 @@ enum DisputeStatus {
   CLOSED
 }
 
-model Dispute {
-  id                String        @id @default(uuid())
-  bookingId         String        @unique
-  raisedBy          String
-  reason            String
-  description       String?
-  status            DisputeStatus @default(OPEN)
-  resolution        String?
-  refundAmount      Float?
-  notes             String?
-  resolvedBy        String?
-  resolvedAt        DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
 
-  booking           Booking       @relation(fields: [bookingId], references: [id])
+enum RestrictionType {
+  BOOKING_BLOCKED
+  LISTING_BLOCKED
+  PAYMENT_BLOCKED
+  FEATURE_DISABLED
+}
 
-  @@index([bookingId])
-  @@index([status])
-  @@index([raisedBy])
+enum RegionType {
+  COUNTRY
+  FYLKE
+  KOMMUNE
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  VIPPS
+  KLARNA
+  PAYPAL
+  INVOICE
+}
+
+enum FeeType {
+  FIXED
+  PERCENTAGE
+}
+
+enum ChangeType {
+  FEATURE_TOGGLE
+  FINANCIAL_UPDATE
+  GEOGRAPHIC_RESTRICTION
+  PAYMENT_CONFIG
+  SYSTEM_SETTING
+  ROLLBACK
+}
+
+enum SecurityEventType {
+  BRUTE_FORCE_ATTACK
+  SUSPICIOUS_LOGIN
+  PRIVILEGE_ESCALATION_ATTEMPT
+  UNAUTHORIZED_ACCESS
+  DATA_EXFILTRATION
+  ANOMALOUS_BEHAVIOR
+  MALICIOUS_REQUEST
+  ACCOUNT_TAKEOVER_ATTEMPT
+  INSIDER_THREAT
+  SYSTEM_COMPROMISE
+  FAILED_LOGIN_ATTEMPT
+  SUSPICIOUS_IP_ACTIVITY
+  UNUSUAL_DATA_ACCESS
+  BULK_DATA_EXPORT
+  UNAUTHORIZED_API_ACCESS
+}
+
+enum SecurityAlertType {
+  MULTIPLE_FAILED_LOGINS
+  PRIVILEGE_ESCALATION
+  ACCOUNT_TAKEOVER
+  POTENTIAL_DATA_BREACH
+  SUSPICIOUS_ACTIVITY
+  BRUTE_FORCE_DETECTED
+  ANOMALOUS_BEHAVIOR_DETECTED
+  INSIDER_THREAT_DETECTED
+}
+
+enum ThreatLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SecurityAlertStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  FALSE_POSITIVE
 }

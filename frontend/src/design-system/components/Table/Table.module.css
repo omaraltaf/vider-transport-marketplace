@@ -1,0 +1,238 @@
+/* Container */
+.container {
+  width: 100%;
+}
+
+/* Desktop table view */
+.desktopView {
+  display: block;
+}
+
+.mobileView {
+  display: none;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 0.5rem; /* lg */
+  border: 1px solid #E5E7EB; /* gray-200 */
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+}
+
+/* Table header */
+.th {
+  padding: 0.75rem 1rem; /* 12px 16px */
+  text-align: left;
+  font-size: 0.875rem; /* sm */
+  font-weight: 600; /* semibold */
+  color: #374151; /* gray-700 */
+  background-color: #F9FAFB; /* gray-50 */
+  border-bottom: 1px solid #E5E7EB; /* gray-200 */
+  white-space: nowrap;
+}
+
+/* Sort button */
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 150ms ease;
+}
+
+.sortButton:hover {
+  color: #3B82F6; /* primary-500 */
+}
+
+.sortButton:focus {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+.sortIcon {
+  display: flex;
+  align-items: center;
+  color: #3B82F6; /* primary-500 */
+}
+
+.sortIconInactive {
+  opacity: 0.3;
+}
+
+/* Table body */
+.tr {
+  transition: background-color 150ms ease;
+}
+
+.tr:hover {
+  background-color: #F9FAFB; /* gray-50 */
+}
+
+.td {
+  padding: 1rem; /* 16px */
+  font-size: 0.875rem; /* sm */
+  color: #1F2937; /* gray-800 */
+  border-bottom: 1px solid #E5E7EB; /* gray-200 */
+}
+
+.tr:last-child .td {
+  border-bottom: none;
+}
+
+/* Loading skeleton */
+.skeletonRow {
+  pointer-events: none;
+}
+
+.skeleton {
+  height: 1rem;
+  background: linear-gradient(
+    90deg,
+    #F3F4F6 25%,
+    #E5E7EB 50%,
+    #F3F4F6 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 0.25rem;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Empty state */
+.emptyState {
+  padding: 3rem 1rem; /* 48px 16px */
+  text-align: center;
+  color: #6B7280; /* gray-500 */
+  font-size: 0.875rem; /* sm */
+}
+
+/* Mobile card view */
+.mobileCards {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mobileCard {
+  background-color: white;
+  border: 1px solid #E5E7EB; /* gray-200 */
+  border-radius: 0.5rem; /* lg */
+  padding: 1rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* sm */
+}
+
+.mobileCardRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #F3F4F6; /* gray-100 */
+}
+
+.mobileCardRow:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.mobileCardRow:first-child {
+  padding-top: 0;
+}
+
+.mobileCardLabel {
+  font-size: 0.75rem; /* xs */
+  font-weight: 600; /* semibold */
+  color: #6B7280; /* gray-500 */
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  margin-right: 1rem;
+}
+
+.mobileCardValue {
+  font-size: 0.875rem; /* sm */
+  color: #1F2937; /* gray-800 */
+  text-align: right;
+  word-break: break-word;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.pageNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ellipsis {
+  padding: 0 0.5rem;
+  color: #6B7280; /* gray-500 */
+  font-size: 0.875rem;
+}
+
+/* Responsive breakpoint - switch to mobile view on tablets and below */
+@media (max-width: 768px) {
+  .desktopView {
+    display: none;
+  }
+
+  .mobileView {
+    display: block;
+  }
+
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .pageNumbers {
+    gap: 0.125rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 640px) {
+  .mobileCard {
+    padding: 0.75rem;
+  }
+
+  .mobileCardRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .mobileCardLabel {
+    margin-right: 0;
+  }
+
+  .mobileCardValue {
+    text-align: left;
+  }
+}

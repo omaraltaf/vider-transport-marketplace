@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import { Button } from '../design-system/components/Button/Button';
+import { Textarea } from '../design-system/components/Textarea/Textarea';
+import { Card } from '../design-system/components/Card/Card';
+import { Stack } from '../design-system/components/Stack/Stack';
 
 interface RatingFormProps {
   bookingId?: string;
@@ -21,7 +25,7 @@ const StarRating: React.FC<{
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      <label className="block text-sm font-medium ds-text-gray-700">{label}</label>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -93,91 +97,81 @@ export const RatingForm: React.FC<RatingFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4">Rate Your Experience</h3>
+    <form onSubmit={handleSubmit}>
+      <Card padding="lg">
+        <Stack spacing={4}>
+          <h3 className="text-lg font-semibold">Rate Your Experience</h3>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="p-3 ds-bg-error-light border ds-border-error rounded ds-text-error text-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Company Rating */}
-        <div className="space-y-4">
-          <StarRating
-            value={companyStars}
-            onChange={setCompanyStars}
-            label="Company Rating *"
-          />
+          {/* Company Rating */}
+          <Stack spacing={4}>
+            <StarRating
+              value={companyStars}
+              onChange={setCompanyStars}
+              label="Company Rating *"
+            />
 
-          <div>
-            <label
-              htmlFor="companyReview"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Company Review (Optional)
-            </label>
-            <textarea
-              id="companyReview"
+            <Textarea
+              label="Company Review (Optional)"
               value={companyReview}
-              onChange={(e) => setCompanyReview(e.target.value)}
+              onChange={setCompanyReview}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Share your experience with this company..."
             />
-          </div>
-        </div>
+          </Stack>
 
-        {/* Driver Rating (if applicable) */}
-        {hasDriver && (
-          <div className="mt-6 pt-6 border-t border-gray-200 space-y-4">
-            <StarRating
-              value={driverStars}
-              onChange={setDriverStars}
-              label="Driver Rating *"
-            />
+          {/* Driver Rating (if applicable) */}
+          {hasDriver && (
+            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #e5e7eb' }}>
+              <Stack spacing={4}>
+                <StarRating
+                  value={driverStars}
+                  onChange={setDriverStars}
+                  label="Driver Rating *"
+                />
 
-            <div>
-              <label
-                htmlFor="driverReview"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Driver Review (Optional)
-              </label>
-              <textarea
-                id="driverReview"
-                value={driverReview}
-                onChange={(e) => setDriverReview(e.target.value)}
-                rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Share your experience with the driver..."
-              />
+                <Textarea
+                  label="Driver Review (Optional)"
+                  value={driverReview}
+                  onChange={setDriverReview}
+                  rows={4}
+                  placeholder="Share your experience with the driver..."
+                />
+              </Stack>
             </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="mt-6 flex gap-3">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Rating'}
-          </button>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-            >
-              Cancel
-            </button>
           )}
-        </div>
-      </div>
+
+          {/* Action Buttons */}
+          <div style={{ marginTop: '1.5rem' }}>
+            <Stack direction="horizontal" spacing={3}>
+              <Button
+                type="submit"
+                variant="primary"
+                loading={isSubmitting}
+                disabled={isSubmitting}
+                fullWidth
+              >
+                Submit Rating
+              </Button>
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              )}
+            </Stack>
+          </div>
+        </Stack>
+      </Card>
     </form>
   );
 };

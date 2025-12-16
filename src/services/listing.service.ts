@@ -877,16 +877,21 @@ export class ListingService {
         });
       }
 
-      // Apply date range filter (check for booking conflicts)
+      // Apply date range filter (check for booking conflicts and availability blocks)
       if (filters.dateRange) {
         const availableListings: typeof allVehicleListings = [];
         for (const listing of allVehicleListings) {
-          const hasConflict = await this.hasBookingConflict(
+          const hasBookingConflict = await this.hasBookingConflict(
             listing.id,
             filters.dateRange.start,
             filters.dateRange.end
           );
-          if (!hasConflict) {
+          const hasBlockConflict = await this.hasAvailabilityBlockConflict(
+            listing.id,
+            filters.dateRange.start,
+            filters.dateRange.end
+          );
+          if (!hasBookingConflict && !hasBlockConflict) {
             availableListings.push(listing);
           }
         }
@@ -969,16 +974,21 @@ export class ListingService {
         }
       }
 
-      // Apply date range filter (check for booking conflicts)
+      // Apply date range filter (check for booking conflicts and availability blocks)
       if (filters.dateRange) {
         const availableListings: typeof allDriverListings = [];
         for (const listing of allDriverListings) {
-          const hasConflict = await this.hasDriverBookingConflict(
+          const hasBookingConflict = await this.hasDriverBookingConflict(
             listing.id,
             filters.dateRange.start,
             filters.dateRange.end
           );
-          if (!hasConflict) {
+          const hasBlockConflict = await this.hasDriverAvailabilityBlockConflict(
+            listing.id,
+            filters.dateRange.start,
+            filters.dateRange.end
+          );
+          if (!hasBookingConflict && !hasBlockConflict) {
             availableListings.push(listing);
           }
         }
@@ -1066,6 +1076,104 @@ export class ListingService {
   }
 
   /**
+   * Check if a vehicle listing has availability block conflicts in the specified date range
+   */
+  private async hasAvailabilityBlockConflict(
+    listingId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<boolean> {
+    // Check manual availability blocks
+    const manualBlocks = await prisma.availabilityBlock.count({
+      where: {
+        listingId,
+        listingType: 'vehicle',
+        isRecurring: false,
+        OR: [
+          {
+            startDate: { lte: endDate },
+            endDate: { gte: startDate },
+          },
+        ],
+      },
+    });
+
+    if (manualBlocks > 0) {
+      return true;
+    }
+
+    // Check recurring blocks
+    const recurringBlocks = await prisma.recurringBlock.findMany({
+      where: {
+        listingId,
+        listingType: 'vehicle',
+        startDate: { lte: endDate },
+        OR: [
+          { endDate: { gte: startDate } },
+          { endDate: null }, // Indefinite recurring blocks
+        ],
+      },
+    });
+
+    // Check if any recurring block generates instances in the date range
+    for (const pattern of recurringBlocks) {
+      const instances = this.generateRecurringInstancesForListing(
+        pattern,
+        startDate,
+        endDate
+      );
+      if (instances.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Generate recurring instances for a pattern within a date range
+   */
+  private generateRecurringInstancesForListing(
+    pattern: any,
+    viewStart: Date,
+    viewEnd: Date
+  ): any[] {
+    const instances: any[] = [];
+    
+    const normalizeDate = (date: Date) => {
+      const normalized = new Date(date);
+      normalized.setHours(0, 0, 0, 0);
+      return normalized;
+    };
+    
+    const patternStart = normalizeDate(pattern.startDate);
+    const viewStartNorm = normalizeDate(viewStart);
+    const startDate = patternStart > viewStartNorm ? patternStart : viewStartNorm;
+    
+    const viewEndNorm = normalizeDate(viewEnd);
+    const endDate = pattern.endDate 
+      ? (normalizeDate(pattern.endDate) < viewEndNorm ? normalizeDate(pattern.endDate) : viewEndNorm)
+      : viewEndNorm;
+
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= endDate) {
+      const dayOfWeek = currentDate.getDay();
+      
+      if (pattern.daysOfWeek.includes(dayOfWeek)) {
+        instances.push({
+          startDate: new Date(currentDate),
+          endDate: new Date(currentDate),
+        });
+      }
+      
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return instances;
+  }
+
+  /**
    * Check if a driver listing has booking conflicts in the specified date range
    */
   private async hasDriverBookingConflict(
@@ -1108,6 +1216,61 @@ export class ListingService {
     });
 
     return conflictingBookings > 0;
+  }
+
+  /**
+   * Check if a driver listing has availability block conflicts in the specified date range
+   */
+  private async hasDriverAvailabilityBlockConflict(
+    listingId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<boolean> {
+    // Check manual availability blocks
+    const manualBlocks = await prisma.availabilityBlock.count({
+      where: {
+        listingId,
+        listingType: 'driver',
+        isRecurring: false,
+        OR: [
+          {
+            startDate: { lte: endDate },
+            endDate: { gte: startDate },
+          },
+        ],
+      },
+    });
+
+    if (manualBlocks > 0) {
+      return true;
+    }
+
+    // Check recurring blocks
+    const recurringBlocks = await prisma.recurringBlock.findMany({
+      where: {
+        listingId,
+        listingType: 'driver',
+        startDate: { lte: endDate },
+        OR: [
+          { endDate: { gte: startDate } },
+          { endDate: null }, // Indefinite recurring blocks
+        ],
+      },
+    });
+
+    // Check if any recurring block generates instances in the date range
+    for (const pattern of recurringBlocks) {
+      const instances = this.generateRecurringInstancesForListing(
+        pattern,
+        startDate,
+        endDate
+      );
+      if (instances.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

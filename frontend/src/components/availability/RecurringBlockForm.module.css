@@ -1,0 +1,350 @@
+.recurringForm {
+  max-width: 700px;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.titleSection {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Days of Week Selector */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.required {
+  color: var(--color-error);
+}
+
+.helperText {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.daysGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.5rem;
+}
+
+.dayCheckbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 0.5rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background-color: var(--color-background);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.dayCheckbox:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.dayCheckbox.checked {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.hiddenCheckbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dayLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  display: block;
+}
+
+.dayLabelFull {
+  font-size: 0.75rem;
+  display: none;
+}
+
+.error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+}
+
+/* Date Fields */
+.dateFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.endDateField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.endDateToggle {
+  padding-top: 0.5rem;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* Preview */
+.preview {
+  padding: 1rem;
+  background-color: var(--color-info-light);
+  border: 1px solid var(--color-info);
+  border-radius: var(--border-radius-md);
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.previewTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-info-dark);
+  margin: 0;
+}
+
+.previewDates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.previewDate {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background-color: white;
+  border: 1px solid var(--color-info);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+}
+
+.previewMore {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Scope Selector */
+.scopeSelector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background-color: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+/* Error Alert */
+.errorAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--color-error-light);
+  border: 1px solid var(--color-error);
+  border-radius: var(--border-radius-md);
+  color: var(--color-error-dark);
+  font-size: 0.875rem;
+}
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.retryButton {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  height: auto;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.primaryActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+/* Delete Confirmation */
+.deleteConfirm {
+  padding: 1rem;
+  background-color: var(--color-error-light);
+  border: 2px solid var(--color-error);
+  border-radius: var(--border-radius-md);
+  margin-top: 1rem;
+}
+
+.deleteTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-error-dark);
+  margin: 0 0 0.5rem 0;
+}
+
+.deleteMessage {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  margin: 0 0 0.75rem 0;
+}
+
+.deleteActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .daysGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .dayLabel {
+    display: none;
+  }
+
+  .dayLabelFull {
+    display: block;
+  }
+
+  .dateFields {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryActions {
+    flex-direction: column-reverse;
+    margin-left: 0;
+  }
+
+  .primaryActions button,
+  .actions > button {
+    width: 100%;
+  }
+
+  .deleteActions {
+    flex-direction: column-reverse;
+  }
+
+  .deleteActions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .daysGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dayCheckbox {
+    padding: 1rem 0.75rem;
+  }
+}

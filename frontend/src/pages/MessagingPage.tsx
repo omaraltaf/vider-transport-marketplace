@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../services/api';
 import type { MessageThread, Message } from '../types';
 import Navbar from '../components/Navbar';
+import { Card, Container, Stack, Input, Button, Spinner } from '../design-system/components';
 
 export default function MessagingPage() {
   const { token, user } = useAuth();
@@ -139,31 +140,33 @@ export default function MessagingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ds-bg-page">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Messages</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Communicate with other companies about your bookings
-          </p>
-        </div>
+      <Container>
+        <Stack spacing={6}>
+          <div>
+            <h1 className="text-3xl font-bold ds-text-gray-900">Messages</h1>
+            <p className="mt-1 text-sm ds-text-gray-500">
+              Communicate with other companies about your bookings
+            </p>
+          </div>
 
-        <div className="bg-white shadow rounded-lg overflow-hidden" style={{ height: '600px' }}>
-          <div className="flex h-full">
+          <Card padding="sm">
+            <div style={{ height: '600px' }}>
+              <div className="flex h-full">
             {/* Thread List */}
-            <div className="w-1/3 border-r border-gray-200 overflow-y-auto">
+            <div className="w-1/3 border-r ds-border-gray-200 overflow-y-auto">
               {threadsLoading && (
                 <div className="p-4 text-center">
-                  <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                  <Spinner size="md" />
                 </div>
               )}
 
               {!threadsLoading && threads && threads.length === 0 && (
-                <div className="p-4 text-center text-gray-500">
+                <div className="p-4 text-center ds-text-gray-500">
                   <svg
-                    className="mx-auto h-12 w-12 text-gray-400"
+                    className="mx-auto h-12 w-12 ds-text-gray-400"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -187,25 +190,25 @@ export default function MessagingPage() {
                     return (
                       <li
                         key={thread.id}
-                        className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                          selectedThreadId === thread.id ? 'bg-indigo-50' : ''
+                        className={`p-4 cursor-pointer ds-hover-bg-page ${
+                          selectedThreadId === thread.id ? 'ds-bg-primary-50' : ''
                         }`}
                         onClick={() => setSelectedThreadId(thread.id)}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
+                            <p className="text-sm font-medium ds-text-gray-900 truncate">
                               {getOtherCompanyName(thread)}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs ds-text-gray-500 mt-1">
                               Booking: {thread.booking?.bookingNumber}
                             </p>
-                            <p className="text-sm text-gray-600 mt-1 truncate">
+                            <p className="text-sm ds-text-gray-600 mt-1 truncate">
                               {getLastMessage(thread)}
                             </p>
                           </div>
                           {unreadCount > 0 && (
-                            <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-indigo-600 rounded-full">
+                            <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white ds-bg-primary-600 rounded-full">
                               {unreadCount}
                             </span>
                           )}
@@ -220,10 +223,10 @@ export default function MessagingPage() {
             {/* Message View */}
             <div className="flex-1 flex flex-col">
               {!selectedThreadId && (
-                <div className="flex-1 flex items-center justify-center text-gray-500">
+                <div className="flex-1 flex items-center justify-center ds-text-gray-500">
                   <div className="text-center">
                     <svg
-                      className="mx-auto h-12 w-12 text-gray-400"
+                      className="mx-auto h-12 w-12 ds-text-gray-400"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -242,18 +245,18 @@ export default function MessagingPage() {
 
               {selectedThreadId && threadLoading && (
                 <div className="flex-1 flex items-center justify-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                  <Spinner size="lg" />
                 </div>
               )}
 
               {selectedThreadId && !threadLoading && selectedThread && (
                 <>
                   {/* Thread Header */}
-                  <div className="px-6 py-4 border-b border-gray-200 bg-white">
-                    <h2 className="text-lg font-medium text-gray-900">
+                  <div className="px-6 py-4 border-b ds-border-gray-200 bg-white">
+                    <h2 className="text-lg font-medium ds-text-gray-900">
                       {getOtherCompanyName(selectedThread)}
                     </h2>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Booking: {selectedThread.booking?.bookingNumber} •{' '}
                       <span className="capitalize">{selectedThread.booking?.status.toLowerCase()}</span>
                     </p>
@@ -262,7 +265,7 @@ export default function MessagingPage() {
                   {/* Messages */}
                   <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     {selectedThread.messages && selectedThread.messages.length === 0 && (
-                      <div className="text-center text-gray-500 py-8">
+                      <div className="text-center ds-text-gray-500 py-8">
                         <p className="text-sm">No messages yet</p>
                         <p className="text-xs mt-1">Start the conversation by sending a message</p>
                       </div>
@@ -279,8 +282,8 @@ export default function MessagingPage() {
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                                 isOwnMessage
-                                  ? 'bg-indigo-600 text-white'
-                                  : 'bg-gray-200 text-gray-900'
+                                  ? 'ds-bg-primary-600 text-white'
+                                  : 'ds-bg-gray-200 ds-text-gray-900'
                               }`}
                             >
                               {!isOwnMessage && message.sender && (
@@ -291,7 +294,7 @@ export default function MessagingPage() {
                               <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                               <p
                                 className={`text-xs mt-1 ${
-                                  isOwnMessage ? 'text-indigo-200' : 'text-gray-500'
+                                  isOwnMessage ? 'text-indigo-200' : 'ds-text-gray-500'
                                 }`}
                               >
                                 {formatTime(message.createdAt)}
@@ -304,25 +307,22 @@ export default function MessagingPage() {
                   </div>
 
                   {/* Message Input */}
-                  <div className="px-6 py-4 border-t border-gray-200 bg-white">
+                  <div className="px-6 py-4 border-t ds-border-gray-200 bg-white">
                     <form onSubmit={handleSendMessage} className="flex space-x-4">
-                      <input
+                      <Input
                         type="text"
                         value={messageContent}
-                        onChange={(e) => setMessageContent(e.target.value)}
+                        onChange={setMessageContent}
                         placeholder="Type your message..."
-                        className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                         disabled={sendMessageMutation.isPending}
                       />
-                      <button
+                      <Button
                         type="submit"
+                        variant="primary"
                         disabled={!messageContent.trim() || sendMessageMutation.isPending}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {sendMessageMutation.isPending ? (
-                          <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        ) : (
-                          <>
+                        loading={sendMessageMutation.isPending}
+                        rightIcon={
+                          !sendMessageMutation.isPending ? (
                             <svg
                               className="h-5 w-5"
                               fill="none"
@@ -336,17 +336,21 @@ export default function MessagingPage() {
                                 d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
                               />
                             </svg>
-                          </>
-                        )}
-                      </button>
+                          ) : undefined
+                        }
+                      >
+                        Send
+                      </Button>
                     </form>
                   </div>
                 </>
               )}
             </div>
           </div>
-        </div>
-      </div>
+            </div>
+          </Card>
+        </Stack>
+      </Container>
     </div>
   );
 }

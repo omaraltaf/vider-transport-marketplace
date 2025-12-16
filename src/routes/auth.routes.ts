@@ -35,6 +35,11 @@ const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const forceChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+
 /**
  * Register a new company and user
  * POST /api/auth/register
@@ -163,14 +168,15 @@ router.post('/login', async (req: Request, res: Response) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
     
-    const tokens = await authService.login(email, password);
+    const result = await authService.login(email, password);
     
     // Get user data to return with tokens
-    const payload = authService.verifyToken(tokens.accessToken);
+    const payload = authService.verifyToken(result.accessToken);
     
     res.status(200).json({
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      requiresPasswordChange: result.requiresPasswordChange || false,
       user: {
         id: payload.userId,
         email: payload.email,
@@ -257,6 +263,74 @@ router.post('/refresh', async (req: Request, res: Response) => {
       error: {
         code: 'INTERNAL_ERROR',
         message: 'Token refresh failed',
+      },
+    });
+  }
+});
+
+/**
+ * Force password change for users with temporary passwords
+ * POST /api/auth/force-change-password
+ */
+router.post('/force-change-password', async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = forceChangePasswordSchema.parse(req.body);
+    
+    // Get user from token (if provided)
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        },
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const payload = authService.verifyToken(token);
+    
+    await authService.forceChangePassword(payload.userId, currentPassword, newPassword);
+    
+    res.status(200).json({
+      message: 'Password changed successfully',
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid input data',
+          details: error.errors,
+        },
+      });
+    }
+
+    if (error instanceof Error) {
+      if (error.message === 'INVALID_CREDENTIALS') {
+        return res.status(400).json({
+          error: {
+            code: 'INVALID_CURRENT_PASSWORD',
+            message: 'Current password is incorrect',
+          },
+        });
+      }
+
+      if (error.message === 'INVALID_TOKEN') {
+        return res.status(401).json({
+          error: {
+            code: 'INVALID_TOKEN',
+            message: 'Invalid or expired token',
+          },
+        });
+      }
+    }
+
+    logError({ error: error as Error, request: req });
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Password change failed',
       },
     });
   }

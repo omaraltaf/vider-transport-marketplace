@@ -1,10 +1,14 @@
-import { PrismaClient, BookingStatus } from '@prisma/client';
+import { PrismaClient, BookingStatus, NotificationType } from '@prisma/client';
 import type { Booking, PlatformConfig } from '@prisma/client';
 import { logger } from '../config/logger';
 import PDFDocument from 'pdfkit';
 import * as fs from 'fs';
 import * as path from 'path';
 import { messagingService } from './messaging.service';
+import { availabilityService } from './availability.service';
+import { notificationService } from './notification.service';
+import { featureToggleService } from './feature-toggle.service';
+import { FeatureToggle } from '../middleware/feature-toggle.middleware';
 
 const prisma = new PrismaClient();
 
@@ -202,13 +206,52 @@ export class BookingService {
    * Blocks availability calendar on creation
    */
   async createBookingRequest(data: BookingRequestData): Promise<Booking> {
+    // Feature toggle enforcement
+    if (data.durationHours) {
+      const hourlyBookingsEnabled = await featureToggleService.isFeatureEnabled(FeatureToggle.HOURLY_BOOKINGS);
+      if (!hourlyBookingsEnabled) {
+        throw new Error('HOURLY_BOOKINGS_DISABLED');
+      }
+    }
+
+    // Geographic restriction enforcement
+    if (data.pickupLocation) {
+      const { checkGeographicAccess } = await import('../middleware/geographic-restriction.middleware');
+      const { RestrictionType, RegionType } = await import('@prisma/client');
+      
+      // Extract region from pickup location (simplified - in real implementation would use geocoding)
+      const region = data.pickupLocation.region || 'Norway';
+      const regionType = RegionType.COUNTRY;
+      
+      const hasBookingAccess = await checkGeographicAccess(region, regionType, RestrictionType.BOOKING_BLOCKED);
+      if (!hasBookingAccess) {
+        throw new Error(`BOOKING_BLOCKED_IN_REGION:${region}`);
+      }
+    }
+
+    // Payment method validation (if payment method is specified)
+    if (data.paymentMethod) {
+      const { checkPaymentMethodAvailability } = await import('../middleware/payment-method-restriction.middleware');
+      
+      const region = data.pickupLocation?.region || 'Norway';
+      const paymentCheck = await checkPaymentMethodAvailability(
+        data.paymentMethod,
+        region,
+        data.totalAmount
+      );
+      
+      if (!paymentCheck.allowed) {
+        throw new Error(`PAYMENT_METHOD_NOT_AVAILABLE:${paymentCheck.reason}`);
+      }
+    }
+
     // Validate that at least one listing is provided
     if (!data.vehicleListingId && !data.driverListingId) {
       throw new Error('AT_LEAST_ONE_LISTING_REQUIRED');
     }
 
-    // Validate dates
-    if (data.startDate >= data.endDate) {
+    // Validate dates (allow same-day bookings where start equals end)
+    if (data.startDate > data.endDate) {
       throw new Error('INVALID_DATE_RANGE');
     }
 
@@ -264,31 +307,85 @@ export class BookingService {
       }
     }
 
-    // Check availability for vehicle
+    // Check availability for vehicle (includes both booking conflicts and availability blocks)
     if (data.vehicleListingId) {
-      const hasConflict = await this.hasBookingConflict(
-        data.vehicleListingId,
-        'vehicle',
-        data.startDate,
-        data.endDate
-      );
+      const availabilityResult = await availabilityService.checkAvailability({
+        listingId: data.vehicleListingId,
+        listingType: 'vehicle',
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
 
-      if (hasConflict) {
-        throw new Error('VEHICLE_NOT_AVAILABLE');
+      if (!availabilityResult.available) {
+        // Check if any conflicts are due to availability blocks
+        const hasBlockConflict = availabilityResult.conflicts.some(c => c.type === 'block');
+        
+        // Create detailed error message with conflict information
+        const conflictDetails = availabilityResult.conflicts.map(c => {
+          if (c.type === 'booking') {
+            return `Booking conflict: ${c.startDate.toISOString().split('T')[0]} to ${c.endDate.toISOString().split('T')[0]}${c.bookingNumber ? ` (${c.bookingNumber})` : ''}`;
+          } else {
+            return `Blocked: ${c.startDate.toISOString().split('T')[0]} to ${c.endDate.toISOString().split('T')[0]}${c.reason ? ` - ${c.reason}` : ''}`;
+          }
+        }).join('; ');
+        
+        // If there's a block conflict, send automatic rejection notification
+        if (hasBlockConflict) {
+          await this.sendBlockedDatesRejectionNotification(
+            data.renterCompanyId,
+            data.vehicleListingId,
+            'vehicle',
+            data.startDate,
+            data.endDate,
+            conflictDetails
+          );
+        }
+        
+        const error: any = new Error('VEHICLE_NOT_AVAILABLE');
+        error.conflicts = availabilityResult.conflicts;
+        error.details = conflictDetails;
+        throw error;
       }
     }
 
-    // Check availability for driver
+    // Check availability for driver (includes both booking conflicts and availability blocks)
     if (data.driverListingId) {
-      const hasConflict = await this.hasBookingConflict(
-        data.driverListingId,
-        'driver',
-        data.startDate,
-        data.endDate
-      );
+      const availabilityResult = await availabilityService.checkAvailability({
+        listingId: data.driverListingId,
+        listingType: 'driver',
+        startDate: data.startDate,
+        endDate: data.endDate,
+      });
 
-      if (hasConflict) {
-        throw new Error('DRIVER_NOT_AVAILABLE');
+      if (!availabilityResult.available) {
+        // Check if any conflicts are due to availability blocks
+        const hasBlockConflict = availabilityResult.conflicts.some(c => c.type === 'block');
+        
+        // Create detailed error message with conflict information
+        const conflictDetails = availabilityResult.conflicts.map(c => {
+          if (c.type === 'booking') {
+            return `Booking conflict: ${c.startDate.toISOString().split('T')[0]} to ${c.endDate.toISOString().split('T')[0]}${c.bookingNumber ? ` (${c.bookingNumber})` : ''}`;
+          } else {
+            return `Blocked: ${c.startDate.toISOString().split('T')[0]} to ${c.endDate.toISOString().split('T')[0]}${c.reason ? ` - ${c.reason}` : ''}`;
+          }
+        }).join('; ');
+        
+        // If there's a block conflict, send automatic rejection notification
+        if (hasBlockConflict) {
+          await this.sendBlockedDatesRejectionNotification(
+            data.renterCompanyId,
+            data.driverListingId,
+            'driver',
+            data.startDate,
+            data.endDate,
+            conflictDetails
+          );
+        }
+        
+        const error: any = new Error('DRIVER_NOT_AVAILABLE');
+        error.conflicts = availabilityResult.conflicts;
+        error.details = conflictDetails;
+        throw error;
       }
     }
 
@@ -388,6 +485,7 @@ export class BookingService {
   /**
    * Check if a listing has booking conflicts in the specified date range
    * This blocks the availability calendar
+   * Includes PENDING, ACCEPTED, ACTIVE, and COMPLETED bookings
    */
   private async hasBookingConflict(
     listingId: string,
@@ -397,7 +495,7 @@ export class BookingService {
   ): Promise<boolean> {
     const where: any = {
       status: {
-        in: [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.ACTIVE],
+        in: [BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.ACTIVE, BookingStatus.COMPLETED],
       },
       OR: [
         // Booking starts during the requested period
@@ -587,6 +685,7 @@ export class BookingService {
   /**
    * Accept a booking request (provider only)
    * Generates a PDF contract summary upon acceptance
+   * Automatically updates availability calendar
    */
   async acceptBooking(bookingId: string, providerId: string): Promise<Booking> {
     const booking = await prisma.booking.findUnique({
@@ -619,16 +718,61 @@ export class BookingService {
     // Generate contract PDF
     const contractPath = await this.generateContract(bookingId, booking);
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: BookingStatus.ACCEPTED,
-        respondedAt: new Date(),
-        contractPdfPath: contractPath,
-      },
+    // Get a user from the provider company to use as createdBy
+    const providerUser = await prisma.user.findFirst({
+      where: { companyId: providerId },
     });
 
-    logger.info('Booking accepted', { bookingId, providerId, contractPath });
+    if (!providerUser) {
+      throw new Error('PROVIDER_USER_NOT_FOUND');
+    }
+
+    // Use transaction to ensure booking acceptance and availability update are atomic
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Update booking status
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.ACCEPTED,
+          respondedAt: new Date(),
+          contractPdfPath: contractPath,
+        },
+      });
+
+      // Automatically update availability calendar for vehicle
+      if (booking.vehicleListingId) {
+        await tx.availabilityBlock.create({
+          data: {
+            listingId: booking.vehicleListingId,
+            listingType: 'vehicle',
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+            reason: `Booking ${booking.bookingNumber}`,
+            isRecurring: false,
+            createdBy: providerUser.id,
+          },
+        });
+      }
+
+      // Automatically update availability calendar for driver
+      if (booking.driverListingId) {
+        await tx.availabilityBlock.create({
+          data: {
+            listingId: booking.driverListingId,
+            listingType: 'driver',
+            startDate: booking.startDate,
+            endDate: booking.endDate,
+            reason: `Booking ${booking.bookingNumber}`,
+            isRecurring: false,
+            createdBy: providerUser.id,
+          },
+        });
+      }
+
+      return updated;
+    });
+
+    logger.info('Booking accepted and availability updated', { bookingId, providerId, contractPath });
 
     return updatedBooking;
   }
@@ -662,6 +806,94 @@ export class BookingService {
     });
 
     logger.info('Booking declined', { bookingId, providerId, reason });
+
+    return updatedBooking;
+  }
+
+  /**
+   * Cancel a booking and restore availability
+   * Can be called by either renter or provider
+   * Automatically removes availability blocks created for this booking
+   */
+  async cancelBooking(bookingId: string, userId: string, reason?: string): Promise<Booking> {
+    const booking = await prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: {
+        renterCompany: true,
+        providerCompany: true,
+      },
+    });
+
+    if (!booking) {
+      throw new Error('BOOKING_NOT_FOUND');
+    }
+
+    // Verify user has permission (must be from renter or provider company)
+    const userCompany = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    });
+
+    if (!userCompany) {
+      throw new Error('USER_NOT_FOUND');
+    }
+
+    if (
+      userCompany.companyId !== booking.renterCompanyId &&
+      userCompany.companyId !== booking.providerCompanyId
+    ) {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    // Can only cancel PENDING, ACCEPTED, or ACTIVE bookings
+    if (![BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.ACTIVE].includes(booking.status)) {
+      throw new Error('INVALID_BOOKING_STATUS');
+    }
+
+    // Use transaction to ensure booking cancellation and availability restoration are atomic
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      // Update booking status
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.CANCELLED,
+          respondedAt: new Date(),
+        },
+      });
+
+      // If booking was ACCEPTED or ACTIVE, remove the availability blocks
+      if (booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.ACTIVE) {
+        // Remove availability block for vehicle
+        if (booking.vehicleListingId) {
+          await tx.availabilityBlock.deleteMany({
+            where: {
+              listingId: booking.vehicleListingId,
+              listingType: 'vehicle',
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              reason: `Booking ${booking.bookingNumber}`,
+            },
+          });
+        }
+
+        // Remove availability block for driver
+        if (booking.driverListingId) {
+          await tx.availabilityBlock.deleteMany({
+            where: {
+              listingId: booking.driverListingId,
+              listingType: 'driver',
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              reason: `Booking ${booking.bookingNumber}`,
+            },
+          });
+        }
+      }
+
+      return updated;
+    });
+
+    logger.info('Booking cancelled and availability restored', { bookingId, userId, reason });
 
     return updatedBooking;
   }
@@ -724,6 +956,7 @@ export class BookingService {
 
   /**
    * Transition booking state
+   * Handles availability calendar updates for state transitions
    */
   async transitionBookingState(bookingId: string, newState: BookingStatus): Promise<Booking> {
     const booking = await prisma.booking.findUnique({
@@ -749,17 +982,132 @@ export class BookingService {
       throw new Error('INVALID_STATE_TRANSITION');
     }
 
-    const updatedBooking = await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        status: newState,
-        completedAt: newState === BookingStatus.COMPLETED ? new Date() : booking.completedAt,
-      },
+    // Use transaction for state transition and availability updates
+    const updatedBooking = await prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: newState,
+          completedAt: newState === BookingStatus.COMPLETED ? new Date() : booking.completedAt,
+        },
+      });
+
+      // When transitioning to COMPLETED, keep the availability blocks for historical reference
+      // They remain in the calendar to show past bookings
+      // No action needed here as blocks are already created when booking was accepted
+
+      // When transitioning to CANCELLED from ACCEPTED or ACTIVE, remove availability blocks
+      if (
+        newState === BookingStatus.CANCELLED &&
+        (booking.status === BookingStatus.ACCEPTED || booking.status === BookingStatus.ACTIVE)
+      ) {
+        // Remove availability block for vehicle
+        if (booking.vehicleListingId) {
+          await tx.availabilityBlock.deleteMany({
+            where: {
+              listingId: booking.vehicleListingId,
+              listingType: 'vehicle',
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              reason: `Booking ${booking.bookingNumber}`,
+            },
+          });
+        }
+
+        // Remove availability block for driver
+        if (booking.driverListingId) {
+          await tx.availabilityBlock.deleteMany({
+            where: {
+              listingId: booking.driverListingId,
+              listingType: 'driver',
+              startDate: booking.startDate,
+              endDate: booking.endDate,
+              reason: `Booking ${booking.bookingNumber}`,
+            },
+          });
+        }
+      }
+
+      return updated;
     });
 
     logger.info('Booking state transitioned', { bookingId, oldState: booking.status, newState });
 
     return updatedBooking;
+  }
+
+  /**
+   * Send automatic rejection notification when booking request is for blocked dates
+   */
+  private async sendBlockedDatesRejectionNotification(
+    renterCompanyId: string,
+    listingId: string,
+    listingType: 'vehicle' | 'driver',
+    startDate: Date,
+    endDate: Date,
+    conflictDetails: string
+  ): Promise<void> {
+    try {
+      // Get a user from the renter company to send notification to
+      const renterUser = await prisma.user.findFirst({
+        where: { companyId: renterCompanyId },
+      });
+
+      if (!renterUser) {
+        logger.warn('No user found for renter company, skipping rejection notification', {
+          renterCompanyId,
+        });
+        return;
+      }
+
+      // Get listing details for the notification
+      let listingTitle = 'Unknown listing';
+      if (listingType === 'vehicle') {
+        const listing = await prisma.vehicleListing.findUnique({
+          where: { id: listingId },
+          select: { title: true },
+        });
+        if (listing) {
+          listingTitle = listing.title;
+        }
+      } else {
+        const listing = await prisma.driverListing.findUnique({
+          where: { id: listingId },
+          select: { name: true },
+        });
+        if (listing) {
+          listingTitle = listing.name;
+        }
+      }
+
+      await notificationService.sendNotification(renterUser.id, {
+        type: NotificationType.BOOKING_REJECTED_BLOCKED_DATES,
+        title: 'Booking Request Rejected - Dates Not Available',
+        message: `Your booking request for ${listingTitle} from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()} was automatically rejected because the dates are blocked by the provider. ${conflictDetails}`,
+        metadata: {
+          listingId,
+          listingType,
+          listingTitle,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          conflictDetails,
+        },
+      });
+
+      logger.info('Blocked dates rejection notification sent', {
+        renterCompanyId,
+        listingId,
+        listingType,
+      });
+    } catch (error) {
+      logger.error('Failed to send blocked dates rejection notification', {
+        renterCompanyId,
+        listingId,
+        listingType,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      // Don't throw - notification failure shouldn't break the booking flow
+    }
   }
 
   /**

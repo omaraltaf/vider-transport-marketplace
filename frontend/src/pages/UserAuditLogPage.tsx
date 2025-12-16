@@ -8,6 +8,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';
+import { Container, Card, Table, Badge } from '../design-system/components';
+import type { Column } from '../design-system/components';
 
 interface AuditLogEntry {
   id: string;
@@ -49,21 +51,14 @@ export default function UserAuditLogPage() {
     }).format(date);
   };
 
-  const getActionBadgeColor = (action: string) => {
-    if (action.includes('VERIFY')) return 'bg-green-100 text-green-800';
-    if (action.includes('SUSPEND') || action.includes('REMOVE')) return 'bg-red-100 text-red-800';
-    if (action.includes('RESOLVE')) return 'bg-blue-100 text-blue-800';
-    return 'bg-gray-100 text-gray-800';
-  };
-
   if (isLoading) {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen ds-bg-page flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading audit log...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 ds-border-primary-600 mx-auto"></div>
+            <p className="mt-4 ds-text-gray-600">Loading audit log...</p>
           </div>
         </div>
       </>
@@ -74,13 +69,13 @@ export default function UserAuditLogPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen ds-bg-page py-8">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="rounded-md bg-red-50 p-4">
+            <div className="rounded-md ds-bg-error-light p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-5 w-5 text-red-400"
+                    className="h-5 w-5 ds-text-error"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -92,7 +87,7 @@ export default function UserAuditLogPage() {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-red-800">
+                  <p className="text-sm font-medium ds-text-error">
                     {error instanceof Error ? error.message : 'Failed to load audit log'}
                   </p>
                 </div>
@@ -104,25 +99,83 @@ export default function UserAuditLogPage() {
     );
   }
 
+  const columns: Column<AuditLogEntry>[] = [
+    {
+      key: 'action',
+      header: 'Action',
+      render: (entry) => {
+        const variant = entry.action.includes('VERIFY')
+          ? 'success'
+          : entry.action.includes('SUSPEND') || entry.action.includes('REMOVE')
+          ? 'error'
+          : entry.action.includes('RESOLVE')
+          ? 'info'
+          : 'neutral';
+        return <Badge variant={variant}>{entry.action.replace(/_/g, ' ')}</Badge>;
+      },
+    },
+    {
+      key: 'entityType',
+      header: 'Entity Type',
+      render: (entry) => <span className="text-sm ds-text-gray-600">{entry.entityType}</span>,
+    },
+    {
+      key: 'admin',
+      header: 'Admin',
+      render: (entry) => (
+        <div className="text-sm">
+          <div className="font-medium ds-text-gray-900">
+            {entry.adminUser.firstName} {entry.adminUser.lastName}
+          </div>
+          <div className="ds-text-gray-500">{entry.adminUser.email}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'reason',
+      header: 'Reason',
+      render: (entry) => (
+        <div className="text-sm ds-text-gray-900">
+          {entry.reason || '-'}
+          {entry.changes && Object.keys(entry.changes).length > 0 && (
+            <details className="mt-1">
+              <summary className="cursor-pointer ds-text-primary-600 ds-hover-text-primary-600 text-xs">
+                View changes
+              </summary>
+              <pre className="mt-2 text-xs ds-bg-page p-2 rounded overflow-x-auto max-w-xs">
+                {JSON.stringify(entry.changes, null, 2)}
+              </pre>
+            </details>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'createdAt',
+      header: 'Date',
+      render: (entry) => <span className="text-sm ds-text-gray-500">{formatDate(entry.createdAt)}</span>,
+    },
+  ];
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen ds-bg-page py-8">
+        <Container>
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Audit Log</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-3xl font-bold ds-text-gray-900">Audit Log</h1>
+            <p className="mt-2 ds-text-gray-600">
               Administrative actions that have affected your account or company
             </p>
           </div>
 
           {/* Info card */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-md">
+          <div className="mb-6 p-4 ds-bg-primary-50 rounded-md">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg
-                  className="h-5 w-5 text-blue-400"
+                  className="h-5 w-5 ds-text-info"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -134,7 +187,7 @@ export default function UserAuditLogPage() {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-blue-700">
+                <p className="text-sm ds-text-primary-700">
                   This log shows all administrative actions performed by platform administrators that
                   have affected your user account, company, or listings. This is part of our
                   commitment to transparency and GDPR compliance.
@@ -143,99 +196,23 @@ export default function UserAuditLogPage() {
             </div>
           </div>
 
-          {/* Audit log entries */}
-          {auditLogs.length === 0 ? (
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-12 text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No audit log entries</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  No administrative actions have been performed on your account or company yet.
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white shadow rounded-lg overflow-hidden">
-              <ul className="divide-y divide-gray-200">
-                {auditLogs.map((entry) => (
-                  <li key={entry.id} className="px-6 py-5 hover:bg-gray-50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getActionBadgeColor(
-                              entry.action
-                            )}`}
-                          >
-                            {entry.action.replace(/_/g, ' ')}
-                          </span>
-                          <span className="text-sm text-gray-500">{entry.entityType}</span>
-                        </div>
-
-                        <div className="mt-2 text-sm text-gray-900">
-                          <p>
-                            <span className="font-medium">Admin:</span>{' '}
-                            {entry.adminUser.firstName} {entry.adminUser.lastName} (
-                            {entry.adminUser.email})
-                          </p>
-                          {entry.reason && (
-                            <p className="mt-1">
-                              <span className="font-medium">Reason:</span> {entry.reason}
-                            </p>
-                          )}
-                          {entry.changes && Object.keys(entry.changes).length > 0 && (
-                            <details className="mt-2">
-                              <summary className="cursor-pointer text-indigo-600 hover:text-indigo-500">
-                                View changes
-                              </summary>
-                              <pre className="mt-2 text-xs bg-gray-50 p-3 rounded overflow-x-auto">
-                                {JSON.stringify(entry.changes, null, 2)}
-                              </pre>
-                            </details>
-                          )}
-                        </div>
-
-                        <div className="mt-2 flex items-center text-sm text-gray-500">
-                          <svg
-                            className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          {formatDate(entry.createdAt)}
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {/* Audit log table */}
+          <Card padding="lg">
+            <Table
+              columns={columns}
+              data={auditLogs}
+              emptyMessage="No administrative actions have been performed on your account or company yet."
+              rowKey={(entry) => entry.id}
+            />
+          </Card>
 
           {/* Footer note */}
           {auditLogs.length > 0 && (
-            <div className="mt-6 text-sm text-gray-500 text-center">
+            <div className="mt-6 text-sm ds-text-gray-500 text-center">
               Showing {auditLogs.length} audit log {auditLogs.length === 1 ? 'entry' : 'entries'}
             </div>
           )}
-        </div>
+        </Container>
       </div>
     </>
   );

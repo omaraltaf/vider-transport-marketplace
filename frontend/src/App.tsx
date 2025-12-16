@@ -3,10 +3,11 @@
  * Sets up routing and global providers
  */
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { queryClient } from './lib/queryClient';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -45,15 +46,50 @@ import AdminAuditLogPage from './pages/admin/AdminAuditLogPage';
 import DataExportPage from './pages/DataExportPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import UserAuditLogPage from './pages/UserAuditLogPage';
+import BulkCalendarManagementPage from './pages/BulkCalendarManagementPage';
+import UserProfilePage from './pages/UserProfilePage';
+import { PlatformAdminPage } from './pages/admin/PlatformAdminPage';
+
+
+import { SkipLink } from './design-system/components/SkipLink/SkipLink';
+
+/**
+ * Root Route Component
+ * Redirects authenticated users to appropriate dashboards based on role
+ */
+function RootRoute() {
+  const { isAuthenticated, user } = useAuth();
+  
+  console.log('RootRoute - isAuthenticated:', isAuthenticated);
+  console.log('RootRoute - user:', user);
+  console.log('RootRoute - user role:', user?.role);
+  
+  if (isAuthenticated) {
+    if (user?.role === 'PLATFORM_ADMIN') {
+      console.log('Redirecting to /platform-admin');
+      return <Navigate to="/platform-admin" replace />;
+    }
+    if (user?.role === 'COMPANY_ADMIN') {
+      console.log('Redirecting to /dashboard');
+      return <Navigate to="/dashboard" replace />;
+    }
+  }
+  
+  console.log('Showing HomePage');
+  return <HomePage />;
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <main id="main-content" role="main">
-            <Routes>
-            <Route path="/" element={<HomePage />} />
+        <ToastProvider>
+          <BrowserRouter>
+
+            <SkipLink />
+            <main id="main-content" role="main">
+              <Routes>
+            <Route path="/" element={<RootRoute />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/listings/:type/:id" element={<ListingDetailPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -125,6 +161,14 @@ function App() {
               }
             />
             <Route
+              path="/listings/bulk-calendar"
+              element={
+                <ProtectedRoute>
+                  <BulkCalendarManagementPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/bookings"
               element={
                 <ProtectedRoute>
@@ -169,6 +213,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <NotificationSettingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/platform-admin"
+              element={
+                <ProtectedRoute>
+                  <PlatformAdminPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/platform-admin/*"
+              element={
+                <ProtectedRoute>
+                  <PlatformAdminPage />
                 </ProtectedRoute>
               }
             />
@@ -276,9 +336,18 @@ function App() {
                 </ProtectedRoute>
               }
             />
-          </Routes>
-          </main>
-        </BrowserRouter>
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <UserProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            </Routes>
+            </main>
+          </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../services/api';
 import type { VehicleListing } from '../types';
 import Navbar from '../components/Navbar';
+import { Container, Card, Button, FormField, Input } from '../design-system/components';
 
 interface VehicleListingFormData {
   title: string;
@@ -147,249 +148,163 @@ export default function CreateVehicleListingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ds-bg-page">
       <Navbar />
       
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Container>
         <div className="mb-6">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/listings/vehicles')}
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700"
+            leftIcon={
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            }
           >
-            <svg className="mr-1 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
             Back to Listings
-          </button>
+          </Button>
         </div>
 
-        <div className="bg-white shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Create Vehicle Listing</h1>
+        <Card padding="lg">
+          <h1 className="text-2xl font-bold ds-text-gray-900 mb-6">Create Vehicle Listing</h1>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Information */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Basic Information</h2>
                 
                 <div className="space-y-4">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                      Title *
-                    </label>
-                    <input
-                      type="text"
-                      id="title"
-                      required
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="e.g., 18-pallet refrigerated truck"
-                    />
-                  </div>
+                  <FormField 
+                    type="text" 
+                    label="Title" 
+                    required
+                    value={formData.title}
+                    onChange={(value) => setFormData({ ...formData, title: value })}
+                    placeholder="e.g., 18-pallet refrigerated truck"
+                  />
 
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      Description *
-                    </label>
-                    <textarea
-                      id="description"
-                      required
-                      rows={4}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      placeholder="Describe your vehicle, its condition, and any special features..."
-                    />
-                  </div>
+                  <FormField 
+                    type="textarea" 
+                    label="Description" 
+                    required
+                    rows={4}
+                    value={formData.description}
+                    onChange={(value) => setFormData({ ...formData, description: value })}
+                    placeholder="Describe your vehicle, its condition, and any special features..."
+                  />
                 </div>
               </div>
 
               {/* Vehicle Details */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Vehicle Details</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Vehicle Details</h2>
                 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">
-                      Vehicle Type *
-                    </label>
-                    <select
-                      id="vehicleType"
-                      required
-                      value={formData.vehicleType}
-                      onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="">Select type</option>
-                      {VEHICLE_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <FormField 
+                    type="select" 
+                    label="Vehicle Type" 
+                    required
+                    value={formData.vehicleType}
+                    onChange={(value) => setFormData({ ...formData, vehicleType: value })}
+                    options={[
+                      { value: '', label: 'Select type' },
+                      ...VEHICLE_TYPES
+                    ]}
+                  />
 
-                  <div>
-                    <label htmlFor="capacity" className="block text-sm font-medium text-gray-700">
-                      Capacity (pallets) *
-                    </label>
-                    <input
-                      type="number"
-                      id="capacity"
-                      required
-                      min="1"
-                      value={formData.capacity || ''}
-                      onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
+                  <FormField 
+                    type="number" 
+                    label="Capacity (pallets)" 
+                    required
+                    value={formData.capacity.toString()}
+                    onChange={(value) => setFormData({ ...formData, capacity: parseInt(value) || 0 })}
+                  />
 
-                  <div>
-                    <label htmlFor="fuelType" className="block text-sm font-medium text-gray-700">
-                      Fuel Type *
-                    </label>
-                    <select
-                      id="fuelType"
-                      required
-                      value={formData.fuelType}
-                      onChange={(e) => setFormData({ ...formData, fuelType: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    >
-                      <option value="">Select fuel type</option>
-                      {FUEL_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <FormField 
+                    type="select" 
+                    label="Fuel Type" 
+                    required
+                    value={formData.fuelType}
+                    onChange={(value) => setFormData({ ...formData, fuelType: value })}
+                    options={[
+                      { value: '', label: 'Select fuel type' },
+                      ...FUEL_TYPES
+                    ]}
+                  />
                 </div>
               </div>
 
               {/* Location */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Location</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Location</h2>
                 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      id="city"
-                      required
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
+                  <FormField 
+                    type="text" 
+                    label="City" 
+                    required
+                    value={formData.city}
+                    onChange={(value) => setFormData({ ...formData, city: value })}
+                  />
 
-                  <div>
-                    <label htmlFor="fylke" className="block text-sm font-medium text-gray-700">
-                      Fylke *
-                    </label>
-                    <input
-                      type="text"
-                      id="fylke"
-                      required
-                      value={formData.fylke}
-                      onChange={(e) => setFormData({ ...formData, fylke: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
+                  <FormField 
+                    type="text" 
+                    label="Fylke" 
+                    required
+                    value={formData.fylke}
+                    onChange={(value) => setFormData({ ...formData, fylke: value })}
+                  />
 
-                  <div>
-                    <label htmlFor="kommune" className="block text-sm font-medium text-gray-700">
-                      Kommune *
-                    </label>
-                    <input
-                      type="text"
-                      id="kommune"
-                      required
-                      value={formData.kommune}
-                      onChange={(e) => setFormData({ ...formData, kommune: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
+                  <FormField 
+                    type="text" 
+                    label="Kommune" 
+                    required
+                    value={formData.kommune}
+                    onChange={(value) => setFormData({ ...formData, kommune: value })}
+                  />
                 </div>
               </div>
 
               {/* Pricing */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Pricing</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Pricing</h2>
                 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div>
-                    <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700">
-                      Hourly Rate
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        id="hourlyRate"
-                        min="0"
-                        step="0.01"
-                        value={formData.hourlyRate || ''}
-                        onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || undefined })}
-                        className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">NOK</span>
-                      </div>
-                    </div>
-                  </div>
+                  <FormField 
+                    type="number" 
+                    label="Hourly Rate" 
+                    helperText="NOK"
+                    value={formData.hourlyRate?.toString() || ''}
+                    onChange={(value) => setFormData({ ...formData, hourlyRate: parseFloat(value) || undefined })}
+                  />
 
-                  <div>
-                    <label htmlFor="dailyRate" className="block text-sm font-medium text-gray-700">
-                      Daily Rate
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        id="dailyRate"
-                        min="0"
-                        step="0.01"
-                        value={formData.dailyRate || ''}
-                        onChange={(e) => setFormData({ ...formData, dailyRate: parseFloat(e.target.value) || undefined })}
-                        className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">NOK</span>
-                      </div>
-                    </div>
-                  </div>
+                  <FormField 
+                    type="number" 
+                    label="Daily Rate" 
+                    helperText="NOK"
+                    value={formData.dailyRate?.toString() || ''}
+                    onChange={(value) => setFormData({ ...formData, dailyRate: parseFloat(value) || undefined })}
+                  />
 
-                  <div>
-                    <label htmlFor="deposit" className="block text-sm font-medium text-gray-700">
-                      Deposit (Optional)
-                    </label>
-                    <div className="mt-1 relative rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        id="deposit"
-                        min="0"
-                        step="0.01"
-                        value={formData.deposit || ''}
-                        onChange={(e) => setFormData({ ...formData, deposit: parseFloat(e.target.value) || undefined })}
-                        className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500 sm:text-sm">NOK</span>
-                      </div>
-                    </div>
-                  </div>
+                  <FormField 
+                    type="number" 
+                    label="Deposit (Optional)" 
+                    helperText="NOK"
+                    value={formData.deposit?.toString() || ''}
+                    onChange={(value) => setFormData({ ...formData, deposit: parseFloat(value) || undefined })}
+                  />
                 </div>
                 
-                <p className="mt-2 text-sm text-gray-500">
+                <p className="mt-2 text-sm ds-text-gray-500">
                   * At least one rate (hourly or daily) is required
                 </p>
               </div>
 
               {/* Service Offerings */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Service Offerings</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Service Offerings</h2>
                 
                 <div className="space-y-4">
                   <div className="flex items-start">
@@ -399,14 +314,14 @@ export default function CreateVehicleListingPage() {
                         type="checkbox"
                         checked={formData.withoutDriver}
                         onChange={(e) => setFormData({ ...formData, withoutDriver: e.target.checked })}
-                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                        className="focus:ring-primary-600 h-4 w-4 text-primary-600 ds-border-gray-300 rounded"
                       />
                     </div>
                     <div className="ml-3 text-sm">
-                      <label htmlFor="withoutDriver" className="font-medium text-gray-700">
+                      <label htmlFor="withoutDriver" className="font-medium ds-text-gray-700">
                         Available without driver
                       </label>
-                      <p className="text-gray-500">Renter provides their own driver</p>
+                      <p className="ds-text-gray-500">Renter provides their own driver</p>
                     </div>
                   </div>
 
@@ -417,35 +332,25 @@ export default function CreateVehicleListingPage() {
                         type="checkbox"
                         checked={formData.withDriver}
                         onChange={(e) => setFormData({ ...formData, withDriver: e.target.checked })}
-                        className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                        className="focus:ring-primary-600 h-4 w-4 text-primary-600 ds-border-gray-300 rounded"
                       />
                     </div>
                     <div className="ml-3 text-sm flex-1">
-                      <label htmlFor="withDriver" className="font-medium text-gray-700">
+                      <label htmlFor="withDriver" className="font-medium ds-text-gray-700">
                         Available with driver
                       </label>
-                      <p className="text-gray-500">You provide a driver with the vehicle</p>
+                      <p className="ds-text-gray-500">You provide a driver with the vehicle</p>
                       
                       {formData.withDriver && (
-                        <div className="mt-2">
-                          <label htmlFor="withDriverCost" className="block text-sm font-medium text-gray-700">
-                            Additional cost for driver
-                          </label>
-                          <div className="mt-1 relative rounded-md shadow-sm max-w-xs">
-                            <input
-                              type="number"
-                              id="withDriverCost"
-                              min="0"
-                              step="0.01"
-                              required={formData.withDriver}
-                              value={formData.withDriverCost || ''}
-                              onChange={(e) => setFormData({ ...formData, withDriverCost: parseFloat(e.target.value) || undefined })}
-                              className="block w-full rounded-md border-gray-300 pr-12 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                              <span className="text-gray-500 sm:text-sm">NOK</span>
-                            </div>
-                          </div>
+                        <div className="mt-2 max-w-xs">
+                          <FormField 
+                            type="number" 
+                            label="Additional cost for driver" 
+                            helperText="NOK" 
+                            required
+                            value={formData.withDriverCost?.toString() || ''}
+                            onChange={(value) => setFormData({ ...formData, withDriverCost: parseFloat(value) || undefined })}
+                          />
                         </div>
                       )}
                     </div>
@@ -455,17 +360,17 @@ export default function CreateVehicleListingPage() {
 
               {/* Photos */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Photos</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Photos</h2>
                 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium ds-text-gray-700">
                       Upload Photos
                     </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ds-border-gray-300 border-dashed rounded-md">
                       <div className="space-y-1 text-center">
                         <svg
-                          className="mx-auto h-12 w-12 text-gray-400"
+                          className="mx-auto h-12 w-12 ds-text-gray-400"
                           stroke="currentColor"
                           fill="none"
                           viewBox="0 0 48 48"
@@ -477,10 +382,10 @@ export default function CreateVehicleListingPage() {
                             strokeLinejoin="round"
                           />
                         </svg>
-                        <div className="flex text-sm text-gray-600">
+                        <div className="flex text-sm ds-text-gray-600">
                           <label
                             htmlFor="photo-upload"
-                            className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500"
+                            className="relative cursor-pointer bg-white rounded-md font-medium ds-text-primary-600 ds-hover-text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-600"
                           >
                             <span>Upload files</span>
                             <input
@@ -494,7 +399,7 @@ export default function CreateVehicleListingPage() {
                           </label>
                           <p className="pl-1">or drag and drop</p>
                         </div>
-                        <p className="text-xs text-gray-500">PNG, JPG, WebP up to 5MB each</p>
+                        <p className="text-xs ds-text-gray-500">PNG, JPG, WebP up to 5MB each</p>
                       </div>
                     </div>
                   </div>
@@ -511,7 +416,7 @@ export default function CreateVehicleListingPage() {
                           <button
                             type="button"
                             onClick={() => removePhoto(index)}
-                            className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700"
+                            className="absolute top-2 right-2 ds-bg-error text-white rounded-full p-1 ds-hover-bg-error"
                           >
                             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -526,7 +431,7 @@ export default function CreateVehicleListingPage() {
 
               {/* Tags */}
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Tags</h2>
+                <h2 className="text-lg font-medium ds-text-gray-900 mb-4">Tags</h2>
                 
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
@@ -537,8 +442,8 @@ export default function CreateVehicleListingPage() {
                         onClick={() => toggleTag(tag)}
                         className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                           formData.tags.includes(tag)
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            ? 'ds-bg-primary-100 ds-text-primary-800'
+                            : 'ds-bg-gray-100 ds-text-gray-800 ds-hover-bg-gray-200'
                         }`}
                       >
                         {tag}
@@ -547,21 +452,23 @@ export default function CreateVehicleListingPage() {
                   </div>
 
                   <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={customTag}
-                      onChange={(e) => setCustomTag(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
-                      placeholder="Add custom tag"
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                    <button
+                    <div className="flex-1">
+                      <Input
+                        type="text"
+                        value={customTag}
+                        onChange={(value) => setCustomTag(value)}
+                        placeholder="Add custom tag"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+                      />
+                    </div>
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="md"
                       onClick={addCustomTag}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
                       Add
-                    </button>
+                    </Button>
                   </div>
 
                   {formData.tags.filter(tag => !COMMON_TAGS.includes(tag)).length > 0 && (
@@ -569,7 +476,7 @@ export default function CreateVehicleListingPage() {
                       {formData.tags.filter(tag => !COMMON_TAGS.includes(tag)).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800"
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ds-bg-primary-100 ds-text-primary-800"
                         >
                           {tag}
                           <button
@@ -590,16 +497,16 @@ export default function CreateVehicleListingPage() {
 
               {/* Error Message */}
               {createMutation.isError && (
-                <div className="rounded-md bg-red-50 p-4">
+                <div className="rounded-md ds-bg-error-light p-4">
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <svg className="h-5 w-5 ds-text-error" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                       </svg>
                     </div>
                     <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">Error creating listing</h3>
-                      <p className="mt-1 text-sm text-red-700">
+                      <h3 className="text-sm font-medium ds-text-error">Error creating listing</h3>
+                      <p className="mt-1 text-sm ds-text-error">
                         {(createMutation.error as Error).message}
                       </p>
                     </div>
@@ -609,25 +516,27 @@ export default function CreateVehicleListingPage() {
 
               {/* Submit Buttons */}
               <div className="flex justify-end gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="md"
                   onClick={() => navigate('/listings/vehicles')}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="md"
+                  loading={createMutation.isPending}
                   disabled={createMutation.isPending}
-                  className="inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create Listing'}
-                </button>
+                </Button>
               </div>
             </form>
-          </div>
-        </div>
-      </div>
+        </Card>
+      </Container>
     </div>
   );
 }

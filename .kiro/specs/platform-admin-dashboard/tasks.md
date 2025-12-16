@@ -1,0 +1,665 @@
+# Implementation Plan
+
+- [x] 1. Create platform admin authentication and authorization system
+  - Implement platform admin role and permissions in database schema
+  - Create platform admin authentication middleware
+  - Set up role-based access control for platform-level operations
+  - _Requirements: 5.1, 7.1_
+
+- [x] 2. Create platform admin API routes and services
+  - Set up dedicated platform admin API endpoints
+  - Implement platform admin service layer with business logic
+  - Create platform admin middleware for request validation
+  - _Requirements: 1.1, 2.1, 3.1_
+
+- [x] 3. Write property test for platform admin authentication
+  - **Property 5: User Management Security**
+  - **Validates: Requirements 5.1**
+
+- [x] 4. Create company management data models and services
+  - [x] 4.1 Extend company model with platform admin fields
+    - Add status field (active, suspended, pending_verification)
+    - Add verification fields (verified_at, verification_notes)
+    - Add metrics fields (total_bookings, revenue, rating)
+    - Update Prisma schema and run migrations
+    - _Requirements: 1.1, 1.2_
+  - [x] 4.2 Implement company management service with CRUD operations
+    - Create CompanyManagementService class
+    - Implement getAllCompanies with filtering and pagination
+    - Implement getCompanyById with detailed metrics
+    - Implement updateCompanyStatus method
+    - _Requirements: 1.1, 1.3_
+  - [x] 4.3 Add company suspension and verification workflows
+    - Implement suspendCompany method with reason tracking
+    - Implement verifyCompany method with admin notes
+    - Add email notifications for status changes
+    - Create audit logging for all company actions
+    - _Requirements: 1.4, 1.5_
+
+- [x] 5. Build company management API endpoints
+  - [x] 5.1 Create basic company management endpoints
+    - GET /api/platform-admin/companies (list with filters)
+    - GET /api/platform-admin/companies/:id (detailed view)
+    - PUT /api/platform-admin/companies/:id/status (update status)
+    - DELETE /api/platform-admin/companies/:id (soft delete)
+    - _Requirements: 1.1, 1.3_
+  - [x] 5.2 Implement company search and filtering functionality
+    - Add search by name, email, location parameters
+    - Implement status filtering (active, suspended, pending)
+    - Add date range filtering for registration/verification
+    - Implement sorting by metrics (bookings, revenue, rating)
+    - _Requirements: 1.1_
+  - [x] 5.3 Add bulk company operations support
+    - POST /api/platform-admin/companies/bulk-suspend
+    - POST /api/platform-admin/companies/bulk-verify
+    - POST /api/platform-admin/companies/bulk-export
+    - Add validation and error handling for bulk operations
+    - _Requirements: 1.2, 1.4, 1.5_
+
+- [x] 6. Write property test for company management operations
+  - **Property 1: Company Management Operations**
+  - **Validates: Requirements 1.1, 1.2, 1.3, 1.4, 1.5**
+
+- [x] 7. Create CompanyManagementPanel component
+  - [x] 7.1 Build company listing and search interface
+    - Create CompanyList component with table/grid view
+    - Implement search bar with real-time filtering
+    - Add pagination and sorting controls
+    - Create status badges and metric displays
+    - _Requirements: 1.1_
+  - [x] 7.2 Implement company action forms and modals
+    - Create SuspendCompanyModal with reason selection
+    - Create VerifyCompanyModal with notes field
+    - Create CompanyDetailsModal with full information
+    - Add confirmation dialogs for destructive actions
+    - _Requirements: 1.2, 1.4, 1.5_
+  - [x] 7.3 Add company metrics display and analytics
+    - Create CompanyMetricsCard component
+    - Implement revenue and booking trend charts
+    - Add rating and review summary display
+    - Create geographic distribution visualization
+    - _Requirements: 1.3_
+
+- [x] 8. Create platform configuration data model
+  - [x] 8.1 Design platform configuration schema
+    - Create PlatformConfig model with feature toggles
+    - Add geographic restriction fields
+    - Add payment method configuration fields
+    - Create configuration categories and grouping
+    - _Requirements: 2.1, 2.2_
+  - [x] 8.2 Implement configuration service for managing settings
+    - Create PlatformConfigService class
+    - Implement getConfiguration and updateConfiguration methods
+    - Add configuration validation and type checking
+    - Create configuration caching mechanism
+    - _Requirements: 2.3, 2.4_
+  - [x] 8.3 Add configuration versioning and rollback capabilities
+    - Create ConfigurationHistory model
+    - Implement version tracking for all changes
+    - Add rollback functionality with admin approval
+    - Create configuration diff and comparison tools
+    - _Requirements: 2.5_
+
+- [ ] 9. Build feature toggle API and enforcement
+  - [x] 9.1 Create feature configuration management endpoints
+    - GET /api/platform-admin/config/features (list all features)
+    - PUT /api/platform-admin/config/features/:id (update feature)
+    - POST /api/platform-admin/config/features/bulk-update
+    - GET /api/platform-admin/config/features/history
+    - _Requirements: 2.1, 2.3_
+  - [x] 9.2 Implement feature toggle enforcement across services
+    - Create FeatureToggleMiddleware for API enforcement
+    - Implement client-side feature flag checking
+    - Add feature toggle caching and performance optimization
+    - Create feature rollback and emergency disable functionality
+    - _Requirements: 2.2, 2.4_
+  - [ ] 9.3 Add geographic and payment method restriction controls
+    - Implement geographic restriction enforcement
+    - Add payment method availability controls
+    - Create region-specific feature configuration
+    - Build restriction violation monitoring and reporting
+    - _Requirements: 2.5_
+
+- [ ] 10. Write property test for feature toggle consistency
+  - **Property 2: Global Feature Toggle Consistency**
+  - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5**
+
+- [ ] 11. Create FeatureTogglePanel component
+  - [ ] 11.1 Build feature toggle management interface
+    - Create FeatureToggleList component with search and filtering
+    - Implement toggle switches with confirmation dialogs
+    - Add feature configuration forms and validation
+    - Create feature grouping and categorization UI
+    - _Requirements: 2.1, 2.2_
+  - [ ] 11.2 Implement configuration forms and controls
+    - Create geographic restriction configuration interface
+    - Implement payment method availability controls
+    - Add feature scheduling and rollout controls
+    - Create bulk feature update and rollback tools
+    - _Requirements: 2.3, 2.4_
+  - [ ] 11.3 Add feature impact analysis and preview functionality
+    - Create feature impact analysis dashboard
+    - Implement feature usage analytics and metrics
+    - Add feature rollout preview and simulation
+    - Create feature dependency tracking and warnings
+    - _Requirements: 2.5_
+
+- [ ] 12. Create analytics data aggregation services
+  - [ ] 12.1 Implement platform metrics calculation and caching
+    - Create AnalyticsService for KPI calculations
+    - Implement daily/weekly/monthly aggregation jobs
+    - Add Redis caching for frequently accessed metrics
+    - Create metric calculation scheduling system
+    - _Requirements: 3.1, 3.2_
+  - [ ] 12.2 Build growth analytics and trend analysis services
+    - Implement user growth rate calculations
+    - Create booking volume trend analysis
+    - Add revenue growth tracking and forecasting
+    - Build cohort analysis for user retention
+    - _Requirements: 3.3, 3.4_
+  - [ ] 12.3 Create geographic usage pattern analysis
+    - Implement location-based usage statistics
+    - Create heat map data generation
+    - Add regional performance comparisons
+    - Build geographic expansion opportunity analysis
+    - _Requirements: 3.5_
+
+- [ ] 13. Build analytics API endpoints
+  - [ ] 13.1 Create platform KPI and metrics endpoints
+    - GET /api/platform-admin/analytics/kpis (key performance indicators)
+    - GET /api/platform-admin/analytics/metrics/:type (specific metrics)
+    - GET /api/platform-admin/analytics/trends (growth trends)
+    - Add parameter validation and error handling
+    - _Requirements: 3.1, 3.2_
+  - [ ] 13.2 Implement real-time data streaming for live metrics
+    - Set up WebSocket connections for live data
+    - Create real-time metric update broadcasting
+    - Implement client-side data synchronization
+    - Add connection management and reconnection logic
+    - _Requirements: 3.3_
+  - [ ] 13.3 Add data export functionality for analytics reports
+    - POST /api/platform-admin/analytics/export (CSV/Excel export)
+    - Implement scheduled report generation
+    - Add email delivery for exported reports
+    - Create custom report builder functionality
+    - _Requirements: 3.4, 3.5_
+
+- [ ] 14. Write property test for analytics data accuracy
+  - **Property 3: Analytics Data Accuracy**
+  - **Validates: Requirements 3.1, 3.2, 3.3, 3.4, 3.5**
+
+- [ ] 15. Create PlatformAnalyticsDashboard component
+  - [ ] 15.1 Build comprehensive analytics dashboard layout
+    - Create main dashboard grid layout
+    - Implement KPI cards with real-time updates
+    - Add dashboard customization and widget management
+    - Create responsive design for different screen sizes
+    - _Requirements: 3.1, 3.2_
+  - [ ] 15.2 Implement interactive data visualization components
+    - Create line charts for trend analysis
+    - Implement bar charts for comparative data
+    - Add pie charts for distribution analysis
+    - Build heat maps for geographic data
+    - _Requirements: 3.3, 3.4_
+  - [ ] 15.3 Add time range selection and filtering capabilities
+    - Create date range picker component
+    - Implement preset time ranges (7d, 30d, 90d, 1y)
+    - Add custom filtering by region, company type, etc.
+    - Create filter persistence and URL state management
+    - _Requirements: 3.5_
+
+- [ ] 16. Create financial management data models and services
+  - [ ] 16.1 Implement commission rate management system
+    - Create CommissionRate model with tiered structures
+    - Implement dynamic rate calculation based on volume
+    - Add geographic and company-specific rate overrides
+    - Create rate change history and audit trail
+    - _Requirements: 4.1, 4.2_
+  - [ ] 16.2 Build revenue analytics and reporting services
+    - Create RevenueAnalyticsService for calculations
+    - Implement revenue forecasting and projections
+    - Add commission tracking and reconciliation
+    - Build profit margin analysis tools
+    - _Requirements: 4.3, 4.4_
+  - [ ] 16.3 Create dispute and refund management workflows
+    - Create Dispute model with status tracking
+    - Implement automated refund processing
+    - Add dispute escalation and resolution workflows
+    - Create financial impact tracking for disputes
+    - _Requirements: 4.5_
+
+- [ ] 17. Build financial management API endpoints
+  - [ ] 17.1 Create commission configuration endpoints
+    - GET /api/platform-admin/financial/commission-rates
+    - PUT /api/platform-admin/financial/commission-rates/:id
+    - POST /api/platform-admin/financial/commission-rates/bulk-update
+    - GET /api/platform-admin/financial/commission-history
+    - _Requirements: 4.1, 4.2_
+  - [ ] 17.2 Implement revenue analytics APIs
+    - GET /api/platform-admin/financial/revenue/summary
+    - GET /api/platform-admin/financial/revenue/trends
+    - GET /api/platform-admin/financial/revenue/forecasts
+    - GET /api/platform-admin/financial/profit-margins
+    - _Requirements: 4.3, 4.4_
+  - [ ] 17.3 Add dispute resolution and refund processing APIs
+    - GET /api/platform-admin/financial/disputes
+    - PUT /api/platform-admin/financial/disputes/:id/resolve
+    - POST /api/platform-admin/financial/refunds/process
+    - GET /api/platform-admin/financial/refunds/history
+    - _Requirements: 4.5_
+
+- [ ] 18. Write property test for financial operations integrity
+  - **Property 4: Financial Operations Integrity**
+  - **Validates: Requirements 4.1, 4.2, 4.3, 4.4, 4.5**
+
+- [ ] 19. Create FinancialManagementPanel component
+  - [ ] 19.1 Build financial dashboard with revenue analytics
+    - Create RevenueDashboard component with key metrics
+    - Implement revenue trend charts and forecasting
+    - Add profit margin analysis and visualization
+    - Create financial health indicators and alerts
+    - _Requirements: 4.3, 4.4_
+  - [ ] 19.2 Implement commission rate configuration interface
+    - Create CommissionRateManager component
+    - Implement rate editing forms with validation
+    - Add bulk rate update functionality
+    - Create rate change preview and impact analysis
+    - _Requirements: 4.1, 4.2_
+  - [ ] 19.3 Add dispute management and refund processing tools
+    - Create DisputeManagement component with queue
+    - Implement refund processing interface
+    - Add dispute resolution workflow tools
+    - Create financial impact tracking dashboard
+    - _Requirements: 4.5_
+
+- [ ] 20. Extend user management for platform admin operations
+  - [ ] 20.1 Enhance user service with platform admin capabilities
+    - Extend UserService with admin-specific methods
+    - Add user search with advanced filtering
+    - Implement user status management (active, suspended, banned)
+    - Create user verification and KYC workflow
+    - _Requirements: 5.1, 5.2_
+  - [ ] 20.2 Implement bulk user operations and role management
+    - Create bulk user import/export functionality
+    - Implement bulk status updates and notifications
+    - Add role assignment and permission management
+    - Create user group management system
+    - _Requirements: 5.3, 5.4_
+  - [ ] 20.3 Add user activity auditing and monitoring
+    - Implement comprehensive user activity logging
+    - Create suspicious activity detection algorithms
+    - Add user behavior analytics and reporting
+    - Build user engagement tracking system
+    - _Requirements: 5.5_
+
+- [ ] 21. Create user management API endpoints
+  - [ ] 21.1 Build admin creation and user management endpoints
+    - POST /api/platform-admin/users/admins (create new admin)
+    - GET /api/platform-admin/users (list with advanced filters)
+    - PUT /api/platform-admin/users/:id/status (update user status)
+    - GET /api/platform-admin/users/:id/details (detailed user info)
+    - _Requirements: 5.1, 5.2_
+  - [ ] 21.2 Implement bulk operations and role assignment APIs
+    - POST /api/platform-admin/users/bulk-update
+    - POST /api/platform-admin/users/bulk-import
+    - PUT /api/platform-admin/users/:id/roles (assign roles)
+    - GET /api/platform-admin/users/export (export user data)
+    - _Requirements: 5.3, 5.4_
+  - [ ] 21.3 Add user activity logging and audit trail functionality
+    - GET /api/platform-admin/users/:id/activity (user activity log)
+    - GET /api/platform-admin/users/suspicious-activity
+    - POST /api/platform-admin/users/:id/flag (flag suspicious user)
+    - GET /api/platform-admin/audit/user-actions (admin action audit)
+    - _Requirements: 5.5_
+
+- [ ] 22. Write property test for user management security
+  - **Property 5: User Management Security**
+  - **Validates: Requirements 5.1, 5.2, 5.3, 5.4, 5.5**
+
+- [ ] 23. Create UserManagementPanel component
+  - [ ] 23.1 Build user management interface with search and filtering
+    - Create UserList component with advanced search
+    - Implement user filtering by status, role, registration date
+    - Add user sorting and pagination controls
+    - Create user detail modal with comprehensive info
+    - _Requirements: 5.1, 5.2_
+  - [ ] 23.2 Implement admin creation and bulk operation tools
+    - Create AdminCreationForm component
+    - Implement bulk user action interface
+    - Add role assignment and permission management UI
+    - Create user import/export functionality
+    - _Requirements: 5.3, 5.4_
+  - [ ] 23.3 Add user activity monitoring and audit log display
+    - Create UserActivityTimeline component
+    - Implement suspicious activity alerts and flags
+    - Add audit log viewer with filtering
+    - Create user behavior analytics dashboard
+    - _Requirements: 5.5_
+
+- [ ] 24. Create content moderation data models and services
+  - [ ] 24.1 Implement content flagging and review system
+    - Create ContentFlag model with categorization
+    - Implement automated content scanning algorithms
+    - Add manual review queue and workflow
+    - Create content approval and rejection processes
+    - _Requirements: 6.1, 6.2_
+  - [ ] 24.2 Build fraud detection and safety monitoring services
+    - Implement fraud detection algorithms and scoring
+    - Create real-time safety monitoring system
+    - Add pattern recognition for suspicious behavior
+    - Build automated alert and escalation system
+    - _Requirements: 6.3, 6.4_
+  - [ ] 24.3 Create blacklist management and enforcement
+    - Create Blacklist model for users, companies, and content
+    - Implement automated blacklist checking
+    - Add manual blacklist management interface
+    - Create blacklist violation tracking and reporting
+    - _Requirements: 6.5_
+
+- [ ] 25. Build content moderation API endpoints
+  - [ ] 25.1 Create content review and moderation endpoints
+    - GET /api/platform-admin/moderation/content/flagged
+    - PUT /api/platform-admin/moderation/content/:id/review
+    - POST /api/platform-admin/moderation/content/:id/approve
+    - POST /api/platform-admin/moderation/content/:id/reject
+    - _Requirements: 6.1, 6.2_
+  - [ ] 25.2 Implement fraud detection and investigation APIs
+    - GET /api/platform-admin/moderation/fraud/alerts
+    - GET /api/platform-admin/moderation/fraud/patterns
+    - POST /api/platform-admin/moderation/fraud/:id/investigate
+    - PUT /api/platform-admin/moderation/fraud/:id/resolve
+    - _Requirements: 6.3, 6.4_
+  - [ ] 25.3 Add blacklist management and safety control APIs
+    - GET /api/platform-admin/moderation/blacklist
+    - POST /api/platform-admin/moderation/blacklist/add
+    - DELETE /api/platform-admin/moderation/blacklist/:id
+    - GET /api/platform-admin/moderation/safety/violations
+    - _Requirements: 6.5_
+
+- [ ] 26. Write property test for content moderation effectiveness
+  - **Property 6: Content Moderation Effectiveness**
+  - **Validates: Requirements 6.1, 6.2, 6.3, 6.4, 6.5**
+
+- [ ] 27. Create ContentModerationPanel component
+  - [ ] 27.1 Build content review and moderation interface
+    - Create ContentReviewQueue component
+    - Implement content flagging and categorization UI
+    - Add content approval/rejection workflow interface
+    - Create content history and audit trail viewer
+    - _Requirements: 6.1, 6.2_
+  - [ ] 27.2 Implement fraud detection dashboard and investigation tools
+    - Create FraudDetectionDashboard component
+    - Implement fraud alert management interface
+    - Add investigation workflow and case management
+    - Create fraud pattern analysis and reporting tools
+    - _Requirements: 6.3, 6.4_
+  - [ ] 27.3 Add blacklist management and safety control interface
+    - Create BlacklistManager component
+    - Implement blacklist entry creation and management
+    - Add safety violation tracking and reporting
+    - Create automated safety rule configuration
+    - _Requirements: 6.5_
+
+- [ ] 28. Create system administration services
+  - [ ] 28.1 Implement system configuration and monitoring services
+    - Create SystemConfigService for platform settings
+    - Implement real-time system health monitoring
+    - Add performance metrics collection and analysis
+    - Create system alert and notification system
+    - _Requirements: 7.1, 7.2_
+  - [ ] 28.2 Build backup and recovery management system
+    - Implement automated database backup scheduling
+    - Create backup verification and integrity checking
+    - Add disaster recovery planning and testing
+    - Build backup restoration and rollback capabilities
+    - _Requirements: 7.3, 7.4_
+  - [ ] 28.3 Create API rate limiting and access control management
+    - Implement dynamic rate limiting configuration
+    - Add IP-based access control and whitelisting
+    - Create API usage monitoring and analytics
+    - Build access control audit and compliance reporting
+    - _Requirements: 7.5_
+
+- [ ] 29. Build system administration API endpoints
+  - [ ] 29.1 Create system configuration and monitoring endpoints
+    - GET /api/platform-admin/system/config (system configuration)
+    - PUT /api/platform-admin/system/config (update configuration)
+    - GET /api/platform-admin/system/health (health status)
+    - GET /api/platform-admin/system/metrics (performance metrics)
+    - _Requirements: 7.1, 7.2_
+  - [ ] 29.2 Implement backup management and health check APIs
+    - POST /api/platform-admin/system/backup/create
+    - GET /api/platform-admin/system/backup/status
+    - POST /api/platform-admin/system/backup/restore
+    - GET /api/platform-admin/system/backup/history
+    - _Requirements: 7.3, 7.4_
+  - [ ] 29.3 Add audit trail and system logging functionality
+    - GET /api/platform-admin/system/audit/logs
+    - GET /api/platform-admin/system/access-control
+    - PUT /api/platform-admin/system/rate-limits
+    - GET /api/platform-admin/system/api-usage
+    - _Requirements: 7.5_
+
+- [ ] 30. Write property test for system configuration reliability
+  - **Property 7: System Configuration Reliability**
+  - **Validates: Requirements 7.1, 7.2, 7.3, 7.4, 7.5**
+
+- [ ] 31. Create SystemAdministrationPanel component
+  - [ ] 31.1 Build system configuration and monitoring dashboard
+    - Create SystemHealthDashboard component
+    - Implement real-time system metrics display
+    - Add system configuration management interface
+    - Create performance monitoring and alerting UI
+    - _Requirements: 7.1, 7.2_
+  - [ ] 31.2 Implement backup management and health monitoring interface
+    - Create BackupManager component
+    - Implement backup scheduling and status monitoring
+    - Add backup restoration interface and controls
+    - Create disaster recovery planning tools
+    - _Requirements: 7.3, 7.4_
+  - [ ] 31.3 Add audit trail viewer and system log analysis tools
+    - Create SystemAuditViewer component
+    - Implement log filtering and search functionality
+    - Add access control management interface
+    - Create API usage analytics and rate limit controls
+    - _Requirements: 7.5_
+
+- [ ] 32. Create communication management services
+  - [ ] 32.1 Implement announcement and broadcast system
+    - Create AnnouncementService for platform-wide messages
+    - Implement targeted messaging by user segments
+    - Add emergency broadcast capabilities
+    - Create message scheduling and delivery tracking
+    - _Requirements: 8.1, 8.2_
+  - [ ] 32.2 Build support ticket management and tracking
+    - Create SupportTicketService for ticket lifecycle
+    - Implement ticket assignment and escalation workflows
+    - Add automated response and categorization
+    - Create SLA tracking and performance metrics
+    - _Requirements: 8.3, 8.4_
+  - [ ] 32.3 Create help center content management system
+    - Implement help article creation and management
+    - Add content versioning and approval workflows
+    - Create FAQ management and search functionality
+    - Build content analytics and usage tracking
+    - _Requirements: 8.5_
+
+- [ ] 33. Build communication API endpoints
+  - [ ] 33.1 Create announcement and broadcast endpoints
+    - POST /api/platform-admin/communication/announcements
+    - GET /api/platform-admin/communication/announcements
+    - POST /api/platform-admin/communication/broadcast/emergency
+    - GET /api/platform-admin/communication/delivery-status
+    - _Requirements: 8.1, 8.2_
+  - [ ] 33.2 Implement support ticket management APIs
+    - GET /api/platform-admin/communication/tickets
+    - PUT /api/platform-admin/communication/tickets/:id/assign
+    - POST /api/platform-admin/communication/tickets/:id/respond
+    - GET /api/platform-admin/communication/tickets/metrics
+    - _Requirements: 8.3, 8.4_
+  - [ ] 33.3 Add help center and communication analytics APIs
+    - GET /api/platform-admin/communication/help-center/articles
+    - POST /api/platform-admin/communication/help-center/articles
+    - GET /api/platform-admin/communication/analytics
+    - GET /api/platform-admin/communication/engagement-metrics
+    - _Requirements: 8.5_
+
+- [ ] 34. Write property test for communication delivery assurance
+  - **Property 8: Communication Delivery Assurance**
+  - **Validates: Requirements 8.1, 8.2, 8.3, 8.4, 8.5**
+
+- [ ] 35. Create CommunicationCenter component
+  - [ ] 35.1 Build announcement creation and broadcast interface
+    - Create AnnouncementCreator component
+    - Implement message targeting and scheduling
+    - Add emergency broadcast interface with confirmation
+    - Create message template management system
+    - _Requirements: 8.1, 8.2_
+  - [ ] 35.2 Implement support ticket management dashboard
+    - Create SupportTicketDashboard component
+    - Implement ticket queue and assignment interface
+    - Add ticket response and escalation tools
+    - Create SLA monitoring and performance metrics
+    - _Requirements: 8.3, 8.4_
+  - [ ] 35.3 Add help center management interface
+    - Create HelpCenterManager component
+    - Implement article creation and editing interface
+    - Add content approval and publishing workflow
+    - Create help center analytics and usage tracking
+    - _Requirements: 8.5_
+
+- [ ] 36. Create PlatformAdminLayout component
+  - [ ] 36.1 Build main dashboard layout with navigation
+    - Create responsive sidebar navigation
+    - Implement main content area with routing
+    - Add header with user info and notifications
+    - Create collapsible navigation for mobile
+    - _Requirements: All sections_
+  - [ ] 36.2 Implement section switching and breadcrumbs
+    - Add breadcrumb navigation component
+    - Implement section-based routing and state management
+    - Create quick navigation shortcuts
+    - Add search functionality across all sections
+    - _Requirements: All sections_
+
+- [ ] 37. Create platform admin overview dashboard
+  - [ ] 37.1 Build main overview page with key metrics
+    - Create OverviewDashboard component
+    - Implement key metric cards (users, companies, revenue)
+    - Add real-time system status indicators
+    - Create alert and notification center
+    - _Requirements: 3.1, 7.3_
+  - [ ] 37.2 Implement quick actions and recent activity
+    - Add quick action buttons for common tasks
+    - Create recent activity feed with filtering
+    - Implement system health summary dashboard
+    - Add performance monitoring widgets
+    - _Requirements: 3.1, 7.3_
+
+- [ ] 38. Integrate all management panels into main dashboard
+  - [ ] 38.1 Wire up all individual panels into cohesive dashboard
+    - Integrate all management panels into main layout
+    - Implement shared state management across panels
+    - Add panel-to-panel navigation and data flow
+    - Create unified error handling and loading states
+    - _Requirements: All sections_
+  - [ ] 38.2 Implement cross-panel data sharing and global features
+    - Add global search functionality across all data
+    - Implement cross-panel data updates and synchronization
+    - Create unified notification and alert system
+    - Add global export and reporting capabilities
+    - _Requirements: All sections_
+
+- [ ] 39. Create comprehensive audit logging system
+  - [ ] 39.1 Implement detailed audit trail for all admin actions
+    - Create AuditLog model with comprehensive action tracking
+    - Implement automatic logging for all admin operations
+    - Add context and metadata capture for all actions
+    - Create audit log retention and archival policies
+    - _Requirements: 2.5, 5.5_
+  - [ ] 39.2 Build audit log search and filtering capabilities
+    - Create AuditLogService with advanced search
+    - Implement filtering by user, action type, date range
+    - Add audit log aggregation and summary reports
+    - Create audit trail visualization and timeline
+    - _Requirements: 7.5, 8.5_
+  - [ ] 39.3 Add audit report generation and export functionality
+    - Implement automated audit report generation
+    - Add compliance reporting and regulatory exports
+    - Create scheduled audit reports and email delivery
+    - Build audit analytics and trend analysis
+    - _Requirements: 2.5, 7.5_
+
+- [ ] 40. Implement security monitoring and alerts
+  - [ ] 40.1 Build security event detection and alerting system
+    - Create SecurityMonitoringService for threat detection
+    - Implement real-time security event processing
+    - Add automated alert generation and escalation
+    - Create security incident response workflows
+    - _Requirements: 6.2, 6.3_
+  - [ ] 40.2 Implement suspicious activity monitoring and reporting
+    - Add behavioral analysis and anomaly detection
+    - Create suspicious activity scoring algorithms
+    - Implement automated flagging and investigation queues
+    - Build security reporting and compliance dashboards
+    - _Requirements: 6.3, 7.3_
+  - [ ] 40.3 Add security dashboard with threat analysis
+    - Create SecurityDashboard component
+    - Implement threat intelligence and analysis tools
+    - Add security metrics and KPI tracking
+    - Create security trend analysis and forecasting
+    - _Requirements: 7.3_
+
+- [ ] 41. Write integration tests for security features
+  - [ ] 41.1 Test end-to-end security workflows and audit trails
+    - Create integration tests for complete audit workflows
+    - Test audit log generation and retrieval
+    - Verify audit trail completeness and accuracy
+    - Test audit report generation and export
+    - _Requirements: 5.1, 7.1_
+  - [ ] 41.2 Verify access control and permission enforcement
+    - Test role-based access control across all endpoints
+    - Verify permission enforcement for admin operations
+    - Test unauthorized access prevention and logging
+    - Create security boundary testing scenarios
+    - _Requirements: 5.1, 6.2_
+  - [ ] 41.3 Test security monitoring and alert functionality
+    - Test security event detection and alerting
+    - Verify suspicious activity monitoring accuracy
+    - Test security dashboard functionality and data
+    - Create security incident response testing
+    - _Requirements: 6.2, 7.1_
+
+- [ ] 42. Ensure all tests pass and system integration works
+  - Run all unit tests, property tests, and integration tests
+  - Verify cross-component data flow and state management
+  - Test error handling and recovery scenarios
+  - Ask the user if questions arise
+
+- [ ] 43. Write end-to-end integration tests
+  - [ ] 43.1 Test complete platform admin workflows
+    - Create end-to-end tests for company management workflows
+    - Test user management and admin creation workflows
+    - Verify financial management and analytics workflows
+    - Test content moderation and safety workflows
+    - _Requirements: All sections_
+  - [ ] 43.2 Verify data consistency and performance
+    - Test data consistency across all operations
+    - Verify proper state management and synchronization
+    - Test performance under load and stress conditions
+    - Create automated performance regression testing
+    - _Requirements: All sections_
+
+- [ ] 44. Create platform admin documentation and user guide
+  - [ ] 44.1 Write comprehensive feature documentation
+    - Create API documentation for all platform admin endpoints
+    - Write technical documentation for all services and models
+    - Document configuration and deployment procedures
+    - Create developer guide for extending the platform
+    - _Requirements: All sections_
+  - [ ] 44.2 Create user guide and training materials
+    - Write user guide with screenshots and workflow examples
+    - Create video tutorials for common admin tasks
+    - Add troubleshooting guide and FAQ section
+    - Create onboarding checklist for new platform admins
+    - _Requirements: All sections_

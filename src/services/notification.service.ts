@@ -193,6 +193,10 @@ export class NotificationService {
       case NotificationType.DISPUTE_RESOLVED:
         return true; // Always send dispute notifications (they're critical)
 
+      case NotificationType.AVAILABILITY_CONFLICT:
+      case NotificationType.BOOKING_REJECTED_BLOCKED_DATES:
+        return preferences.bookingUpdates; // Use bookingUpdates for availability-related notifications
+
       default:
         return true;
     }

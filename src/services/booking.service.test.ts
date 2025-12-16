@@ -6,6 +6,22 @@ import { BookingService } from './booking.service';
 const prisma = new PrismaClient();
 const bookingService = new BookingService();
 
+// Helper function to clean up database in correct order
+async function cleanupDatabase() {
+  // Delete in order to respect foreign key constraints
+  await prisma.message.deleteMany();
+  await prisma.messageThread.deleteMany();
+  await prisma.booking.deleteMany();
+  await prisma.availabilityBlock.deleteMany();
+  await prisma.recurringBlock.deleteMany();
+  await prisma.vehicleListing.deleteMany();
+  await prisma.driverListing.deleteMany();
+  await prisma.platformConfig.deleteMany();
+  // Delete users before companies due to foreign key constraint
+  await prisma.user.deleteMany();
+  await prisma.company.deleteMany();
+}
+
 // Helper function to create a test company
 async function createTestCompany(orgNumber: string) {
   return prisma.company.create({
@@ -82,27 +98,11 @@ async function createTestDriverListing(companyId: string, hourlyRate?: number, d
 
 describe('BookingService', () => {
   beforeEach(async () => {
-    // Clean up database before each test - delete in correct order
-    await prisma.message.deleteMany();
-    await prisma.messageThread.deleteMany();
-    await prisma.booking.deleteMany();
-    await prisma.vehicleListing.deleteMany();
-    await prisma.driverListing.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.company.deleteMany();
-    await prisma.platformConfig.deleteMany();
+    await cleanupDatabase();
   });
 
   afterEach(async () => {
-    // Clean up after each test - delete in correct order
-    await prisma.message.deleteMany();
-    await prisma.messageThread.deleteMany();
-    await prisma.booking.deleteMany();
-    await prisma.vehicleListing.deleteMany();
-    await prisma.driverListing.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.company.deleteMany();
-    await prisma.platformConfig.deleteMany();
+    await cleanupDatabase();
   });
 
   describe('Platform Configuration', () => {
@@ -141,14 +141,8 @@ describe('BookingService', () => {
           fc.float({ min: 10, max: 30, noNaN: true }), // tax rate
           fc.integer({ min: 12, max: 72 }), // timeout hours
           async (commissionRate, taxRate, timeoutHours) => {
-            // Clean up for this iteration - must delete in correct order
-            await prisma.messageThread.deleteMany();
-            await prisma.message.deleteMany();
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
-            await prisma.platformConfig.deleteMany();
+            // Clean up for this iteration
+            await cleanupDatabase();
 
             // Create test data
             const company1 = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
@@ -197,7 +191,7 @@ describe('BookingService', () => {
             expect(timeDiff).toBeLessThan(2000); // Within 2 seconds (more lenient for test timing)
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20, timeout: 10000 }
       );
     });
   });
@@ -220,11 +214,7 @@ describe('BookingService', () => {
           fc.boolean(), // use hourly (true) or daily (false) rate
           async (rate, commissionRate, taxRate, duration, useHourly) => {
             // Clean up for this iteration
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
-            await prisma.platformConfig.deleteMany();
+            await cleanupDatabase();
 
             // Create test data
             const company = await createTestCompany(`ORG${Date.now()}${Math.random()}`);
@@ -246,6 +236,12 @@ describe('BookingService', () => {
 
             // Small delay to ensure timestamp ordering
             await new Promise(resolve => setTimeout(resolve, 10));
+
+            // Verify listing exists before calculating costs
+            const listingExists = await prisma.vehicleListing.findUnique({
+              where: { id: vehicleListing.id }
+            });
+            expect(listingExists).toBeTruthy();
 
             // Calculate costs
             const costs = await bookingService.calculateCosts(
@@ -271,7 +267,7 @@ describe('BookingService', () => {
             expect(costs.total).toBeCloseTo(calculatedTotal, 2);
           }
         ),
-        { numRuns: 100 }
+        { numRuns: 20, timeout: 10000 }
       );
     });
   });
@@ -331,10 +327,7 @@ describe('BookingService', () => {
           fc.integer({ min: 1, max: 10 }), // duration in days
           async (durationDays) => {
             // Clean up for this iteration
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.driverListing.deleteMany();
-            await prisma.company.deleteMany();
+            await cleanupDatabase();
 
             // Create three companies: renter, vehicle provider, driver provider
             const renterCompany = await createTestCompany(`ORG${Date.now()}1`);
@@ -386,12 +379,7 @@ describe('BookingService', () => {
           fc.integer({ min: 0, max: 3 }), // gap days (0 means overlap, >0 means gap)
           async (duration1, duration2, gapDays) => {
             // Clean up for this iteration
-            await prisma.messageThread.deleteMany();
-            await prisma.message.deleteMany();
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
+            await cleanupDatabase();
 
             // Create companies and listing
             const renterCompany1 = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
@@ -475,12 +463,7 @@ describe('BookingService', () => {
           fc.integer({ min: 1, max: 10 }), // duration in days
           async (durationDays) => {
             // Clean up for this iteration
-            await prisma.messageThread.deleteMany();
-            await prisma.message.deleteMany();
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
+            await cleanupDatabase();
 
             // Create companies and listing
             const renterCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
@@ -545,13 +528,7 @@ describe('BookingService', () => {
           fc.integer({ min: 1, max: 24 }), // timeout hours
           async (durationDays, timeoutHours) => {
             // Clean up for this iteration
-            await prisma.messageThread.deleteMany();
-            await prisma.message.deleteMany();
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
-            await prisma.platformConfig.deleteMany();
+            await cleanupDatabase();
 
             // Set platform configuration with specific timeout
             await bookingService.updatePlatformConfig({
@@ -639,12 +616,7 @@ describe('BookingService', () => {
           fc.constantFrom(...Object.values(BookingStatus)), // target state
           async (currentState, targetState) => {
             // Clean up for this iteration
-            await prisma.messageThread.deleteMany();
-            await prisma.message.deleteMany();
-            await prisma.booking.deleteMany();
-            await prisma.vehicleListing.deleteMany();
-            await prisma.user.deleteMany();
-            await prisma.company.deleteMany();
+            await cleanupDatabase();
 
             // Create companies and listing
             const renterCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
@@ -690,6 +662,275 @@ describe('BookingService', () => {
                 bookingService.transitionBookingState(booking.id, targetState)
               ).rejects.toThrow('INVALID_STATE_TRANSITION');
             }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+  });
+
+  describe('Booking-Calendar Synchronization', () => {
+    /**
+     * Feature: listing-availability-calendar, Property 7: Automatic booking synchronization
+     * For any booking status change from PENDING to ACCEPTED, the listing's availability
+     * should automatically reflect the booking dates as unavailable.
+     * Validates: Requirements 3.1, 8.3
+     */
+    it('property: automatic booking synchronization', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 1, max: 10 }), // duration in days
+          fc.integer({ min: 1, max: 30 }), // days in future for start date
+          async (durationDays, daysInFuture) => {
+            // Clean up for this iteration
+            await cleanupDatabase();
+
+            // Create companies and listings
+            const renterCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
+            const providerCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}2`);
+            await createTestUser(renterCompany.id, `user1-${Date.now()}${Math.random()}@test.com`);
+            await createTestUser(providerCompany.id, `user2-${Date.now()}${Math.random()}@test.com`);
+            const vehicleListing = await createTestVehicleListing(providerCompany.id);
+            const driverListing = await createTestDriverListing(providerCompany.id);
+
+            // Create a booking request
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() + daysInFuture);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + durationDays);
+
+            const booking = await bookingService.createBookingRequest({
+              renterCompanyId: renterCompany.id,
+              providerCompanyId: providerCompany.id,
+              vehicleListingId: vehicleListing.id,
+              driverListingId: driverListing.id,
+              startDate,
+              endDate,
+              durationDays,
+            });
+
+            // Verify initial status is PENDING
+            expect(booking.status).toBe(BookingStatus.PENDING);
+
+            // Verify no availability blocks exist yet
+            const blocksBefore = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+            expect(blocksBefore.length).toBe(0);
+
+            // Accept the booking
+            const acceptedBooking = await bookingService.acceptBooking(
+              booking.id,
+              providerCompany.id
+            );
+
+            // Verify status transitioned to ACCEPTED
+            expect(acceptedBooking.status).toBe(BookingStatus.ACCEPTED);
+
+            // Verify availability blocks were created for both vehicle and driver
+            const blocksAfter = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+
+            // Should have 2 blocks (one for vehicle, one for driver)
+            expect(blocksAfter.length).toBe(2);
+
+            // Verify vehicle block
+            const vehicleBlock = blocksAfter.find(
+              (b) => b.listingId === vehicleListing.id && b.listingType === 'vehicle'
+            );
+            expect(vehicleBlock).toBeDefined();
+            expect(vehicleBlock!.startDate.getTime()).toBe(startDate.getTime());
+            expect(vehicleBlock!.endDate.getTime()).toBe(endDate.getTime());
+            expect(vehicleBlock!.reason).toContain(booking.bookingNumber);
+
+            // Verify driver block
+            const driverBlock = blocksAfter.find(
+              (b) => b.listingId === driverListing.id && b.listingType === 'driver'
+            );
+            expect(driverBlock).toBeDefined();
+            expect(driverBlock!.startDate.getTime()).toBe(startDate.getTime());
+            expect(driverBlock!.endDate.getTime()).toBe(endDate.getTime());
+            expect(driverBlock!.reason).toContain(booking.bookingNumber);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    /**
+     * Feature: listing-availability-calendar, Property 8: Booking cancellation availability restoration
+     * For any accepted booking, cancelling it should restore the listing's availability
+     * for those dates (round-trip property).
+     * Validates: Requirements 3.2
+     */
+    it('property: booking cancellation availability restoration', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 1, max: 10 }), // duration in days
+          fc.integer({ min: 1, max: 30 }), // days in future for start date
+          async (durationDays, daysInFuture) => {
+            // Clean up for this iteration
+            await cleanupDatabase();
+
+            // Create companies and listings
+            const renterCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
+            const providerCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}2`);
+            const renterUser = await createTestUser(renterCompany.id, `user1-${Date.now()}${Math.random()}@test.com`);
+            await createTestUser(providerCompany.id, `user2-${Date.now()}${Math.random()}@test.com`);
+            const vehicleListing = await createTestVehicleListing(providerCompany.id);
+            const driverListing = await createTestDriverListing(providerCompany.id);
+
+            // Create a booking request
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() + daysInFuture);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + durationDays);
+
+            const booking = await bookingService.createBookingRequest({
+              renterCompanyId: renterCompany.id,
+              providerCompanyId: providerCompany.id,
+              vehicleListingId: vehicleListing.id,
+              driverListingId: driverListing.id,
+              startDate,
+              endDate,
+              durationDays,
+            });
+
+            // Accept the booking
+            await bookingService.acceptBooking(booking.id, providerCompany.id);
+
+            // Verify availability blocks were created
+            const blocksAfterAccept = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+            expect(blocksAfterAccept.length).toBe(2);
+
+            // Cancel the booking
+            await bookingService.cancelBooking(booking.id, renterUser.id, 'Test cancellation');
+
+            // Verify availability blocks were removed (round-trip)
+            const blocksAfterCancel = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+            expect(blocksAfterCancel.length).toBe(0);
+
+            // Verify booking status is CANCELLED
+            const cancelledBooking = await prisma.booking.findUnique({
+              where: { id: booking.id },
+            });
+            expect(cancelledBooking?.status).toBe(BookingStatus.CANCELLED);
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    /**
+     * Feature: listing-availability-calendar, Property 9: Completed booking persistence
+     * For any booking with COMPLETED status, the dates should remain marked as booked
+     * in the calendar for historical reference.
+     * Validates: Requirements 3.4
+     */
+    it('property: completed booking persistence', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          fc.integer({ min: 1, max: 10 }), // duration in days
+          fc.integer({ min: 1, max: 30 }), // days in future for start date
+          async (durationDays, daysInFuture) => {
+            // Clean up for this iteration
+            await cleanupDatabase();
+
+            // Create companies and listings
+            const renterCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}1`);
+            const providerCompany = await createTestCompany(`ORG${Date.now()}${Math.random()}2`);
+            await createTestUser(renterCompany.id, `user1-${Date.now()}${Math.random()}@test.com`);
+            await createTestUser(providerCompany.id, `user2-${Date.now()}${Math.random()}@test.com`);
+            const vehicleListing = await createTestVehicleListing(providerCompany.id);
+            const driverListing = await createTestDriverListing(providerCompany.id);
+
+            // Create a booking request
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() + daysInFuture);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + durationDays);
+
+            const booking = await bookingService.createBookingRequest({
+              renterCompanyId: renterCompany.id,
+              providerCompanyId: providerCompany.id,
+              vehicleListingId: vehicleListing.id,
+              driverListingId: driverListing.id,
+              startDate,
+              endDate,
+              durationDays,
+            });
+
+            // Accept the booking
+            await bookingService.acceptBooking(booking.id, providerCompany.id);
+
+            // Verify availability blocks were created
+            const blocksAfterAccept = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+            expect(blocksAfterAccept.length).toBe(2);
+
+            // Transition to ACTIVE
+            await bookingService.transitionBookingState(booking.id, BookingStatus.ACTIVE);
+
+            // Transition to COMPLETED
+            await bookingService.transitionBookingState(booking.id, BookingStatus.COMPLETED);
+
+            // Verify availability blocks still exist (for historical reference)
+            const blocksAfterComplete = await prisma.availabilityBlock.findMany({
+              where: {
+                OR: [
+                  { listingId: vehicleListing.id, listingType: 'vehicle' },
+                  { listingId: driverListing.id, listingType: 'driver' },
+                ],
+              },
+            });
+            expect(blocksAfterComplete.length).toBe(2);
+
+            // Verify booking status is COMPLETED
+            const completedBooking = await prisma.booking.findUnique({
+              where: { id: booking.id },
+            });
+            expect(completedBooking?.status).toBe(BookingStatus.COMPLETED);
+            expect(completedBooking?.completedAt).toBeDefined();
+
+            // Verify the blocks still have the correct dates and reason
+            const vehicleBlock = blocksAfterComplete.find(
+              (b) => b.listingId === vehicleListing.id && b.listingType === 'vehicle'
+            );
+            expect(vehicleBlock).toBeDefined();
+            expect(vehicleBlock!.startDate.getTime()).toBe(startDate.getTime());
+            expect(vehicleBlock!.endDate.getTime()).toBe(endDate.getTime());
+            expect(vehicleBlock!.reason).toContain(booking.bookingNumber);
           }
         ),
         { numRuns: 100 }

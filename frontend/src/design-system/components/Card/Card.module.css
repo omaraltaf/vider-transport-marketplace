@@ -1,0 +1,60 @@
+/* Card Component Styles */
+
+.card {
+  background-color: white;
+  border-radius: 0.5rem; /* lg */
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* base */
+  transition: box-shadow 150ms ease-in-out, transform 150ms ease-in-out;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Padding variants */
+.padding-sm {
+  padding: 1rem; /* 16px */
+}
+
+.padding-md {
+  padding: 1.5rem; /* 24px */
+}
+
+.padding-lg {
+  padding: 2rem; /* 32px */
+}
+
+/* Mobile: reduce padding for better space utilization */
+@media (max-width: 768px) {
+  .padding-sm {
+    padding: 0.75rem; /* 12px */
+  }
+
+  .padding-md {
+    padding: 1rem; /* 16px */
+  }
+
+  .padding-lg {
+    padding: 1.25rem; /* 20px */
+  }
+}
+
+/* Hoverable variant */
+.hoverable:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* md */
+  transform: translateY(-2px);
+}
+
+/* Clickable state */
+.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.clickable:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+.clickable:active {
+  transform: translateY(0);
+}

@@ -1,0 +1,72 @@
+/* Bulk Calendar Management Page Styles */
+
+.selectionCard {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: var(--ds-color-error-50);
+  border: 1px solid var(--ds-color-error-200);
+  color: var(--ds-color-error-700);
+  font-size: 0.875rem;
+}
+
+.errorAlert svg {
+  flex-shrink: 0;
+  color: var(--ds-color-error-500);
+}
+
+/* Responsive adjustments - Tablet (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .selectionCard {
+    max-height: 450px;
+  }
+
+  .errorAlert {
+    font-size: 0.8125rem;
+    padding: 0.875rem;
+  }
+}
+
+/* Responsive adjustments - Mobile (< 768px) */
+@media (max-width: 768px) {
+  .selectionCard {
+    max-height: 350px;
+  }
+
+  .errorAlert {
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 0.8125rem;
+    padding: 0.875rem;
+  }
+
+  .errorAlert svg {
+    align-self: flex-start;
+  }
+}
+
+/* Responsive adjustments - Small Mobile (< 480px) */
+@media (max-width: 480px) {
+  .selectionCard {
+    max-height: 300px;
+  }
+
+  .errorAlert {
+    font-size: 0.75rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .selectionCard {
+    -webkit-overflow-scrolling: touch;
+  }
+}

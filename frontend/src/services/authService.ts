@@ -29,6 +29,7 @@ export interface LoginData {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  requiresPasswordChange?: boolean;
   user: {
     id: string;
     email: string;
@@ -68,8 +69,8 @@ class AuthService {
     return apiClient.post<RefreshTokenResponse>('/auth/refresh', { refreshToken });
   }
 
-  async logout(): Promise<void> {
-    return apiClient.post<void>('/auth/logout', {});
+  async logout(token?: string): Promise<void> {
+    return apiClient.post<void>('/auth/logout', {}, token);
   }
 }
 

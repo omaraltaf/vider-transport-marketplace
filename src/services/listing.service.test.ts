@@ -18,6 +18,8 @@ describe('ListingService', () => {
     await prisma.message.deleteMany({});
     await prisma.messageThread.deleteMany({});
     await prisma.booking.deleteMany({});
+    await prisma.availabilityBlock.deleteMany({});
+    await prisma.recurringBlock.deleteMany({});
     await prisma.driverListing.deleteMany({});
     await prisma.vehicleListing.deleteMany({});
     await prisma.user.deleteMany({});
@@ -904,7 +906,6 @@ describe('ListingService', () => {
       await prisma.user.delete({ where: { id: adminUser.id } });
     });
   });
-});
 
   /**
    * **Feature: vider-transport-marketplace, Property 13: Search filter conjunction**
@@ -1529,3 +1530,1092 @@ describe('ListingService', () => {
       await prisma.user.delete({ where: { id: adminUser.id } });
     });
   });
+
+  /**
+   * **Feature: listing-availability-calendar, Property 10: Search availability filtering**
+   * **Validates: Requirements 4.1, 4.2, 4.3, 8.5**
+   * 
+   * For any search with date filters, the results should only include listings where both 
+   * manual blocks and existing bookings do not overlap the requested date range.
+   */
+  describe('Property 15: Search availability filtering', () => {
+    it('should exclude listings with availability blocks overlapping requested dates', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          // Generate company data
+          fc.record({
+            name: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            organizationNumber: fc.integer({ min: 100000000, max: 999999999 }).map(n => n.toString()),
+            businessAddress: fc.string({ minLength: 1, maxLength: 200 }).filter(s => s.trim().length > 0),
+            city: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            postalCode: fc.string({ minLength: 4, maxLength: 4 }).map(s => s.replace(/\D/g, '0').padStart(4, '1')),
+            fylke: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            kommune: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            vatRegistered: fc.boolean(),
+          }),
+          // Generate search date range (future dates)
+          fc.record({
+            daysFromNow: fc.integer({ min: 1, max: 30 }),
+            duration: fc.integer({ min: 1, max: 7 }),
+          }),
+          // Generate block configuration
+          fc.record({
+            hasBlock: fc.boolean(),
+            blockOverlaps: fc.boolean(), // Whether the block overlaps with search dates
+          }),
+          async (companyData, searchDates, blockConfig) => {
+            // Create test company with unique org number
+            const uniqueOrgNumber = randomUUID().replace(/-/g, '').slice(0, 9);
+            const company = await prisma.company.create({
+              data: {
+                ...companyData,
+                organizationNumber: uniqueOrgNumber,
+              },
+            });
+
+            // Create a test user for creating blocks
+            const user = await prisma.user.create({
+              data: {
+                email: `user-${randomUUID()}@test.com`,
+                passwordHash: 'hashedpassword',
+                role: 'COMPANY_ADMIN',
+                companyId: company.id,
+                firstName: 'Test',
+                lastName: 'User',
+                phone: '12345678',
+                emailVerified: true,
+              },
+            });
+
+            // Create vehicle listing
+            const listing = await listingService.createVehicleListing({
+              companyId: company.id,
+              title: 'Test Vehicle',
+              description: 'Test description',
+              vehicleType: VehicleType.PALLET_18,
+              capacity: 18,
+              fuelType: FuelType.DIESEL,
+              city: 'Oslo',
+              fylke: 'Oslo',
+              kommune: 'Oslo',
+              hourlyRate: 100,
+              withDriver: true,
+              withDriverCost: 50,
+              withoutDriver: false,
+            });
+
+            // Calculate search date range
+            const searchStart = new Date();
+            searchStart.setDate(searchStart.getDate() + searchDates.daysFromNow);
+            searchStart.setHours(0, 0, 0, 0);
+            
+            const searchEnd = new Date(searchStart);
+            searchEnd.setDate(searchEnd.getDate() + searchDates.duration);
+            searchEnd.setHours(23, 59, 59, 999);
+
+            // Create availability block if configured
+            if (blockConfig.hasBlock) {
+              let blockStart: Date;
+              let blockEnd: Date;
+
+              if (blockConfig.blockOverlaps) {
+                // Create a block that overlaps with search dates
+                blockStart = new Date(searchStart);
+                blockStart.setDate(blockStart.getDate() + 1); // Start 1 day into search range
+                blockEnd = new Date(blockStart);
+                blockEnd.setDate(blockEnd.getDate() + 1);
+              } else {
+                // Create a block that doesn't overlap with search dates
+                blockStart = new Date(searchStart);
+                blockStart.setDate(blockStart.getDate() - 10); // 10 days before search
+                blockEnd = new Date(blockStart);
+                blockEnd.setDate(blockEnd.getDate() + 1);
+              }
+
+              await prisma.availabilityBlock.create({
+                data: {
+                  listingId: listing.id,
+                  listingType: 'vehicle',
+                  startDate: blockStart,
+                  endDate: blockEnd,
+                  reason: 'Test block',
+                  isRecurring: false,
+                  createdBy: user.id,
+                },
+              });
+            }
+
+            // Search for listings with date filter
+            const searchResults = await listingService.searchListings({
+              dateRange: {
+                start: searchStart,
+                end: searchEnd,
+              },
+            });
+
+            // Verify results based on block configuration
+            const listingInResults = searchResults.vehicleListings.some(l => l.id === listing.id);
+
+            if (blockConfig.hasBlock && blockConfig.blockOverlaps) {
+              // Listing should be excluded if block overlaps
+              expect(listingInResults).toBe(false);
+            } else {
+              // Listing should be included if no block or block doesn't overlap
+              expect(listingInResults).toBe(true);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should exclude listings with bookings overlapping requested dates', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          // Generate company data
+          fc.record({
+            name: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            organizationNumber: fc.integer({ min: 100000000, max: 999999999 }).map(n => n.toString()),
+            businessAddress: fc.string({ minLength: 1, maxLength: 200 }).filter(s => s.trim().length > 0),
+            city: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            postalCode: fc.string({ minLength: 4, maxLength: 4 }).map(s => s.replace(/\D/g, '0').padStart(4, '1')),
+            fylke: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            kommune: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            vatRegistered: fc.boolean(),
+          }),
+          // Generate search date range
+          fc.record({
+            daysFromNow: fc.integer({ min: 1, max: 30 }),
+            duration: fc.integer({ min: 1, max: 7 }),
+          }),
+          // Generate booking configuration
+          fc.record({
+            hasBooking: fc.boolean(),
+            bookingOverlaps: fc.boolean(),
+            bookingStatus: fc.constantFrom('ACCEPTED', 'ACTIVE'),
+          }),
+          async (companyData, searchDates, bookingConfig) => {
+            // Create provider company
+            const uniqueOrgNumber = randomUUID().replace(/-/g, '').slice(0, 9);
+            const providerCompany = await prisma.company.create({
+              data: {
+                ...companyData,
+                organizationNumber: uniqueOrgNumber,
+              },
+            });
+
+            // Create renter company
+            const renterCompany = await prisma.company.create({
+              data: {
+                name: 'Renter Company',
+                organizationNumber: randomUUID().replace(/-/g, '').slice(0, 9),
+                businessAddress: '456 Renter St',
+                city: 'Bergen',
+                postalCode: '5001',
+                fylke: 'Vestland',
+                kommune: 'Bergen',
+                vatRegistered: true,
+              },
+            });
+
+            // Create users
+            const providerUser = await prisma.user.create({
+              data: {
+                email: `provider-${randomUUID()}@test.com`,
+                passwordHash: 'hashedpassword',
+                role: 'COMPANY_ADMIN',
+                companyId: providerCompany.id,
+                firstName: 'Provider',
+                lastName: 'User',
+                phone: '12345678',
+                emailVerified: true,
+              },
+            });
+
+            const renterUser = await prisma.user.create({
+              data: {
+                email: `renter-${randomUUID()}@test.com`,
+                passwordHash: 'hashedpassword',
+                role: 'COMPANY_ADMIN',
+                companyId: renterCompany.id,
+                firstName: 'Renter',
+                lastName: 'User',
+                phone: '87654321',
+                emailVerified: true,
+              },
+            });
+
+            // Create vehicle listing
+            const listing = await listingService.createVehicleListing({
+              companyId: providerCompany.id,
+              title: 'Test Vehicle',
+              description: 'Test description',
+              vehicleType: VehicleType.PALLET_18,
+              capacity: 18,
+              fuelType: FuelType.DIESEL,
+              city: 'Oslo',
+              fylke: 'Oslo',
+              kommune: 'Oslo',
+              hourlyRate: 100,
+              withDriver: true,
+              withDriverCost: 50,
+              withoutDriver: false,
+            });
+
+            // Calculate search date range
+            const searchStart = new Date();
+            searchStart.setDate(searchStart.getDate() + searchDates.daysFromNow);
+            searchStart.setHours(0, 0, 0, 0);
+            
+            const searchEnd = new Date(searchStart);
+            searchEnd.setDate(searchEnd.getDate() + searchDates.duration);
+            searchEnd.setHours(23, 59, 59, 999);
+
+            // Create booking if configured
+            if (bookingConfig.hasBooking) {
+              let bookingStart: Date;
+              let bookingEnd: Date;
+
+              if (bookingConfig.bookingOverlaps) {
+                // Create a booking that overlaps with search dates
+                bookingStart = new Date(searchStart);
+                bookingStart.setDate(bookingStart.getDate() + 1);
+                bookingEnd = new Date(bookingStart);
+                bookingEnd.setDate(bookingEnd.getDate() + 2);
+              } else {
+                // Create a booking that doesn't overlap
+                bookingStart = new Date(searchStart);
+                bookingStart.setDate(bookingStart.getDate() - 10);
+                bookingEnd = new Date(bookingStart);
+                bookingEnd.setDate(bookingEnd.getDate() + 1);
+              }
+
+              await prisma.booking.create({
+                data: {
+                  bookingNumber: `BK-${Date.now()}-${Math.random().toString().slice(2, 5)}`,
+                  vehicleListingId: listing.id,
+                  providerCompanyId: providerCompany.id,
+                  renterCompanyId: renterCompany.id,
+                  requestedById: renterUser.id,
+                  startDate: bookingStart,
+                  endDate: bookingEnd,
+                  totalCost: 1000,
+                  currency: 'NOK',
+                  status: bookingConfig.bookingStatus as any,
+                  withDriver: true,
+                },
+              });
+            }
+
+            // Search for listings with date filter
+            const searchResults = await listingService.searchListings({
+              dateRange: {
+                start: searchStart,
+                end: searchEnd,
+              },
+            });
+
+            // Verify results based on booking configuration
+            const listingInResults = searchResults.vehicleListings.some(l => l.id === listing.id);
+
+            if (bookingConfig.hasBooking && bookingConfig.bookingOverlaps) {
+              // Listing should be excluded if booking overlaps
+              expect(listingInResults).toBe(false);
+            } else {
+              // Listing should be included if no booking or booking doesn't overlap
+              expect(listingInResults).toBe(true);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should exclude listings with recurring blocks overlapping requested dates', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          // Generate company data
+          fc.record({
+            name: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            organizationNumber: fc.integer({ min: 100000000, max: 999999999 }).map(n => n.toString()),
+            businessAddress: fc.string({ minLength: 1, maxLength: 200 }).filter(s => s.trim().length > 0),
+            city: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            postalCode: fc.string({ minLength: 4, maxLength: 4 }).map(s => s.replace(/\D/g, '0').padStart(4, '1')),
+            fylke: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            kommune: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            vatRegistered: fc.boolean(),
+          }),
+          // Generate search date range
+          fc.record({
+            daysFromNow: fc.integer({ min: 1, max: 30 }),
+            duration: fc.integer({ min: 1, max: 7 }),
+          }),
+          // Generate recurring block configuration
+          fc.record({
+            hasRecurringBlock: fc.boolean(),
+            daysOfWeek: fc.array(fc.integer({ min: 0, max: 6 }), { minLength: 1, maxLength: 3 }),
+          }),
+          async (companyData, searchDates, recurringConfig) => {
+            // Create test company
+            const uniqueOrgNumber = randomUUID().replace(/-/g, '').slice(0, 9);
+            const company = await prisma.company.create({
+              data: {
+                ...companyData,
+                organizationNumber: uniqueOrgNumber,
+              },
+            });
+
+            // Create user
+            const user = await prisma.user.create({
+              data: {
+                email: `user-${randomUUID()}@test.com`,
+                passwordHash: 'hashedpassword',
+                role: 'COMPANY_ADMIN',
+                companyId: company.id,
+                firstName: 'Test',
+                lastName: 'User',
+                phone: '12345678',
+                emailVerified: true,
+              },
+            });
+
+            // Create vehicle listing
+            const listing = await listingService.createVehicleListing({
+              companyId: company.id,
+              title: 'Test Vehicle',
+              description: 'Test description',
+              vehicleType: VehicleType.PALLET_18,
+              capacity: 18,
+              fuelType: FuelType.DIESEL,
+              city: 'Oslo',
+              fylke: 'Oslo',
+              kommune: 'Oslo',
+              hourlyRate: 100,
+              withDriver: true,
+              withDriverCost: 50,
+              withoutDriver: false,
+            });
+
+            // Calculate search date range
+            const searchStart = new Date();
+            searchStart.setDate(searchStart.getDate() + searchDates.daysFromNow);
+            searchStart.setHours(0, 0, 0, 0);
+            
+            const searchEnd = new Date(searchStart);
+            searchEnd.setDate(searchEnd.getDate() + searchDates.duration);
+            searchEnd.setHours(23, 59, 59, 999);
+
+            // Create recurring block if configured
+            let shouldBeExcluded = false;
+            if (recurringConfig.hasRecurringBlock) {
+              // Create recurring block that covers the search period
+              const recurringStart = new Date(searchStart);
+              recurringStart.setDate(recurringStart.getDate() - 5); // Start before search
+              
+              const recurringEnd = new Date(searchEnd);
+              recurringEnd.setDate(recurringEnd.getDate() + 5); // End after search
+
+              await prisma.recurringBlock.create({
+                data: {
+                  listingId: listing.id,
+                  listingType: 'vehicle',
+                  daysOfWeek: recurringConfig.daysOfWeek,
+                  startDate: recurringStart,
+                  endDate: recurringEnd,
+                  reason: 'Test recurring block',
+                  createdBy: user.id,
+                },
+              });
+
+              // Check if any day in the search range matches the recurring pattern
+              let currentDate = new Date(searchStart);
+              while (currentDate <= searchEnd) {
+                if (recurringConfig.daysOfWeek.includes(currentDate.getDay())) {
+                  shouldBeExcluded = true;
+                  break;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+              }
+            }
+
+            // Search for listings with date filter
+            const searchResults = await listingService.searchListings({
+              dateRange: {
+                start: searchStart,
+                end: searchEnd,
+              },
+            });
+
+            // Verify results
+            const listingInResults = searchResults.vehicleListings.some(l => l.id === listing.id);
+
+            if (shouldBeExcluded) {
+              // Listing should be excluded if recurring block generates instances in search range
+              expect(listingInResults).toBe(false);
+            } else {
+              // Listing should be included otherwise
+              expect(listingInResults).toBe(true);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should include listings when search has no date filter', async () => {
+      // Create test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create user
+      const user = await prisma.user.create({
+        data: {
+          email: `user-${randomUUID()}@test.com`,
+          passwordHash: 'hashedpassword',
+          role: 'COMPANY_ADMIN',
+          companyId: company.id,
+          firstName: 'Test',
+          lastName: 'User',
+          phone: '12345678',
+          emailVerified: true,
+        },
+      });
+
+      // Create vehicle listing
+      const listing = await listingService.createVehicleListing({
+        companyId: company.id,
+        title: 'Test Vehicle',
+        description: 'Test description',
+        vehicleType: VehicleType.PALLET_18,
+        capacity: 18,
+        fuelType: FuelType.DIESEL,
+        city: 'Oslo',
+        fylke: 'Oslo',
+        kommune: 'Oslo',
+        hourlyRate: 100,
+        withDriver: true,
+        withDriverCost: 50,
+        withoutDriver: false,
+      });
+
+      // Create availability block
+      const blockStart = new Date();
+      blockStart.setDate(blockStart.getDate() + 5);
+      const blockEnd = new Date(blockStart);
+      blockEnd.setDate(blockEnd.getDate() + 2);
+
+      await prisma.availabilityBlock.create({
+        data: {
+          listingId: listing.id,
+          listingType: 'vehicle',
+          startDate: blockStart,
+          endDate: blockEnd,
+          reason: 'Test block',
+          isRecurring: false,
+          createdBy: user.id,
+        },
+      });
+
+      // Search without date filter
+      const searchResults = await listingService.searchListings({});
+
+      // Listing should be included even though it has blocks
+      const listingInResults = searchResults.vehicleListings.some(l => l.id === listing.id);
+      expect(listingInResults).toBe(true);
+    });
+  });
+
+  /**
+   * **Feature: listing-availability-calendar, Property 10: Search availability filtering**
+   * **Validates: Requirements 4.1, 4.2, 4.3, 8.5**
+   * 
+   * For any search with date filters, the results should only include listings where both 
+   * manual blocks and existing bookings do not overlap the requested date range.
+   */
+  describe('Property 10: Search availability filtering', () => {
+    it('should only return listings available for the entire requested date range', async () => {
+      await fc.assert(
+        fc.asyncProperty(
+          // Generate company data
+          fc.record({
+            name: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            organizationNumber: fc.integer({ min: 100000000, max: 999999999 }).map(n => n.toString()),
+            businessAddress: fc.string({ minLength: 1, maxLength: 200 }).filter(s => s.trim().length > 0),
+            city: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            postalCode: fc.string({ minLength: 4, maxLength: 4 }).map(s => s.replace(/\D/g, '0').padStart(4, '1')),
+            fylke: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            kommune: fc.string({ minLength: 1, maxLength: 100 }).filter(s => s.trim().length > 0),
+            vatRegistered: fc.boolean(),
+          }),
+          // Generate search date range (future dates only)
+          fc.record({
+            daysFromNow: fc.integer({ min: 1, max: 30 }),
+            duration: fc.integer({ min: 1, max: 14 }),
+          }),
+          // Generate conflict scenario
+          fc.constantFrom('no-conflict', 'booking-conflict', 'block-conflict', 'recurring-block-conflict'),
+          async (companyData, searchDates, conflictType) => {
+            // Create test company with unique org number using UUID
+            const uniqueOrgNumber = randomUUID().replace(/-/g, '').slice(0, 9);
+            const company = await prisma.company.create({
+              data: {
+                ...companyData,
+                organizationNumber: uniqueOrgNumber,
+              },
+            });
+
+            // Create a test user for bookings and blocks
+            const user = await prisma.user.create({
+              data: {
+                email: `user-${randomUUID()}@test.com`,
+                passwordHash: 'hashedpassword',
+                role: 'COMPANY_ADMIN',
+                companyId: company.id,
+                firstName: 'Test',
+                lastName: 'User',
+                phone: '12345678',
+                emailVerified: true,
+              },
+            });
+
+            // Create a vehicle listing
+            const listing = await listingService.createVehicleListing({
+              companyId: company.id,
+              title: 'Test Vehicle',
+              description: 'Test description',
+              vehicleType: VehicleType.PALLET_18,
+              capacity: 18,
+              fuelType: FuelType.DIESEL,
+              city: companyData.city,
+              fylke: companyData.fylke,
+              kommune: companyData.kommune,
+              hourlyRate: 100,
+              withDriver: true,
+              withDriverCost: 50,
+              withoutDriver: false,
+            });
+
+            // Calculate search date range
+            const searchStart = new Date();
+            searchStart.setDate(searchStart.getDate() + searchDates.daysFromNow);
+            searchStart.setHours(0, 0, 0, 0);
+            
+            const searchEnd = new Date(searchStart);
+            searchEnd.setDate(searchEnd.getDate() + searchDates.duration);
+            searchEnd.setHours(23, 59, 59, 999);
+
+            // Create conflicts based on scenario
+            let shouldBeFiltered = false;
+
+            if (conflictType === 'booking-conflict') {
+              // Create a booking that overlaps with search dates
+              const bookingStart = new Date(searchStart);
+              bookingStart.setDate(bookingStart.getDate() + Math.floor(searchDates.duration / 2));
+              
+              const bookingEnd = new Date(bookingStart);
+              bookingEnd.setDate(bookingEnd.getDate() + 2);
+
+              await prisma.booking.create({
+                data: {
+                  bookingNumber: `BK-${Date.now()}-${Math.random().toString().slice(2, 5)}`,
+                  vehicleListingId: listing.id,
+                  providerCompanyId: company.id,
+                  renterCompanyId: company.id,
+                  startDate: bookingStart,
+                  endDate: bookingEnd,
+                  providerRate: 1000,
+                  platformCommission: 100,
+                  platformCommissionRate: 0.1,
+                  taxes: 50,
+                  taxRate: 0.05,
+                  total: 1150,
+                  currency: 'NOK',
+                  status: 'ACCEPTED', // Active booking should filter out the listing
+                  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+                },
+              });
+
+              shouldBeFiltered = true;
+            } else if (conflictType === 'block-conflict') {
+              // Create an availability block that overlaps with search dates
+              const blockStart = new Date(searchStart);
+              blockStart.setDate(blockStart.getDate() + Math.floor(searchDates.duration / 2));
+              
+              const blockEnd = new Date(blockStart);
+              blockEnd.setDate(blockEnd.getDate() + 2);
+
+              await prisma.availabilityBlock.create({
+                data: {
+                  listingId: listing.id,
+                  listingType: 'vehicle',
+                  startDate: blockStart,
+                  endDate: blockEnd,
+                  reason: 'Maintenance',
+                  isRecurring: false,
+                  createdBy: user.id,
+                },
+              });
+
+              shouldBeFiltered = true;
+            } else if (conflictType === 'recurring-block-conflict') {
+              // Create a recurring block that generates instances during search dates
+              const recurringStart = new Date(searchStart);
+              recurringStart.setDate(recurringStart.getDate() - 7); // Start before search
+              
+              const recurringEnd = new Date(searchEnd);
+              recurringEnd.setDate(recurringEnd.getDate() + 7); // End after search
+
+              // Block every day of the week to ensure overlap
+              await prisma.recurringBlock.create({
+                data: {
+                  listingId: listing.id,
+                  listingType: 'vehicle',
+                  daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // All days
+                  startDate: recurringStart,
+                  endDate: recurringEnd,
+                  reason: 'Regular maintenance',
+                  createdBy: user.id,
+                },
+              });
+
+              shouldBeFiltered = true;
+            }
+
+            // Perform search with date filters
+            // Include location filter to match the listing's location
+            const searchResults = await listingService.searchListings({
+              listingType: 'vehicle',
+              location: {
+                fylke: companyData.fylke,
+                kommune: companyData.kommune,
+              },
+              dateRange: {
+                start: searchStart,
+                end: searchEnd,
+              },
+            });
+
+            // Verify the listing is included/excluded based on conflicts
+            const listingInResults = searchResults.vehicleListings.some(
+              (l) => l.id === listing.id
+            );
+
+            if (shouldBeFiltered) {
+              // Listing should NOT be in results due to conflict
+              expect(listingInResults).toBe(false);
+            } else {
+              // Listing should be in results (no conflicts)
+              expect(listingInResults).toBe(true);
+            }
+          }
+        ),
+        { numRuns: 100 }
+      );
+    });
+
+    it('should filter out listings with overlapping bookings', async () => {
+      // Create a test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create a vehicle listing
+      const listing = await listingService.createVehicleListing({
+        companyId: company.id,
+        title: 'Test Vehicle',
+        description: 'Test description',
+        vehicleType: VehicleType.PALLET_18,
+        capacity: 18,
+        fuelType: FuelType.DIESEL,
+        city: 'Oslo',
+        fylke: 'Oslo',
+        kommune: 'Oslo',
+        hourlyRate: 100,
+        withDriver: true,
+        withDriverCost: 50,
+        withoutDriver: false,
+      });
+
+      // Create a booking for the listing
+      const bookingStart = new Date();
+      bookingStart.setDate(bookingStart.getDate() + 5);
+      bookingStart.setHours(0, 0, 0, 0);
+      
+      const bookingEnd = new Date(bookingStart);
+      bookingEnd.setDate(bookingEnd.getDate() + 3);
+      bookingEnd.setHours(23, 59, 59, 999);
+
+      const user = await prisma.user.create({
+        data: {
+          email: `user-${randomUUID()}@test.com`,
+          passwordHash: 'hashedpassword',
+          role: 'COMPANY_ADMIN',
+          companyId: company.id,
+          firstName: 'Test',
+          lastName: 'User',
+          phone: '12345678',
+          emailVerified: true,
+        },
+      });
+
+      await prisma.booking.create({
+        data: {
+          bookingNumber: `BK-${Date.now()}-${Math.random().toString().slice(2, 5)}`,
+          vehicleListingId: listing.id,
+          providerCompanyId: company.id,
+          renterCompanyId: company.id,
+          startDate: bookingStart,
+          endDate: bookingEnd,
+          providerRate: 1000,
+          platformCommission: 100,
+          platformCommissionRate: 0.1,
+          taxes: 50,
+          taxRate: 0.05,
+          total: 1150,
+          currency: 'NOK',
+          status: 'ACCEPTED',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      // Search for listings during the booked period
+      const searchResults = await listingService.searchListings({
+        listingType: 'vehicle',
+        dateRange: {
+          start: bookingStart,
+          end: bookingEnd,
+        },
+      });
+
+      // Listing should NOT be in results
+      const listingInResults = searchResults.vehicleListings.some(
+        (l) => l.id === listing.id
+      );
+      expect(listingInResults).toBe(false);
+    });
+
+    it('should filter out listings with overlapping availability blocks', async () => {
+      // Create a test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create a test user
+      const user = await prisma.user.create({
+        data: {
+          email: `user-${randomUUID()}@test.com`,
+          passwordHash: 'hashedpassword',
+          role: 'COMPANY_ADMIN',
+          companyId: company.id,
+          firstName: 'Test',
+          lastName: 'User',
+          phone: '12345678',
+          emailVerified: true,
+        },
+      });
+
+      // Create a vehicle listing
+      const listing = await listingService.createVehicleListing({
+        companyId: company.id,
+        title: 'Test Vehicle',
+        description: 'Test description',
+        vehicleType: VehicleType.PALLET_18,
+        capacity: 18,
+        fuelType: FuelType.DIESEL,
+        city: 'Oslo',
+        fylke: 'Oslo',
+        kommune: 'Oslo',
+        hourlyRate: 100,
+        withDriver: true,
+        withDriverCost: 50,
+        withoutDriver: false,
+      });
+
+      // Create an availability block for the listing
+      const blockStart = new Date();
+      blockStart.setDate(blockStart.getDate() + 10);
+      blockStart.setHours(0, 0, 0, 0);
+      
+      const blockEnd = new Date(blockStart);
+      blockEnd.setDate(blockEnd.getDate() + 3);
+      blockEnd.setHours(23, 59, 59, 999);
+
+      await prisma.availabilityBlock.create({
+        data: {
+          listingId: listing.id,
+          listingType: 'vehicle',
+          startDate: blockStart,
+          endDate: blockEnd,
+          reason: 'Maintenance',
+          isRecurring: false,
+          createdBy: user.id,
+        },
+      });
+
+      // Search for listings during the blocked period
+      const searchResults = await listingService.searchListings({
+        listingType: 'vehicle',
+        dateRange: {
+          start: blockStart,
+          end: blockEnd,
+        },
+      });
+
+      // Listing should NOT be in results
+      const listingInResults = searchResults.vehicleListings.some(
+        (l) => l.id === listing.id
+      );
+      expect(listingInResults).toBe(false);
+    });
+
+    it('should include listings with no conflicts', async () => {
+      // Create a test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create a vehicle listing
+      const listing = await listingService.createVehicleListing({
+        companyId: company.id,
+        title: 'Test Vehicle',
+        description: 'Test description',
+        vehicleType: VehicleType.PALLET_18,
+        capacity: 18,
+        fuelType: FuelType.DIESEL,
+        city: 'Oslo',
+        fylke: 'Oslo',
+        kommune: 'Oslo',
+        hourlyRate: 100,
+        withDriver: true,
+        withDriverCost: 50,
+        withoutDriver: false,
+      });
+
+      // Search for listings in the future (no conflicts)
+      const searchStart = new Date();
+      searchStart.setDate(searchStart.getDate() + 30);
+      searchStart.setHours(0, 0, 0, 0);
+      
+      const searchEnd = new Date(searchStart);
+      searchEnd.setDate(searchEnd.getDate() + 3);
+      searchEnd.setHours(23, 59, 59, 999);
+
+      const searchResults = await listingService.searchListings({
+        listingType: 'vehicle',
+        dateRange: {
+          start: searchStart,
+          end: searchEnd,
+        },
+      });
+
+      // Listing should be in results
+      const listingInResults = searchResults.vehicleListings.some(
+        (l) => l.id === listing.id
+      );
+      expect(listingInResults).toBe(true);
+    });
+
+    it('should filter out driver listings with overlapping bookings', async () => {
+      // Create a test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create admin user for verification
+      const adminUser = await prisma.user.create({
+        data: {
+          email: `admin-${randomUUID()}@test.com`,
+          passwordHash: 'hashedpassword',
+          role: 'PLATFORM_ADMIN',
+          companyId: company.id,
+          firstName: 'Admin',
+          lastName: 'User',
+          phone: '12345678',
+          emailVerified: true,
+        },
+      });
+
+      // Create a driver listing
+      const listing = await listingService.createDriverListing({
+        companyId: company.id,
+        name: 'John Doe',
+        licenseClass: 'C',
+        languages: ['Norwegian', 'English'],
+        hourlyRate: 100,
+        licenseDocumentPath: '/path/to/license.pdf',
+      });
+
+      // Verify the driver
+      await listingService.verifyDriverListing(listing.id, adminUser.id);
+
+      // Create a booking for the driver
+      const bookingStart = new Date();
+      bookingStart.setDate(bookingStart.getDate() + 5);
+      bookingStart.setHours(0, 0, 0, 0);
+      
+      const bookingEnd = new Date(bookingStart);
+      bookingEnd.setDate(bookingEnd.getDate() + 3);
+      bookingEnd.setHours(23, 59, 59, 999);
+
+      await prisma.booking.create({
+        data: {
+          bookingNumber: `BK-${Date.now()}-${Math.random().toString().slice(2, 5)}`,
+          driverListingId: listing.id,
+          providerCompanyId: company.id,
+          renterCompanyId: company.id,
+          startDate: bookingStart,
+          endDate: bookingEnd,
+          providerRate: 1000,
+          platformCommission: 100,
+          platformCommissionRate: 0.1,
+          taxes: 50,
+          taxRate: 0.05,
+          total: 1150,
+          currency: 'NOK',
+          status: 'ACCEPTED',
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
+
+      // Search for driver listings during the booked period
+      const searchResults = await listingService.searchListings({
+        listingType: 'driver',
+        dateRange: {
+          start: bookingStart,
+          end: bookingEnd,
+        },
+      });
+
+      // Listing should NOT be in results
+      const listingInResults = searchResults.driverListings.some(
+        (l) => l.id === listing.id
+      );
+      expect(listingInResults).toBe(false);
+    });
+
+    it('should filter out driver listings with overlapping availability blocks', async () => {
+      // Create a test company
+      const company = await prisma.company.create({
+        data: {
+          name: 'Test Company',
+          organizationNumber: generateOrgNumber(),
+          businessAddress: '123 Test St',
+          city: 'Oslo',
+          postalCode: '0001',
+          fylke: 'Oslo',
+          kommune: 'Oslo',
+          vatRegistered: true,
+        },
+      });
+
+      // Create admin user for verification
+      const adminUser = await prisma.user.create({
+        data: {
+          email: `admin-${randomUUID()}@test.com`,
+          passwordHash: 'hashedpassword',
+          role: 'PLATFORM_ADMIN',
+          companyId: company.id,
+          firstName: 'Admin',
+          lastName: 'User',
+          phone: '12345678',
+          emailVerified: true,
+        },
+      });
+
+      // Create a driver listing
+      const listing = await listingService.createDriverListing({
+        companyId: company.id,
+        name: 'John Doe',
+        licenseClass: 'C',
+        languages: ['Norwegian', 'English'],
+        hourlyRate: 100,
+        licenseDocumentPath: '/path/to/license.pdf',
+      });
+
+      // Verify the driver
+      await listingService.verifyDriverListing(listing.id, adminUser.id);
+
+      // Create an availability block for the driver
+      const blockStart = new Date();
+      blockStart.setDate(blockStart.getDate() + 10);
+      blockStart.setHours(0, 0, 0, 0);
+      
+      const blockEnd = new Date(blockStart);
+      blockEnd.setDate(blockEnd.getDate() + 3);
+      blockEnd.setHours(23, 59, 59, 999);
+
+      await prisma.availabilityBlock.create({
+        data: {
+          listingId: listing.id,
+          listingType: 'driver',
+          startDate: blockStart,
+          endDate: blockEnd,
+          reason: 'Vacation',
+          isRecurring: false,
+          createdBy: adminUser.id,
+        },
+      });
+
+      // Search for driver listings during the blocked period
+      const searchResults = await listingService.searchListings({
+        listingType: 'driver',
+        dateRange: {
+          start: blockStart,
+          end: blockEnd,
+        },
+      });
+
+      // Listing should NOT be in results
+      const listingInResults = searchResults.driverListings.some(
+        (l) => l.id === listing.id
+      );
+      expect(listingInResults).toBe(false);
+    });
+  });
+});

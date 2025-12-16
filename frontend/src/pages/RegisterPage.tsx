@@ -11,6 +11,8 @@ import { authService, type RegisterData } from '../services/authService';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { Button, Card, FormField, Icon, Stack } from '../design-system/components';
+import { Mail, Phone, Lock, User, Building, MapPin, Check, AlertCircle } from 'lucide-react';
 
 const registerSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -42,12 +44,17 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       vatRegistered: false,
     },
   });
+
+  // Watch all form fields
+  const formValues = watch();
 
   const registerMutation = useMutation({
     mutationFn: (data: RegisterData) => authService.register(data),
@@ -66,43 +73,34 @@ export default function RegisterPage() {
   if (verificationToken && registeredEmail) {
     return (
       <Layout showNavbar={false}>
-        <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-          <div className="max-w-md w-full space-y-6 p-8 bg-white rounded-lg shadow">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-              <svg
-                className="h-6 w-6 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-            </div>
-            <h2 className="mt-4 text-2xl font-bold text-gray-900">
-              Registration Successful!
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              We've sent a verification email to <strong>{registeredEmail}</strong>
-            </p>
-            <p className="mt-2 text-sm text-gray-600">
-              Please check your email and click the verification link to activate your account.
-            </p>
+        <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full">
+            <Card padding="lg">
+              <Stack direction="vertical" spacing={6} align="center">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full ds-bg-success-100">
+                  <Icon icon={Check} size="xl" color="#059669" />
+                </div>
+                
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold ds-text-gray-900">
+                    Registration Successful!
+                  </h2>
+                  <p className="text-sm ds-text-gray-600">
+                    We've sent a verification email to <strong>{registeredEmail}</strong>
+                  </p>
+                  <p className="text-sm ds-text-gray-600">
+                    Please check your email and click the verification link to activate your account.
+                  </p>
+                </div>
+
+                <Link to="/login" className="w-full">
+                  <Button variant="primary" size="lg" fullWidth>
+                    Go to Login
+                  </Button>
+                </Link>
+              </Stack>
+            </Card>
           </div>
-          <div className="mt-6">
-            <Link
-              to="/login"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Go to Login
-            </Link>
-          </div>
-        </div>
         </div>
       </Layout>
     );
@@ -110,268 +108,238 @@ export default function RegisterPage() {
 
   return (
     <Layout showNavbar={false}>
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-        <div className="max-w-2xl w-full space-y-8 p-8 bg-white rounded-lg shadow">
-        <div>
-          <h2 className="text-3xl font-bold text-center text-gray-900">
-            Create Company Account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Join the Vider marketplace for Norwegian B2B transport
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* User Information */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900">User Information</h3>
-            
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                  First Name *
-                </label>
-                <input
-                  {...register('firstName')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-                )}
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-2xl w-full">
+          <Card padding="lg">
+            <div className="space-y-8">
+              <div className="text-center">
+                <h2 className="text-3xl font-bold ds-text-gray-900">
+                  Create Company Account
+                </h2>
+                <p className="mt-2 text-sm ds-text-gray-600">
+                  Join the Vider marketplace for Norwegian B2B transport
+                </p>
               </div>
 
-              <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-                  Last Name *
-                </label>
-                <input
-                  {...register('lastName')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-                )}
-              </div>
-            </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+                {/* User Information */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium ds-text-gray-900 border-b pb-2">User Information</h3>
+                  
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      type="text"
+                      label="First Name"
+                      value={formValues.firstName || ''}
+                      onChange={(value) => setValue('firstName', value)}
+                      error={errors.firstName?.message}
+                      required
+                      leftIcon={<Icon icon={User} size="sm" />}
+                      placeholder="John"
+                    />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address *
-              </label>
-              <input
-                {...register('email')}
-                type="email"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
+                    <FormField
+                      type="text"
+                      label="Last Name"
+                      value={formValues.lastName || ''}
+                      onChange={(value) => setValue('lastName', value)}
+                      error={errors.lastName?.message}
+                      required
+                      leftIcon={<Icon icon={User} size="sm" />}
+                      placeholder="Doe"
+                    />
+                  </div>
 
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Phone Number *
-              </label>
-              <input
-                {...register('phone')}
-                type="tel"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-              {errors.phone && (
-                <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>
-              )}
-            </div>
+                  <FormField
+                    type="email"
+                    label="Email Address"
+                    value={formValues.email || ''}
+                    onChange={(value) => setValue('email', value)}
+                    error={errors.email?.message}
+                    required
+                    autoComplete="email"
+                    leftIcon={<Icon icon={Mail} size="sm" />}
+                    placeholder="john.doe@company.com"
+                  />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password *
-                </label>
-                <input
-                  {...register('password')}
-                  type="password"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
+                  <FormField
+                    type="tel"
+                    label="Phone Number"
+                    value={formValues.phone || ''}
+                    onChange={(value) => setValue('phone', value)}
+                    error={errors.phone?.message}
+                    required
+                    leftIcon={<Icon icon={Phone} size="sm" />}
+                    placeholder="+47 123 45 678"
+                  />
 
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                  Confirm Password *
-                </label>
-                <input
-                  {...register('confirmPassword')}
-                  type="password"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      type="password"
+                      label="Password"
+                      value={formValues.password || ''}
+                      onChange={(value) => setValue('password', value)}
+                      error={errors.password?.message}
+                      required
+                      autoComplete="new-password"
+                      leftIcon={<Icon icon={Lock} size="sm" />}
+                      placeholder="Min. 8 characters"
+                      helperText="At least 8 characters"
+                    />
 
-          {/* Company Information */}
-          <div className="space-y-4 pt-6 border-t border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Company Information</h3>
-            
-            <div>
-              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
-                Company Name *
-              </label>
-              <input
-                {...register('companyName')}
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-              {errors.companyName && (
-                <p className="mt-1 text-sm text-red-600">{errors.companyName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="organizationNumber" className="block text-sm font-medium text-gray-700">
-                Organization Number (Org. nr.) *
-              </label>
-              <input
-                {...register('organizationNumber')}
-                type="text"
-                placeholder="9 digits"
-                maxLength={9}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-              {errors.organizationNumber && (
-                <p className="mt-1 text-sm text-red-600">{errors.organizationNumber.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="businessAddress" className="block text-sm font-medium text-gray-700">
-                Business Address *
-              </label>
-              <input
-                {...register('businessAddress')}
-                type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-              />
-              {errors.businessAddress && (
-                <p className="mt-1 text-sm text-red-600">{errors.businessAddress.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                  City *
-                </label>
-                <input
-                  {...register('city')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="postalCode" className="block text-sm font-medium text-gray-700">
-                  Postal Code *
-                </label>
-                <input
-                  {...register('postalCode')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.postalCode && (
-                  <p className="mt-1 text-sm text-red-600">{errors.postalCode.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="fylke" className="block text-sm font-medium text-gray-700">
-                  Fylke (County) *
-                </label>
-                <input
-                  {...register('fylke')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.fylke && (
-                  <p className="mt-1 text-sm text-red-600">{errors.fylke.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label htmlFor="kommune" className="block text-sm font-medium text-gray-700">
-                  Kommune (Municipality) *
-                </label>
-                <input
-                  {...register('kommune')}
-                  type="text"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
-                />
-                {errors.kommune && (
-                  <p className="mt-1 text-sm text-red-600">{errors.kommune.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                {...register('vatRegistered')}
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="vatRegistered" className="ml-2 block text-sm text-gray-900">
-                VAT Registered
-              </label>
-            </div>
-          </div>
-
-          {registerMutation.isError && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
-                    Registration failed
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    {registerMutation.error instanceof Error
-                      ? registerMutation.error.message
-                      : 'An error occurred during registration'}
+                    <FormField
+                      type="password"
+                      label="Confirm Password"
+                      value={formValues.confirmPassword || ''}
+                      onChange={(value) => setValue('confirmPassword', value)}
+                      error={errors.confirmPassword?.message}
+                      required
+                      autoComplete="new-password"
+                      leftIcon={<Icon icon={Lock} size="sm" />}
+                      placeholder="Repeat password"
+                    />
                   </div>
                 </div>
-              </div>
+
+                {/* Company Information */}
+                <div className="space-y-6 pt-6 border-t ds-border-gray-200">
+                  <h3 className="text-lg font-medium ds-text-gray-900 border-b pb-2">Company Information</h3>
+                  
+                  <FormField
+                    type="text"
+                    label="Company Name"
+                    value={formValues.companyName || ''}
+                    onChange={(value) => setValue('companyName', value)}
+                    error={errors.companyName?.message}
+                    required
+                    leftIcon={<Icon icon={Building} size="sm" />}
+                    placeholder="Acme Transport AS"
+                  />
+
+                  <FormField
+                    type="text"
+                    label="Organization Number (Org. nr.)"
+                    value={formValues.organizationNumber || ''}
+                    onChange={(value) => setValue('organizationNumber', value)}
+                    error={errors.organizationNumber?.message}
+                    required
+                    maxLength={9}
+                    placeholder="123456789"
+                    helperText="9 digits"
+                  />
+
+                  <FormField
+                    type="text"
+                    label="Business Address"
+                    value={formValues.businessAddress || ''}
+                    onChange={(value) => setValue('businessAddress', value)}
+                    error={errors.businessAddress?.message}
+                    required
+                    leftIcon={<Icon icon={MapPin} size="sm" />}
+                    placeholder="Storgata 1"
+                  />
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      type="text"
+                      label="City"
+                      value={formValues.city || ''}
+                      onChange={(value) => setValue('city', value)}
+                      error={errors.city?.message}
+                      required
+                      placeholder="Oslo"
+                    />
+
+                    <FormField
+                      type="text"
+                      label="Postal Code"
+                      value={formValues.postalCode || ''}
+                      onChange={(value) => setValue('postalCode', value)}
+                      error={errors.postalCode?.message}
+                      required
+                      placeholder="0123"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    <FormField
+                      type="text"
+                      label="Fylke (County)"
+                      value={formValues.fylke || ''}
+                      onChange={(value) => setValue('fylke', value)}
+                      error={errors.fylke?.message}
+                      required
+                      placeholder="Oslo"
+                    />
+
+                    <FormField
+                      type="text"
+                      label="Kommune (Municipality)"
+                      value={formValues.kommune || ''}
+                      onChange={(value) => setValue('kommune', value)}
+                      error={errors.kommune?.message}
+                      required
+                      placeholder="Oslo"
+                    />
+                  </div>
+
+                  <div className="flex items-center">
+                    <input
+                      {...register('vatRegistered')}
+                      type="checkbox"
+                      id="vatRegistered"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 ds-border-gray-300 rounded"
+                    />
+                    <label htmlFor="vatRegistered" className="ml-2 block text-sm ds-text-gray-900">
+                      VAT Registered
+                    </label>
+                  </div>
+                </div>
+
+                {registerMutation.isError && (
+                  <div 
+                    className="rounded-md ds-bg-error-light p-4 border ds-border-error" 
+                    role="alert" 
+                    aria-live="assertive"
+                  >
+                    <div className="flex items-start">
+                      <Icon icon={AlertCircle} size="md" color="#DC2626" />
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium ds-text-error">
+                          Registration failed
+                        </h3>
+                        <div className="mt-1 text-sm ds-text-error">
+                          {registerMutation.error instanceof Error
+                            ? registerMutation.error.message
+                            : 'An error occurred during registration'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  loading={registerMutation.isPending}
+                >
+                  Create Account
+                </Button>
+
+                <div className="text-center">
+                  <p className="text-sm ds-text-gray-600">
+                    Already have an account?{' '}
+                    <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
+              </form>
             </div>
-          )}
-
-          <div>
-            <button
-              type="submit"
-              disabled={registerMutation.isPending}
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {registerMutation.isPending ? 'Creating Account...' : 'Create Account'}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </form>
-      </div>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

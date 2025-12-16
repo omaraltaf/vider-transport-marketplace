@@ -8,7 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
-import { MagnifyingGlassIcon, CheckBadgeIcon } from '@heroicons/react/24/outline';
+import { Container, Table, Badge, Button, SearchBar, Spinner } from '../../design-system/components';
+import { CheckBadgeIcon } from '@heroicons/react/24/outline';
 
 interface DriverListing {
   id: string;
@@ -128,174 +129,173 @@ const AdminDriverListingsPage = () => {
 
   return (
     <AdminPanelPage>
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Driver Listings</h1>
+      <Container >
+        <h1 className="text-3xl font-bold text-neutral-900 mb-6">Driver Listings</h1>
 
         {/* Search */}
         <div className="mb-6">
-          <div className="relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by name or license class..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
+          <SearchBar
+            value={searchQuery}
+            onChange={handleSearch}
+            placeholder="Search by name or license class..."
+          />
         </div>
 
         {/* Results */}
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Loading listings...</p>
+            <Spinner size="lg" />
+            <p className="mt-2 ds-text-gray-600">Loading listings...</p>
           </div>
         ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">Failed to load listings. Please try again.</p>
+          <div className="bg-error-50 border border-error-200 rounded-lg p-4">
+            <p className="text-error-800">Failed to load listings. Please try again.</p>
           </div>
         ) : data && data.items.length > 0 ? (
           <>
-            <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Driver
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Company
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      License
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Rating
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {data.items.map((listing) => (
-                    <tr key={listing.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="text-sm font-medium text-gray-900">{listing.name}</div>
-                          {listing.verified && (
-                            <CheckBadgeIcon className="ml-2 h-5 w-5 text-blue-600" title="Verified" />
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {listing.company.name}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {listing.licenseClass}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {listing.aggregatedRating ? (
-                          <div>
-                            <span className="font-medium">{listing.aggregatedRating.toFixed(1)}</span>
-                            <span className="text-gray-400"> ({listing.totalRatings})</span>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400">No ratings</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            listing.status === 'ACTIVE'
-                              ? 'bg-green-100 text-green-800'
-                              : listing.status === 'SUSPENDED'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
+            <Table
+              columns={[
+                {
+                  key: 'driver',
+                  header: 'Driver',
+                  render: ( listing) => (
+                    <div className="flex items-center">
+                      <div className="text-sm font-medium text-neutral-900">{listing.name}</div>
+                      {listing.verified && (
+                        <CheckBadgeIcon className="ml-2 h-5 w-5 ds-text-primary-600" title="Verified" />
+                      )}
+                    </div>
+                  ),
+                },
+                {
+                  key: 'company',
+                  header: 'Company',
+                  render: ( listing) => (
+                    <span className="text-sm text-neutral-900">{listing.company.name}</span>
+                  ),
+                },
+                {
+                  key: 'license',
+                  header: 'License',
+                  render: ( listing) => (
+                    <span className="text-sm text-neutral-500">{listing.licenseClass}</span>
+                  ),
+                },
+                {
+                  key: 'rating',
+                  header: 'Rating',
+                  render: ( listing) =>
+                    listing.aggregatedRating ? (
+                      <div className="text-sm text-neutral-500">
+                        <span className="font-medium">{listing.aggregatedRating.toFixed(1)}</span>
+                        <span className="ds-text-gray-400"> ({listing.totalRatings})</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm ds-text-gray-400">No ratings</span>
+                    ),
+                },
+                {
+                  key: 'status',
+                  header: 'Status',
+                  render: ( listing) => (
+                    <Badge
+                      variant={
+                        listing.status === 'ACTIVE'
+                          ? 'success'
+                          : listing.status === 'SUSPENDED'
+                          ? 'warning'
+                          : 'error'
+                      }
+                    >
+                      {listing.status}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  header: 'Actions',
+                  render: ( listing) => (
+                    <div className="flex gap-2">
+                      {!listing.verified && listing.status === 'ACTIVE' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleVerify(listing.id)}
+                          disabled={verifyMutation.isPending}
                         >
-                          {listing.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                        {!listing.verified && listing.status === 'ACTIVE' && (
-                          <button
-                            onClick={() => handleVerify(listing.id)}
-                            disabled={verifyMutation.isPending}
-                            className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-50"
+                          Verify
+                        </Button>
+                      )}
+                      {listing.status === 'ACTIVE' && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSuspend(listing.id)}
+                            disabled={suspendMutation.isPending}
                           >
-                            Verify
-                          </button>
-                        )}
-                        {listing.status === 'ACTIVE' && (
-                          <>
-                            <button
-                              onClick={() => handleSuspend(listing.id)}
-                              disabled={suspendMutation.isPending}
-                              className="text-yellow-600 hover:text-yellow-800 font-medium disabled:opacity-50"
-                            >
-                              Suspend
-                            </button>
-                            <button
-                              onClick={() => handleRemove(listing.id)}
-                              disabled={removeMutation.isPending}
-                              className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
-                            >
-                              Remove
-                            </button>
-                          </>
-                        )}
-                        {listing.status === 'SUSPENDED' && (
-                          <button
+                            Suspend
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleRemove(listing.id)}
                             disabled={removeMutation.isPending}
-                            className="text-red-600 hover:text-red-800 font-medium disabled:opacity-50"
                           >
                             Remove
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                          </Button>
+                        </>
+                      )}
+                      {listing.status === 'SUSPENDED' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemove(listing.id)}
+                          disabled={removeMutation.isPending}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+              data={data.items}
+            />
 
             {/* Pagination */}
             {data.totalPages > 1 && (
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+                <div className="text-sm ds-text-gray-700">
                   Showing page {data.page} of {data.totalPages} ({data.total} total listings)
                 </div>
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="outline"
+                    size="md"
                     onClick={() => setPage(page - 1)}
                     disabled={page === 1}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Previous
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="md"
                     onClick={() => setPage(page + 1)}
                     disabled={page === data.totalPages}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Next
-                  </button>
+                  </Button>
                 </div>
               </div>
             )}
           </>
         ) : (
           <div className="text-center py-12 bg-white rounded-lg">
-            <p className="text-gray-500">No driver listings found</p>
+            <p className="text-neutral-500">No driver listings found</p>
           </div>
         )}
-      </div>
+      </Container>
     </AdminPanelPage>
   );
 };

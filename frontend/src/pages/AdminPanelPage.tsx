@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import { Button } from '../design-system/components';
+import { colors } from '../design-system/tokens/colors';
 import {
   UsersIcon,
   BuildingOfficeIcon,
@@ -39,7 +41,7 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ backgroundColor: colors.background.page }}>
       <Navbar />
       
       <div className="flex h-[calc(100vh-64px)]">
@@ -47,19 +49,22 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = ({ children }) => {
         <aside
           className={`${
             sidebarOpen ? 'w-64' : 'w-20'
-          } bg-white border-r border-gray-200 transition-all duration-300 overflow-y-auto`}
+          } transition-all duration-300 overflow-y-auto`}
+          style={{ backgroundColor: colors.white, borderRight: `1px solid ${colors.gray[200]}` }}
         >
           <div className="p-4">
-            <button
+            <Button
+              variant="ghost"
+              size="md"
+              fullWidth
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="w-full flex items-center justify-center p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
               {sidebarOpen ? (
                 <span className="text-sm font-medium">Collapse</span>
               ) : (
                 <span className="text-xl">☰</span>
               )}
-            </button>
+            </Button>
           </div>
 
           <nav className="px-2 space-y-1">
@@ -69,16 +74,21 @@ const AdminPanelPage: React.FC<AdminPanelPageProps> = ({ children }) => {
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  } group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors`}
+                  className="group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: isActive ? colors.primary[50] : 'transparent',
+                    color: isActive ? colors.primary[600] : colors.gray[700],
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = colors.background.hover;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <item.icon
-                    className={`${
-                      isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-                    } ${sidebarOpen ? 'mr-3' : 'mx-auto'} h-6 w-6 flex-shrink-0`}
+                    className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} h-6 w-6 flex-shrink-0`}
+                    style={{ color: isActive ? colors.primary[600] : colors.gray[400] }}
                   />
                   {sidebarOpen && <span>{item.name}</span>}
                 </Link>

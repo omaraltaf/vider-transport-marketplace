@@ -146,7 +146,7 @@ export class AuthService {
   /**
    * Login with email and password
    */
-  async login(email: string, password: string): Promise<AuthTokens> {
+  async login(email: string, password: string): Promise<AuthTokens & { requiresPasswordChange?: boolean }> {
     const user = await prisma.user.findUnique({
       where: { email },
       include: { company: true },
@@ -166,6 +166,9 @@ export class AuthService {
       throw new Error('EMAIL_NOT_VERIFIED');
     }
 
+    // Check if password change is required
+    const requiresPasswordChange = user.isTemporaryPassword || false;
+
     // Generate tokens
     const tokens = this.generateTokens({
       userId: user.id,
@@ -174,9 +177,9 @@ export class AuthService {
       companyId: user.companyId,
     });
 
-    logger.info('User logged in', { userId: user.id, email: user.email });
+    logger.info('User logged in', { userId: user.id, email: user.email, requiresPasswordChange });
 
-    return tokens;
+    return { ...tokens, requiresPasswordChange };
   }
 
   /**
@@ -287,6 +290,38 @@ export class AuthService {
     });
 
     logger.info('Password reset completed', { userId: user.id });
+  }
+
+  /**
+   * Force password change for users with temporary passwords
+   */
+  async forceChangePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new Error('INVALID_CREDENTIALS');
+    }
+
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new Error('INVALID_CREDENTIALS');
+    }
+
+    // Hash new password
+    const passwordHash = await bcrypt.hash(newPassword, this.SALT_ROUNDS);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        isTemporaryPassword: false, // Mark password as no longer temporary
+      },
+    });
+
+    logger.info('User forced password change completed', { userId });
   }
 
   /**

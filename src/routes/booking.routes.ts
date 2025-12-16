@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth.middleware';
 import { authorizationService } from '../services/authorization.service';
 import { logError } from '../utils/logging.utils';
 import { bookingRateLimiter } from '../middleware/rate-limit.middleware';
+import { requireFeature, FeatureToggle } from '../middleware/feature-toggle.middleware';
 import { prisma } from '../config/database';
 
 const router = Router();

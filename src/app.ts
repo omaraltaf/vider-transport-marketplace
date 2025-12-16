@@ -6,6 +6,7 @@ import { logger } from './config/logger';
 import { HealthService } from './services/health.service';
 import { logError } from './utils/logging.utils';
 import { openApiSpec } from './openapi/spec';
+import { blockInMaintenanceMode } from './middleware/feature-toggle.middleware';
 
 export function createApp(): Application {
   const app = express();
@@ -15,6 +16,8 @@ export function createApp(): Application {
   const allowedOrigins = [
     'https://vider-transport-marketplace.vercel.app',
     'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
     'http://localhost:3000',
   ];
   
@@ -44,6 +47,11 @@ export function createApp(): Application {
     });
     next();
   });
+
+  // Maintenance mode check (allow platform admins to bypass)
+  app.use(blockInMaintenanceMode({ 
+    allowedRoles: ['PLATFORM_ADMIN'] 
+  }));
 
   // Health check endpoint with dependency status
   app.get('/health', async (req: Request, res: Response) => {
@@ -109,11 +117,53 @@ export function createApp(): Application {
   const adminRoutes = require('./routes/admin.routes').default;
   app.use('/api/admin', adminRoutes);
   
+  const platformAdminRoutes = require('./routes/platform-admin.routes').default;
+  app.use('/api/platform-admin', platformAdminRoutes);
+  
+  const securityMonitoringRoutes = require('./routes/security-monitoring.routes').default;
+  app.use('/api/platform-admin/security', securityMonitoringRoutes);
+  
+  const financialRoutes = require('./routes/financial.routes').default;
+  app.use('/api/platform-admin/financial', financialRoutes);
+  
+  const userManagementRoutes = require('./routes/user-management.routes').default;
+  app.use('/api/platform-admin/users', userManagementRoutes);
+  
+  const companyManagementRoutes = require('./routes/company-management.routes').default;
+  app.use('/api/platform-admin/companies', companyManagementRoutes);
+  
+  const analyticsRoutes = require('./routes/analytics.routes').default;
+  app.use('/api/platform-admin/analytics', analyticsRoutes);
+  
+  const auditLogRoutes = require('./routes/audit-log.routes').default;
+  app.use('/api/audit-logs', auditLogRoutes);
+  
+  const communicationRoutes = require('./routes/communication.routes').default;
+  app.use('/api/platform-admin/communication', communicationRoutes);
+  
+  const contentModerationRoutes = require('./routes/content-moderation.routes').default;
+  app.use('/api/platform-admin/moderation', contentModerationRoutes);
+  
+  const systemAdminRoutes = require('./routes/system-admin.routes').default;
+  app.use('/api/platform-admin/system', systemAdminRoutes);
+  
+  const platformAdminGlobalRoutes = require('./routes/platform-admin-global.routes').default;
+  app.use('/api/platform-admin', platformAdminGlobalRoutes);
+  
   const gdprRoutes = require('./routes/gdpr.routes').default;
   app.use('/api/gdpr', gdprRoutes);
   
+  const dashboardRoutes = require('./routes/dashboard.routes').default;
+  app.use('/api/dashboard', dashboardRoutes);
+  
+  const availabilityRoutes = require('./routes/availability.routes').default;
+  app.use('/api/availability', availabilityRoutes);
+  
   const seedRoutes = require('./routes/seed.routes').default;
   app.use('/api/seed', seedRoutes);
+  
+  const userRoutes = require('./routes/user.routes').default;
+  app.use('/api/user', userRoutes);
   
   const debugRoutes = require('./routes/debug.routes').default;
   app.use('/api/debug', debugRoutes);

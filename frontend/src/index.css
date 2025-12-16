@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Design System Color Utilities */
+@import "./design-system/tokens/color-utilities.css";
+
 /* Accessibility Improvements */
 
 /* Skip to main content link */
@@ -73,14 +76,58 @@ textarea:focus-visible {
   border-width: 0;
 }
 
-/* Ensure minimum touch target size on mobile */
-@media (max-width: 640px) {
+/* Ensure minimum touch target size on mobile (44x44px per WCAG) */
+@media (max-width: 768px) {
+  /* All interactive elements should meet minimum touch target */
   button,
-  a,
+  a[role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Checkbox and radio buttons */
   input[type="checkbox"],
   input[type="radio"] {
     min-height: 44px;
     min-width: 44px;
+    /* Increase visual size while maintaining layout */
+    transform: scale(1.5);
+    margin: 8px;
+  }
+
+  /* Text inputs and selects */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  textarea {
+    min-height: 44px;
+    padding: 12px;
+  }
+
+  /* Ensure spacing between touch targets */
+  button + button,
+  a + a,
+  button + a,
+  a + button {
+    margin-left: 8px;
+  }
+
+  /* Icon-only buttons need explicit sizing */
+  button[aria-label]:not(:has(span)),
+  a[aria-label]:not(:has(span)) {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px;
   }
 }
 

@@ -442,6 +442,133 @@ async function main() {
   });
   console.log('✓ Transactions created');
 
+  // Create availability blocks
+  console.log('Creating availability blocks...');
+  
+  // Manual block for vehicle1 - maintenance period
+  await prisma.availabilityBlock.create({
+    data: {
+      listingId: vehicle1.id,
+      listingType: 'vehicle',
+      startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 2 weeks from now
+      endDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000), // 16 days from now
+      reason: 'Scheduled maintenance',
+      isRecurring: false,
+      createdBy: company1Admin.id,
+    },
+  });
+
+  // Manual block for vehicle2 - holiday period
+  await prisma.availabilityBlock.create({
+    data: {
+      listingId: vehicle2.id,
+      listingType: 'vehicle',
+      startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+      endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000), // 37 days from now
+      reason: 'Company holiday - Christmas break',
+      isRecurring: false,
+      createdBy: company2Admin.id,
+    },
+  });
+
+  // Manual block for driver1 - vacation
+  await prisma.availabilityBlock.create({
+    data: {
+      listingId: driver1.id,
+      listingType: 'driver',
+      startDate: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000), // 3 weeks from now
+      endDate: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000), // 4 weeks from now
+      reason: 'Annual vacation',
+      isRecurring: false,
+      createdBy: company1Admin.id,
+    },
+  });
+
+  console.log('✓ Availability blocks created');
+
+  // Create recurring blocks
+  console.log('Creating recurring blocks...');
+  
+  // Recurring block for vehicle3 - weekends unavailable
+  const recurringBlock1 = await prisma.recurringBlock.create({
+    data: {
+      listingId: vehicle3.id,
+      listingType: 'vehicle',
+      daysOfWeek: [0, 6], // Sunday and Saturday
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // Next 90 days
+      reason: 'Weekend maintenance schedule',
+      createdBy: company1Admin.id,
+    },
+  });
+
+  // Create instances for the recurring block (next 4 weekends as examples)
+  const weekendDates = [];
+  const today = new Date();
+  for (let i = 0; i < 28; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      weekendDates.push(new Date(date));
+    }
+  }
+
+  for (const date of weekendDates) {
+    await prisma.availabilityBlock.create({
+      data: {
+        listingId: vehicle3.id,
+        listingType: 'vehicle',
+        startDate: new Date(date.setHours(0, 0, 0, 0)),
+        endDate: new Date(date.setHours(23, 59, 59, 999)),
+        reason: 'Weekend maintenance schedule',
+        isRecurring: true,
+        recurringBlockId: recurringBlock1.id,
+        createdBy: company1Admin.id,
+      },
+    });
+  }
+
+  // Recurring block for driver2 - Mondays unavailable
+  const recurringBlock2 = await prisma.recurringBlock.create({
+    data: {
+      listingId: driver2.id,
+      listingType: 'driver',
+      daysOfWeek: [1], // Monday
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // Next 60 days
+      reason: 'Regular training day',
+      createdBy: company2Admin.id,
+    },
+  });
+
+  // Create instances for Mondays (next 8 Mondays as examples)
+  const mondayDates = [];
+  for (let i = 0; i < 60; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    if (date.getDay() === 1) {
+      mondayDates.push(new Date(date));
+    }
+  }
+
+  for (const date of mondayDates) {
+    await prisma.availabilityBlock.create({
+      data: {
+        listingId: driver2.id,
+        listingType: 'driver',
+        startDate: new Date(date.setHours(0, 0, 0, 0)),
+        endDate: new Date(date.setHours(23, 59, 59, 999)),
+        reason: 'Regular training day',
+        isRecurring: true,
+        recurringBlockId: recurringBlock2.id,
+        createdBy: company2Admin.id,
+      },
+    });
+  }
+
+  console.log('✓ Recurring blocks created');
+
   console.log('');
   console.log('✅ Database seeded successfully!');
   console.log('');

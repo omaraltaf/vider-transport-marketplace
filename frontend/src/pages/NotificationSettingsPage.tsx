@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';
+import { Container, Card, Button } from '../design-system/components';
 import type { NotificationPreferences } from '../types';
 
 export default function NotificationSettingsPage() {
@@ -73,10 +74,10 @@ export default function NotificationSettingsPage() {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen ds-bg-page flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading preferences...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 ds-border-primary-600 mx-auto"></div>
+            <p className="mt-4 ds-text-gray-600">Loading preferences...</p>
           </div>
         </div>
       </>
@@ -86,23 +87,23 @@ export default function NotificationSettingsPage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen ds-bg-page py-8">
+        <Container>
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900">Notification Settings</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-3xl font-bold ds-text-gray-900">Notification Settings</h1>
+            <p className="mt-2 ds-text-gray-600">
               Manage how you receive notifications from Vider
             </p>
           </div>
 
           {/* Success message */}
           {saveSuccess && (
-            <div className="mb-6 rounded-md bg-green-50 p-4">
+            <div className="mb-6 rounded-md ds-bg-success-light p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
                   <svg
-                    className="h-5 w-5 text-green-400"
+                    className="h-5 w-5 ds-text-success"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -114,7 +115,7 @@ export default function NotificationSettingsPage() {
                   </svg>
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm font-medium text-green-800">
+                  <p className="text-sm font-medium ds-text-success">
                     Preferences saved successfully
                   </p>
                 </div>
@@ -125,20 +126,20 @@ export default function NotificationSettingsPage() {
           {/* Settings form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Channel preferences */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-5 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Notification Channels</h2>
-                <p className="mt-1 text-sm text-gray-500">
+            <Card padding="lg">
+              <div className="border-b ds-border-gray-200 pb-5 mb-5">
+                <h2 className="text-lg font-medium ds-text-gray-900">Notification Channels</h2>
+                <p className="mt-1 text-sm ds-text-gray-500">
                   Choose how you want to receive notifications
                 </p>
               </div>
-              <div className="px-6 py-5 space-y-4">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="emailEnabled" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="emailEnabled" className="text-sm font-medium ds-text-gray-900">
                       Email Notifications
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Receive notifications via email
                     </p>
                   </div>
@@ -148,7 +149,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.emailEnabled}
                     onClick={() => handleToggle('emailEnabled')}
                     className={`${
-                      formData.emailEnabled ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.emailEnabled ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -161,10 +162,10 @@ export default function NotificationSettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="inAppEnabled" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="inAppEnabled" className="text-sm font-medium ds-text-gray-900">
                       In-App Notifications
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Receive notifications within the platform
                     </p>
                   </div>
@@ -174,7 +175,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.inAppEnabled}
                     onClick={() => handleToggle('inAppEnabled')}
                     className={`${
-                      formData.inAppEnabled ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.inAppEnabled ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -185,26 +186,26 @@ export default function NotificationSettingsPage() {
                   </button>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Notification types */}
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-6 py-5 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Notification Types</h2>
-                <p className="mt-1 text-sm text-gray-500">
+            <Card padding="lg">
+              <div className="border-b ds-border-gray-200 pb-5 mb-5">
+                <h2 className="text-lg font-medium ds-text-gray-900">Notification Types</h2>
+                <p className="mt-1 text-sm ds-text-gray-500">
                   Choose which types of notifications you want to receive
                 </p>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs ds-text-gray-400">
                   Note: Critical notifications (booking cancellations, disputes) will always be sent
                 </p>
               </div>
-              <div className="px-6 py-5 space-y-4">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="bookingUpdates" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="bookingUpdates" className="text-sm font-medium ds-text-gray-900">
                       Booking Updates
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Notifications about booking requests, acceptances, and completions
                     </p>
                   </div>
@@ -214,7 +215,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.bookingUpdates}
                     onClick={() => handleToggle('bookingUpdates')}
                     className={`${
-                      formData.bookingUpdates ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.bookingUpdates ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -227,10 +228,10 @@ export default function NotificationSettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="messages" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="messages" className="text-sm font-medium ds-text-gray-900">
                       Messages
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Notifications when you receive new messages
                     </p>
                   </div>
@@ -240,7 +241,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.messages}
                     onClick={() => handleToggle('messages')}
                     className={`${
-                      formData.messages ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.messages ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -253,10 +254,10 @@ export default function NotificationSettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="ratings" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="ratings" className="text-sm font-medium ds-text-gray-900">
                       Ratings & Reviews
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Notifications when you receive ratings or reviews
                     </p>
                   </div>
@@ -266,7 +267,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.ratings}
                     onClick={() => handleToggle('ratings')}
                     className={`${
-                      formData.ratings ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.ratings ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -279,10 +280,10 @@ export default function NotificationSettingsPage() {
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <label htmlFor="marketing" className="text-sm font-medium text-gray-900">
+                    <label htmlFor="marketing" className="text-sm font-medium ds-text-gray-900">
                       Marketing & Updates
                     </label>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm ds-text-gray-500">
                       Platform updates, tips, and promotional content
                     </p>
                   </div>
@@ -292,7 +293,7 @@ export default function NotificationSettingsPage() {
                     aria-checked={formData.marketing}
                     onClick={() => handleToggle('marketing')}
                     className={`${
-                      formData.marketing ? 'bg-indigo-600' : 'bg-gray-200'
+                      formData.marketing ? 'ds-bg-primary-600' : 'ds-bg-gray-200'
                     } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2`}
                   >
                     <span
@@ -303,20 +304,21 @@ export default function NotificationSettingsPage() {
                   </button>
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Save button */}
             <div className="flex justify-end">
-              <button
+              <Button
                 type="submit"
-                disabled={updateMutation.isPending}
-                className="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="primary"
+                size="md"
+                loading={updateMutation.isPending}
               >
-                {updateMutation.isPending ? 'Saving...' : 'Save Preferences'}
-              </button>
+                Save Preferences
+              </Button>
             </div>
           </form>
-        </div>
+        </Container>
       </div>
     </>
   );

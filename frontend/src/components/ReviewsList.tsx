@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
 import type { Rating } from '../types';
+import { Card } from '../design-system/components/Card/Card';
+import { Stack } from '../design-system/components/Stack/Stack';
+import { Button } from '../design-system/components/Button/Button';
+import { Textarea } from '../design-system/components/Textarea/Textarea';
 
 interface ReviewsListProps {
   reviews: Rating[];
@@ -56,107 +60,116 @@ const ReviewItem: React.FC<{
   };
 
   return (
-    <div className="border-b border-gray-200 pb-6 last:border-b-0">
-      {/* Company Review */}
-      <div className="mb-4">
-        <div className="flex items-start justify-between mb-2">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <StarDisplay rating={review.companyStars} />
-              <span className="text-sm text-gray-600">
-                {new Date(review.createdAt).toLocaleDateString()}
-              </span>
+    <div style={{ borderBottom: '1px solid #e5e7eb', paddingBottom: '1.5rem' }} className="last:border-b-0">
+      <Stack spacing={4}>
+        {/* Company Review */}
+        <div>
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <StarDisplay rating={review.companyStars} />
+                <span className="text-sm ds-text-gray-600">
+                  {new Date(review.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              {review.renterCompany && (
+                <p className="text-sm ds-text-gray-600">
+                  by {review.renterCompany.name}
+                </p>
+              )}
             </div>
-            {review.renterCompany && (
-              <p className="text-sm text-gray-600">
-                by {review.renterCompany.name}
-              </p>
+          </div>
+          {review.companyReview && (
+            <p className="ds-text-gray-700 mt-2">{review.companyReview}</p>
+          )}
+        </div>
+
+        {/* Driver Review (if exists) */}
+        {review.driverStars && (
+          <div style={{ marginLeft: '1rem', paddingLeft: '1rem', borderLeft: '2px solid #e5e7eb' }}>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-sm font-medium ds-text-gray-700">Driver:</span>
+              <StarDisplay rating={review.driverStars} />
+            </div>
+            {review.driverReview && (
+              <p className="ds-text-gray-700 mt-2">{review.driverReview}</p>
             )}
           </div>
-        </div>
-        {review.companyReview && (
-          <p className="text-gray-700 mt-2">{review.companyReview}</p>
         )}
-      </div>
 
-      {/* Driver Review (if exists) */}
-      {review.driverStars && (
-        <div className="ml-4 pl-4 border-l-2 border-gray-200 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-700">Driver:</span>
-            <StarDisplay rating={review.driverStars} />
-          </div>
-          {review.driverReview && (
-            <p className="text-gray-700 mt-2">{review.driverReview}</p>
-          )}
-        </div>
-      )}
-
-      {/* Provider Response */}
-      {review.providerResponse && (
-        <div className="mt-4 ml-4 pl-4 border-l-2 border-blue-200 bg-blue-50 p-3 rounded">
-          <p className="text-sm font-medium text-gray-700 mb-1">
-            Response from provider:
-          </p>
-          <p className="text-gray-700">{review.providerResponse}</p>
-          {review.providerRespondedAt && (
-            <p className="text-xs text-gray-500 mt-2">
-              {new Date(review.providerRespondedAt).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Response Form */}
-      {canRespond && !review.providerResponse && (
-        <div className="mt-4">
-          {!showResponseForm ? (
-            <button
-              onClick={() => setShowResponseForm(true)}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Respond to review
-            </button>
-          ) : (
-            <form onSubmit={handleSubmitResponse} className="space-y-3">
-              {error && (
-                <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
-                  {error}
-                </div>
+        {/* Provider Response */}
+        {review.providerResponse && (
+          <Card padding="sm" style={{ marginLeft: '1rem', borderLeft: '2px solid #bfdbfe', backgroundColor: '#eff6ff' }}>
+            <Stack spacing={2}>
+              <p className="text-sm font-medium ds-text-gray-700">
+                Response from provider:
+              </p>
+              <p className="ds-text-gray-700">{review.providerResponse}</p>
+              {review.providerRespondedAt && (
+                <p className="text-xs ds-text-gray-500">
+                  {new Date(review.providerRespondedAt).toLocaleDateString()}
+                </p>
               )}
-              <textarea
-                value={responseText}
-                onChange={(e) => setResponseText(e.target.value)}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Write your response..."
-                disabled={isSubmitting}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !responseText.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
-                >
-                  {isSubmitting ? 'Submitting...' : 'Submit Response'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowResponseForm(false);
-                    setResponseText('');
-                    setError(null);
-                  }}
-                  disabled={isSubmitting}
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
+            </Stack>
+          </Card>
+        )}
+
+        {/* Response Form */}
+        {canRespond && !review.providerResponse && (
+          <div>
+            {!showResponseForm ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowResponseForm(true)}
+              >
+                Respond to review
+              </Button>
+            ) : (
+              <form onSubmit={handleSubmitResponse}>
+                <Stack spacing={3}>
+                  {error && (
+                    <div className="p-2 ds-bg-error-light border ds-border-error rounded ds-text-error text-sm">
+                      {error}
+                    </div>
+                  )}
+                  <Textarea
+                    value={responseText}
+                    onChange={setResponseText}
+                    rows={3}
+                    placeholder="Write your response..."
+                    disabled={isSubmitting}
+                  />
+                  <Stack direction="horizontal" spacing={2}>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="sm"
+                      disabled={isSubmitting || !responseText.trim()}
+                      loading={isSubmitting}
+                    >
+                      Submit Response
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowResponseForm(false);
+                        setResponseText('');
+                        setError(null);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Stack>
+              </form>
+            )}
+          </div>
+        )}
+      </Stack>
     </div>
   );
 };
@@ -168,14 +181,14 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
 }) => {
   if (reviews.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 ds-text-gray-500">
         No reviews yet
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={6}>
       {reviews.map((review) => (
         <ReviewItem
           key={review.id}
@@ -184,6 +197,6 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
           onRespond={onRespond}
         />
       ))}
-    </div>
+    </Stack>
   );
 };

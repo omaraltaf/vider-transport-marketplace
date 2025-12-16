@@ -1,0 +1,24 @@
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem; /* 16px on mobile */
+  padding-right: 1rem;
+}
+
+/* Tablet and up: increase padding */
+@media (min-width: 768px) {
+  .container {
+    padding-left: 1.5rem; /* 24px */
+    padding-right: 1.5rem;
+  }
+}
+
+/* Desktop and up: increase padding */
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem; /* 32px */
+    padding-right: 2rem;
+  }
+}

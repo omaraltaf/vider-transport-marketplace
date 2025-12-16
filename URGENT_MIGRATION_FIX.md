@@ -2,67 +2,85 @@
 
 ## The Problem
 
-Your Railway deployment is stuck in a crash loop because of a failed database migration. The migration tried to add columns that already exist, causing it to fail. Now Prisma won't deploy anything until this is fixed.
+Your Railway deployment is stuck because the `_prisma_migrations` table is empty, but your database already has the schema. Prisma doesn't know which migrations have been applied, so it tries to run them all and fails when it encounters existing columns.
 
 ## The Quick Fix
 
-### Option 1: Use the Script (Easiest)
+### Step 1: Install Railway CLI
 
 ```bash
-./scripts/fix-migration-via-cli.sh
+npm i -g @railway/cli
 ```
 
-### Option 2: Manual Fix via Railway CLI
+### Step 2: Login to Railway
 
-1. **Connect to your database:**
+```bash
+railway login
+```
+
+This will open your browser to authenticate.
+
+### Step 3: Link to your project
+
+```bash
+railway link
+```
+
+Select your project from the list.
+
+### Step 4: Run the baseline script
+
+```bash
+./scripts/baseline-migrations.sh
+```
+
+This will mark all 5 migrations as applied in your database.
+
+### Step 5: Redeploy
+
+```bash
+git commit --allow-empty -m "Trigger redeploy after baseline"
+git push origin main
+```
+
+Or click "Redeploy" in Railway dashboard.
+
+## Alternative: Manual SQL via psql
+
+If you have `psql` installed locally:
+
+1. Get your DATABASE_URL from Railway:
    ```bash
-   railway connect postgres
+   railway variables --json | grep DATABASE_URL
    ```
 
-2. **Run this SQL:**
-   ```sql
-   DELETE FROM "_prisma_migrations" 
-   WHERE migration_name = '20251201011147_add_driver_rates';
-   
-   INSERT INTO "_prisma_migrations" (
-     id, checksum, finished_at, migration_name, 
-     logs, rolled_back_at, started_at, applied_steps_count
-   ) VALUES (
-     gen_random_uuid(),
-     'e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5e8c5c8f5',
-     NOW(),
-     '20251201011147_add_driver_rates',
-     NULL, NULL, NOW(), 1
-   );
-   ```
-
-3. **Trigger redeploy:**
+2. Connect and run the SQL:
    ```bash
-   git commit --allow-empty -m "Trigger redeploy after migration fix"
-   git push origin main
+   psql "YOUR_DATABASE_URL" < scripts/baseline-migrations.sql
    ```
-
-### Option 3: Via Railway Dashboard
-
-1. Go to Railway → Your Project → PostgreSQL
-2. Click "Query" tab
-3. Paste and run the SQL from Option 2
-4. Go to your backend service and click "Redeploy"
 
 ## What This Does
 
-- Removes the failed migration record from Prisma's tracking table
-- Adds it back as successfully completed
-- Allows deployments to proceed normally
+- Populates the empty `_prisma_migrations` table with records for all 5 migrations
+- Marks them all as successfully completed
+- Tells Prisma that the database is already up-to-date
+- Allows future deployments to proceed normally
 
 ## After the Fix
 
-Your next deployment should succeed. The app will start normally and the migration issue will be resolved.
-
-## Need More Details?
-
-See `MIGRATION_FIX_GUIDE.md` for complete documentation.
+Your next deployment should succeed. You should see:
+```
+✓ Prisma schema loaded from prisma/schema.prisma
+✓ Database schema is up to date!
+```
 
 ---
 
-**TL;DR:** Run `./scripts/fix-migration-via-cli.sh` then redeploy.
+**TL;DR:** 
+```bash
+npm i -g @railway/cli
+railway login
+railway link
+./scripts/baseline-migrations.sh
+```
+Then redeploy.

@@ -5,6 +5,7 @@
 
 import { type ReactNode } from 'react';
 import Navbar from './Navbar';
+import { Container } from '../design-system/components/Container/Container';
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,10 +14,12 @@ interface LayoutProps {
 
 export default function Layout({ children, showNavbar = true }: LayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ds-bg-page">
       {showNavbar && <Navbar />}
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8" role="main">
-        {children}
+      <main role="main" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
+        <Container>
+          {children}
+        </Container>
       </main>
     </div>
   );

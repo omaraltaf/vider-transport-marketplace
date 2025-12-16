@@ -243,7 +243,9 @@ export type NotificationType =
   | 'DRIVER_VERIFIED'
   | 'LISTING_SUSPENDED'
   | 'DISPUTE_RAISED'
-  | 'DISPUTE_RESOLVED';
+  | 'DISPUTE_RESOLVED'
+  | 'AVAILABILITY_CONFLICT'
+  | 'BOOKING_REJECTED_BLOCKED_DATES';
 
 export type NotificationChannel = 'EMAIL' | 'IN_APP';
 
