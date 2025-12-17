@@ -5,7 +5,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { commissionRateService } from '../services/commission-rate.service';
+import { commissionRateService, CommissionCalculationRequest } from '../services/commission-rate.service';
 import { revenueAnalyticsService } from '../services/revenue-analytics.service';
 import { disputeRefundService } from '../services/dispute-refund.service';
 
@@ -78,7 +78,13 @@ const requirePlatformAdmin = (req: Request, res: Response, next: Function) => {
   }
   
   // Mock admin user
-  req.user = { id: 'admin-1', role: 'PLATFORM_ADMIN' };
+  req.user = { 
+    id: 'admin-1', 
+    userId: 'admin-1',
+    email: 'admin@platform.com',
+    role: 'PLATFORM_ADMIN',
+    companyId: 'platform-company'
+  };
   next();
 };
 
@@ -157,7 +163,13 @@ router.post('/commission-rates', async (req: Request, res: Response) => {
     const validatedData = CommissionRateSchema.parse(req.body);
     const createdBy = req.user?.id || 'unknown';
     
-    const rate = await commissionRateService.createCommissionRate(validatedData, createdBy);
+    // Add required createdBy field
+    const rateData = {
+      ...validatedData,
+      createdBy
+    };
+    
+    const rate = await commissionRateService.createCommissionRate(rateData, createdBy);
     
     res.status(201).json({
       success: true,
@@ -200,6 +212,16 @@ router.put('/commission-rates/:id', async (req: Request, res: Response) => {
     const validatedUpdates = CommissionRateSchema.partial().parse(updates);
     const updatedBy = req.user?.id || 'unknown';
     
+    // Ensure tiers have proper structure if provided
+    if (validatedUpdates.tiers) {
+      validatedUpdates.tiers = validatedUpdates.tiers.map(tier => ({
+        minVolume: tier.minVolume ?? 0,
+        maxVolume: tier.maxVolume,
+        rate: tier.rate ?? 0,
+        description: tier.description ?? ''
+      }));
+    }
+    
     const rate = await commissionRateService.updateCommissionRate(id, validatedUpdates, updatedBy, reason);
     
     res.json({
@@ -233,7 +255,23 @@ router.post('/commission-rates/bulk-update', async (req: Request, res: Response)
     const { updates, reason } = BulkUpdateSchema.parse(req.body);
     const updatedBy = req.user?.id || 'unknown';
     
-    const result = await commissionRateService.bulkUpdateRates(updates, updatedBy, reason);
+    // Ensure all updates have required fields and proper tier structure
+    const validatedUpdates = updates.map(update => ({
+      id: update.id,
+      updates: {
+        ...update.updates,
+        ...(update.updates.tiers && {
+          tiers: update.updates.tiers.map(tier => ({
+            minVolume: tier.minVolume ?? 0,
+            maxVolume: tier.maxVolume,
+            rate: tier.rate ?? 0,
+            description: tier.description ?? ''
+          }))
+        })
+      }
+    }));
+    
+    const result = await commissionRateService.bulkUpdateRates(validatedUpdates, updatedBy, reason);
     
     res.json({
       success: true,
@@ -296,7 +334,7 @@ router.get('/commission-history', async (req: Request, res: Response) => {
  */
 router.post('/commission-rates/calculate', async (req: Request, res: Response) => {
   try {
-    const calculationRequest = z.object({
+    const validatedData = z.object({
       bookingAmount: z.number().min(0),
       companyId: z.string(),
       region: z.string(),
@@ -307,6 +345,16 @@ router.post('/commission-rates/calculate', async (req: Request, res: Response) =
         yearlyVolume: z.number().min(0)
       }).optional()
     }).parse(req.body);
+    
+    // Ensure all required fields are present
+    const calculationRequest: CommissionCalculationRequest = {
+      bookingAmount: validatedData.bookingAmount,
+      companyId: validatedData.companyId,
+      region: validatedData.region,
+      companyType: validatedData.companyType,
+      bookingDate: validatedData.bookingDate,
+      volumeData: validatedData.volumeData
+    };
     
     const result = await commissionRateService.calculateCommission(calculationRequest);
     
@@ -622,8 +670,14 @@ router.get('/disputes/:id', async (req: Request, res: Response) => {
 router.put('/disputes/:id/resolve', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const resolution = DisputeResolutionSchema.parse(req.body);
+    const validatedResolution = DisputeResolutionSchema.parse(req.body);
     const resolvedBy = req.user?.id || 'unknown';
+    
+    // Add resolvedBy to resolution object
+    const resolution = {
+      ...validatedResolution,
+      resolvedBy
+    };
     
     const dispute = await disputeRefundService.resolveDispute(id, resolution, resolvedBy);
     

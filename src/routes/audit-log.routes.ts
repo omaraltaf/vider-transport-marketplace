@@ -33,7 +33,7 @@ router.get('/',
         ipAddress,
         page = 1,
         pageSize = 50,
-        sortBy = 'timestamp',
+        sortBy = 'createdAt',
         sortOrder = 'desc'
       } = req.query;
 
@@ -52,7 +52,7 @@ router.get('/',
         ipAddress: ipAddress as string,
         limit,
         offset,
-        sortBy: sortBy as 'timestamp' | 'severity' | 'action',
+        sortBy: sortBy as 'createdAt' | 'severity' | 'action',
         sortOrder: sortOrder as 'asc' | 'desc'
       };
 
@@ -322,7 +322,7 @@ router.post('/search',
         filters,
         dateRange,
         pagination = { page: 1, pageSize: 50 },
-        sorting = { sortBy: 'timestamp', sortOrder: 'desc' }
+        sorting = { sortBy: 'createdAt', sortOrder: 'desc' }
       } = req.body;
 
       const offset = (pagination.page - 1) * pagination.pageSize;

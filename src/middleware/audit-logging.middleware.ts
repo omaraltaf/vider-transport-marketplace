@@ -57,31 +57,39 @@ export const auditLoggingMiddleware = (
 
       // Log the audit event
       const auditData = {
+        // Core Prisma fields
         action: req.auditContext!.action!,
-        severity: req.auditContext!.severity!,
-        userId: req.user?.userId,
-        userEmail: req.user?.email,
-        targetId: req.auditContext!.targetId,
-        targetType: req.auditContext!.targetType,
-        description: req.auditContext!.description!,
-        metadata: {
-          ...req.auditContext!.metadata,
-          ...additionalMetadata,
-          method: req.method,
-          path: req.path,
-          query: req.query,
-          body: sanitizeRequestBody(req.body),
-          statusCode: res.statusCode,
-          responseSize: JSON.stringify(body).length
+        adminUserId: req.user?.userId || req.user?.id || 'anonymous',
+        entityType: req.auditContext!.targetType || 'unknown',
+        entityId: req.auditContext!.targetId || 'unknown',
+        changes: {
+          // Backward compatibility fields
+          severity: req.auditContext!.severity!,
+          userId: req.user?.userId,
+          userEmail: req.user?.email,
+          targetId: req.auditContext!.targetId,
+          targetType: req.auditContext!.targetType,
+          description: req.auditContext!.description!,
+          metadata: {
+            ...req.auditContext!.metadata,
+            ...additionalMetadata,
+            method: req.method,
+            path: req.path,
+            query: req.query,
+            body: sanitizeRequestBody(req.body),
+            statusCode: res.statusCode,
+            responseSize: JSON.stringify(body).length
+          },
+          userAgent: req.get('User-Agent'),
+          sessionId: req.sessionID || 'no-session',
+          success,
+          errorMessage: success ? undefined : extractErrorMessage(body),
+          duration,
+          resourcesAccessed: [req.path],
+          companyId: req.user?.companyId
         },
-        ipAddress: getClientIpAddress(req),
-        userAgent: req.get('User-Agent'),
-        sessionId: req.sessionID || 'no-session',
-        success,
-        errorMessage: success ? undefined : extractErrorMessage(body),
-        duration,
-        resourcesAccessed: [req.path],
-        companyId: req.user?.companyId
+        reason: req.auditContext!.description!,
+        ipAddress: getClientIpAddress(req)
       };
 
       // Log asynchronously to avoid blocking response
@@ -139,29 +147,37 @@ export const logAuditEvent = async (
     Date.now() - req.auditContext.startTime : undefined;
 
   const auditData = {
+    // Core Prisma fields
     action: overrides.action || req.auditContext?.action || AuditAction.USER_UPDATED,
-    severity: overrides.severity || req.auditContext?.severity || AuditSeverity.MEDIUM,
-    userId: req.user?.userId,
-    userEmail: req.user?.email,
-    targetId: overrides.targetId || req.auditContext?.targetId || req.params.id,
-    targetType: overrides.targetType || req.auditContext?.targetType,
-    description: overrides.description || req.auditContext?.description || 'Admin operation',
-    metadata: {
-      ...req.auditContext?.metadata,
-      ...overrides.metadata,
-      method: req.method,
-      path: req.path,
-      query: req.query,
-      body: sanitizeRequestBody(req.body)
+    adminUserId: req.user?.userId || req.user?.id || 'anonymous',
+    entityType: overrides.targetType || req.auditContext?.targetType || 'unknown',
+    entityId: overrides.targetId || req.auditContext?.targetId || req.params.id || 'unknown',
+    changes: {
+      // Backward compatibility fields
+      severity: overrides.severity || req.auditContext?.severity || AuditSeverity.MEDIUM,
+      userId: req.user?.userId,
+      userEmail: req.user?.email,
+      targetId: overrides.targetId || req.auditContext?.targetId || req.params.id,
+      targetType: overrides.targetType || req.auditContext?.targetType,
+      description: overrides.description || req.auditContext?.description || 'Admin operation',
+      metadata: {
+        ...req.auditContext?.metadata,
+        ...overrides.metadata,
+        method: req.method,
+        path: req.path,
+        query: req.query,
+        body: sanitizeRequestBody(req.body)
+      },
+      userAgent: req.get('User-Agent'),
+      sessionId: req.sessionID || 'no-session',
+      success: overrides.success !== undefined ? overrides.success : true,
+      errorMessage: overrides.errorMessage,
+      duration,
+      resourcesAccessed: [req.path],
+      companyId: req.user?.companyId
     },
-    ipAddress: getClientIpAddress(req),
-    userAgent: req.get('User-Agent'),
-    sessionId: req.sessionID || 'no-session',
-    success: overrides.success !== undefined ? overrides.success : true,
-    errorMessage: overrides.errorMessage,
-    duration,
-    resourcesAccessed: [req.path],
-    companyId: req.user?.companyId
+    reason: overrides.description || req.auditContext?.description || 'Admin operation',
+    ipAddress: getClientIpAddress(req)
   };
 
   return auditLogService.logEvent(auditData);
@@ -338,19 +354,28 @@ export function AuditLog(
 
         // Log audit event (this would need access to request context)
         auditLogService.logEvent({
+          // Core Prisma fields
           action,
-          severity: options.severity || AuditSeverity.MEDIUM,
-          targetId: typeof targetId === 'string' ? targetId : undefined,
-          targetType: options.targetType,
-          description: `Service method: ${propertyName}`,
-          metadata: {
-            ...metadata,
-            method: propertyName,
-            service: target.constructor.name
+          adminUserId: 'system', // Service-level operations
+          entityType: options.targetType || 'service',
+          entityId: typeof targetId === 'string' ? targetId : 'unknown',
+          changes: {
+            // Backward compatibility fields
+            severity: options.severity || AuditSeverity.MEDIUM,
+            targetId: typeof targetId === 'string' ? targetId : undefined,
+            targetType: options.targetType,
+            description: `Service method: ${propertyName}`,
+            metadata: {
+              ...metadata,
+              method: propertyName,
+              service: target.constructor.name
+            },
+            success,
+            errorMessage,
+            duration
           },
-          success,
-          errorMessage,
-          duration
+          reason: `Service method: ${propertyName}`,
+          ipAddress: 'system'
         }).catch(error => {
           console.error('Failed to log service audit event:', error);
         });
