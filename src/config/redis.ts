@@ -161,6 +161,46 @@ class OptionalRedis {
     }
   }
 
+  async mget(...keys: string[]): Promise<(string | null)[]> {
+    if (!this.isConnected || !this.redis) {
+      return keys.map(() => null);
+    }
+    
+    try {
+      return await this.redis.mget(...keys);
+    } catch (error) {
+      logger.warn('Redis mget failed', { keys, error });
+      return keys.map(() => null);
+    }
+  }
+
+  pipeline() {
+    if (!this.isConnected || !this.redis) {
+      // Return a mock pipeline that does nothing
+      return {
+        set: () => this.pipeline(),
+        setex: () => this.pipeline(),
+        del: () => this.pipeline(),
+        exec: async () => []
+      };
+    }
+    
+    return this.redis.pipeline();
+  }
+
+  async ping(): Promise<string> {
+    if (!this.isConnected || !this.redis) {
+      throw new Error('Redis not connected');
+    }
+    
+    try {
+      return await this.redis.ping();
+    } catch (error) {
+      logger.warn('Redis ping failed', { error });
+      throw error;
+    }
+  }
+
   isAvailable(): boolean {
     return this.isConnected && this.redis !== null;
   }

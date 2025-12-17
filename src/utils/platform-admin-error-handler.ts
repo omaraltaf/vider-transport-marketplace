@@ -95,9 +95,8 @@ export class PlatformAdminErrorHandler {
     try {
       // Import Redis dynamically to avoid circular dependencies
       const { redis } = await import('../config/redis');
-      const redis = getRedisClient();
       
-      if (redis) {
+      if (redis.isAvailable()) {
         await redis.setex(key, ttl, JSON.stringify(data));
       }
     } catch (error) {

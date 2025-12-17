@@ -407,11 +407,11 @@ export class AuditLogService {
         _count: { action: true }
       }),
       
-      // Entries by severity
+      // Entries by entity type (instead of severity)
       prisma.auditLog.groupBy({
-        by: ['severity'],
+        by: ['entityType'],
         where,
-        _count: { severity: true }
+        _count: { entityType: true }
       }),
       
       // Entries by user (top 10)
@@ -447,21 +447,23 @@ export class AuditLogService {
       [AuditSeverity.HIGH]: 0,
       [AuditSeverity.CRITICAL]: 0
     };
+    // Since we don't have severity, we'll use entityType counts instead
+    const entriesByEntityType: Record<string, number> = {};
     severityCounts.forEach(item => {
-      entriesBySeverity[item.severity as AuditSeverity] = item._count.severity;
+      entriesByEntityType[item.entityType] = item._count.entityType;
     });
 
     // Process user counts
     const entriesByUser = userCounts.map(item => ({
-      userId: item.userId!,
-      userEmail: item.userEmail || 'Unknown',
-      count: item._count.userId
+      userId: item.adminUserId,
+      userEmail: 'Unknown', // We don't have email in the groupBy result
+      count: item._count.adminUserId
     }));
 
     return {
       totalEntries,
       entriesByAction,
-      entriesBySeverity,
+      entriesBySeverity: entriesBySeverity, // Keep the original severity structure
       entriesByUser,
       successRate: totalEntries > 0 ? (successCount / totalEntries) * 100 : 0,
       timeRange: {

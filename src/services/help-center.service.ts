@@ -126,6 +126,9 @@ export interface SearchResult {
 
 export class HelpCenterService {
   private static instance: HelpCenterService;
+  private articles: Map<string, HelpArticle> = new Map();
+  private versions: Map<string, HelpArticle[]> = new Map();
+  private categories: Map<string, HelpCategory> = new Map();
 
   public static getInstance(): HelpCenterService {
     if (!HelpCenterService.instance) {
@@ -1152,9 +1155,9 @@ Når du er godkjent, kan du begynne å motta oppdrag umiddelbart.`,
           entityId,
           adminUserId: 'system',
           changes: { description },
-          timestamp: new Date(),
+
           ipAddress: 'system',
-          userAgent: 'help-center-service'
+
         }
       });
     } catch (error) {

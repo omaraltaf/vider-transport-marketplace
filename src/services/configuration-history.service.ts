@@ -136,7 +136,7 @@ export class ConfigurationHistoryService {
     }
 
     const targetState = await this.reconstructConfigurationState(configId, targetVersion);
-    const comparison = this.calculateDifferences(currentConfig, targetState);
+    const comparison = this.calculateDifferences(currentConfig as any, targetState as any);
 
     const warnings: string[] = [];
     const blockers: string[] = [];

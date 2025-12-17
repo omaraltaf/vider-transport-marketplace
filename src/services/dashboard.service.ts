@@ -173,15 +173,18 @@ export class DashboardService {
       where.renterCompanyId = companyId;
     }
 
-    const bookings = await prisma.booking.findMany({
-      where,
-      select: role === 'provider' ? { providerRate: true } : { total: true },
-    });
-
     if (role === 'provider') {
+      const bookings = await prisma.booking.findMany({
+        where,
+        select: { providerRate: true },
+      });
       return bookings.reduce((sum, b) => sum + b.providerRate, 0);
     } else {
-      return bookings.reduce((sum, b) => sum + (b as any).total, 0);
+      const bookings = await prisma.booking.findMany({
+        where,
+        select: { total: true },
+      });
+      return bookings.reduce((sum, b) => sum + b.total, 0);
     }
   }
 

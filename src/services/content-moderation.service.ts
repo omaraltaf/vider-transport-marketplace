@@ -412,21 +412,25 @@ export class ContentModerationService {
         }
       });
       
-      // Process security alerts
+      // Process security alerts (audit logs)
       securityAlerts.forEach(alert => {
         flags.push({
           id: `flag-security-${alert.id}`,
-          contentId: alert.id,
+          contentId: alert.entityId,
           contentType: 'USER_PROFILE',
           flagType: 'FRAUD',
-          severity: alert.severity === 'CRITICAL' ? 'CRITICAL' : 'HIGH',
+          severity: alert.action.includes('SUSPEND') ? 'CRITICAL' : 'HIGH',
           status: 'ESCALATED',
           flaggedBy: 'SYSTEM',
           flaggedAt: alert.createdAt,
           reason: 'Sikkerhetsvarsel',
-          description: alert.description,
+          description: `Security action: ${alert.action}`,
           evidence: {
-            metadata: { alertType: alert.alertType, indicators: alert.indicators }
+            metadata: { 
+              action: alert.action, 
+              entityType: alert.entityType,
+              reason: alert.reason || 'No reason provided'
+            }
           },
           actions: []
         });
