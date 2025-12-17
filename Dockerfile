@@ -33,6 +33,9 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build:production
 
+# Debug: List dist contents
+RUN echo "=== Checking dist/ contents ===" && ls -la dist/ && echo "=== Checking dist/app.js ===" && ls -la dist/app.js && echo "=== Checking dist/index.js ===" && ls -la dist/index.js
+
 # Production image
 FROM base AS runner
 WORKDIR /app
