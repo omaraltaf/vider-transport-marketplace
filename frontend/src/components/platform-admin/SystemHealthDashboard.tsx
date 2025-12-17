@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../config/app.config';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface SystemHealthMetrics {
@@ -73,7 +74,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchSystemHealth = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/health', {
+      const response = await fetch(getApiUrl('/platform-admin/system/health'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -93,7 +94,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchMetricsHistory = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/health/history?hours=24', {
+      const response = await fetch(getApiUrl('/platform-admin/system/health/history?hours=24'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -112,7 +113,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/alerts?acknowledged=false', {
+      const response = await fetch(getApiUrl('/platform-admin/system/alerts?acknowledged=false'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -131,7 +132,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const acknowledgeAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`/api/platform-admin/system/alerts/${alertId}/acknowledge`, {
+      const response = await fetch(getApiUrl(`/platform-admin/system/alerts/${alertId}/acknowledge`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -148,7 +149,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const resolveAlert = async (alertId: string) => {
     try {
-      const response = await fetch(`/api/platform-admin/system/alerts/${alertId}/resolve`, {
+      const response = await fetch(getApiUrl(`/platform-admin/system/alerts/${alertId}/resolve`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Flag,
   Eye,
@@ -72,7 +73,7 @@ const ContentReviewQueue: React.FC = () => {
         }
       });
 
-      const response = await fetch(`/api/platform-admin/moderation/content/flagged?${queryParams}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/moderation/content/flagged?${queryParams}`), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -146,7 +147,7 @@ const ContentReviewQueue: React.FC = () => {
 
   const handleReview = async (flagId: string, decision: 'APPROVE' | 'REJECT' | 'ESCALATE', notes?: string) => {
     try {
-      const response = await fetch(`/api/platform-admin/moderation/content/${flagId}/review`, {
+      const response = await fetch(getApiUrl(`/platform-admin/moderation/content/${flagId}/review`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

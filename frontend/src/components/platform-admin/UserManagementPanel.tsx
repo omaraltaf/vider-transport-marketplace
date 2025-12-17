@@ -125,7 +125,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Fetch companies for filter dropdown
   const fetchCompanies = async () => {
     try {
-      const response = await fetch('/api/platform-admin/users/companies/options?limit=100', {
+      const response = await fetch(getApiUrl('/platform-admin/users/companies/options?limit=100'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -318,7 +318,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle admin creation
   const handleCreateAdmin = async (adminData: any) => {
     try {
-      const response = await fetch('/api/platform-admin/users/admins', {
+      const response = await fetch(getApiUrl('/platform-admin/users/admins'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -342,7 +342,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle user creation
   const handleCreateUser = async (userData: any) => {
     try {
-      const response = await fetch('/api/platform-admin/users', {
+      const response = await fetch(getApiUrl('/platform-admin/users'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -376,7 +376,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     }
 
     try {
-      const response = await fetch(`/api/platform-admin/users/${user.id}/reset-password`, {
+      const response = await fetch(getApiUrl(`/platform-admin/users/${user.id}/reset-password`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -406,7 +406,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle user export
   const handleExportUsers = async () => {
     try {
-      const response = await fetch('/api/platform-admin/users/export', {
+      const response = await fetch(getApiUrl('/platform-admin/users/export'), {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`

@@ -8,6 +8,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../config/app.config';
 
 interface BackupJob {
   id: string;
@@ -119,7 +120,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchBackupJobs = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/jobs', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/jobs'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -138,7 +139,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchSchedules = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/schedules', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/schedules'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -157,7 +158,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchRestoreJobs = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/restore/jobs', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/restore/jobs'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -176,7 +177,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const createBackup = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/create', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/create'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -218,7 +219,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const createSchedule = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/schedules', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/schedules'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -257,7 +258,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const startRestore = async () => {
     try {
-      const response = await fetch('/api/platform-admin/system/backup/restore', {
+      const response = await fetch(getApiUrl('/platform-admin/system/backup/restore'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -301,7 +302,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const cancelBackup = async (backupId: string) => {
     try {
-      const response = await fetch(`/api/platform-admin/system/backup/jobs/${backupId}/cancel`, {
+      const response = await fetch(getApiUrl(`/platform-admin/system/backup/jobs/${backupId}/cancel`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -322,7 +323,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
     }
 
     try {
-      const response = await fetch(`/api/platform-admin/system/backup/jobs/${backupId}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/system/backup/jobs/${backupId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -339,7 +340,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const verifyBackup = async (backupId: string) => {
     try {
-      const response = await fetch(`/api/platform-admin/system/backup/verify/${backupId}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/system/backup/verify/${backupId}`), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
