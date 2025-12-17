@@ -15,7 +15,6 @@ class OptionalRedis {
     if (process.env.REDIS_URL && process.env.REDIS_URL.trim() !== '') {
       try {
         this.redis = new Redis(process.env.REDIS_URL, {
-          retryDelayOnFailover: 100,
           maxRetriesPerRequest: 1,
           lazyConnect: true,
           connectTimeout: 5000,
