@@ -28,15 +28,6 @@
   "exclude": [
     "node_modules",
     "dist", 
-    "**/*.test.ts",
-    // Temporarily exclude files with blocking errors for deployment
-    "src/routes/analytics.routes.ts",
-    "src/services/analytics-export.service.ts", 
-    "src/services/analytics-scheduler.service.ts",
-    "src/services/help-center.service.ts",
-    "src/services/platform-admin-cache.service.ts",
-    "src/utils/platform-admin-error-handler.ts",
-    "src/utils/database-performance-optimizer.ts",
-    "src/services/platform-admin-fallback.service.ts"
+    "**/*.test.ts"
   ]
 }
