@@ -57,5 +57,5 @@ EXPOSE 3000
 
 ENV PORT=3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application using compiled JavaScript
+CMD ["npm", "run", "start:compiled"]
