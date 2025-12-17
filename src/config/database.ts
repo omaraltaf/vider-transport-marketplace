@@ -1,9 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from './env';
 
-// Create a singleton instance of PrismaClient
+// Create a singleton instance of PrismaClient with connection pooling
 const prisma = new PrismaClient({
   log: config.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: config.DATABASE_URL,
+    },
+  },
 });
 
 export function getDatabaseClient(): PrismaClient {

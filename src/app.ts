@@ -54,6 +54,7 @@ export function createApp(): Application {
     /^https:\/\/.*\.vercel\.app$/,
     // Allow Railway URLs
     /^https:\/\/.*\.railway\.app$/,
+    /^https:\/\/.*\.up\.railway\.app$/,
   ];
   
   app.use(cors({
