@@ -8,6 +8,32 @@ import { logError } from './utils/logging.utils';
 import { openApiSpec } from './openapi/spec';
 import { blockInMaintenanceMode } from './middleware/feature-toggle.middleware';
 
+// Route imports
+import authRoutes from './routes/auth.routes';
+import companyRoutes from './routes/company.routes';
+import listingRoutes from './routes/listing.routes';
+import bookingRoutes from './routes/booking.routes';
+import paymentRoutes from './routes/payment.routes';
+import ratingRoutes from './routes/rating.routes';
+import messagingRoutes from './routes/messaging.routes';
+import notificationRoutes from './routes/notification.routes';
+import adminRoutes from './routes/admin.routes';
+import platformAdminRoutes from './routes/platform-admin.routes';
+import securityMonitoringRoutes from './routes/security-monitoring.routes';
+import financialRoutes from './routes/financial.routes';
+import userManagementRoutes from './routes/user-management.routes';
+import companyManagementRoutes from './routes/company-management.routes';
+import analyticsRoutes from './routes/analytics.routes';
+import auditLogRoutes from './routes/audit-log.routes';
+import communicationRoutes from './routes/communication.routes';
+import contentModerationRoutes from './routes/content-moderation.routes';
+import systemAdminRoutes from './routes/system-admin.routes';
+import platformConfigRoutes from './routes/platform-config.routes';
+import userRoutes from './routes/user.routes';
+import availabilityRoutes from './routes/availability.routes';
+import seedRoutes from './routes/seed.routes';
+import debugRoutes from './routes/debug.routes';
+
 export function createApp(): Application {
   const app = express();
   const healthService = new HealthService();
@@ -114,58 +140,23 @@ export function createApp(): Application {
   });
 
   // API routes
-  const authRoutes = require('./routes/auth.routes').default;
   app.use('/api/auth', authRoutes);
-  
-  const companyRoutes = require('./routes/company.routes').default;
   app.use('/api/companies', companyRoutes);
-  
-  const listingRoutes = require('./routes/listing.routes').default;
   app.use('/api/listings', listingRoutes);
-  
-  const bookingRoutes = require('./routes/booking.routes').default;
   app.use('/api/bookings', bookingRoutes);
-  
-  const paymentRoutes = require('./routes/payment.routes').default;
   app.use('/api/payments', paymentRoutes);
-  
-  const ratingRoutes = require('./routes/rating.routes').default;
   app.use('/api/ratings', ratingRoutes);
-  
-  const messagingRoutes = require('./routes/messaging.routes').default;
   app.use('/api/messages', messagingRoutes);
-  
-  const notificationRoutes = require('./routes/notification.routes').default;
   app.use('/api/notifications', notificationRoutes);
-  
-  const adminRoutes = require('./routes/admin.routes').default;
   app.use('/api/admin', adminRoutes);
-  
-  const platformAdminRoutes = require('./routes/platform-admin.routes').default;
   app.use('/api/platform-admin', platformAdminRoutes);
-  
-  const securityMonitoringRoutes = require('./routes/security-monitoring.routes').default;
   app.use('/api/platform-admin/security', securityMonitoringRoutes);
-  
-  const financialRoutes = require('./routes/financial.routes').default;
   app.use('/api/platform-admin/financial', financialRoutes);
-  
-  const userManagementRoutes = require('./routes/user-management.routes').default;
   app.use('/api/platform-admin/users', userManagementRoutes);
-  
-  const companyManagementRoutes = require('./routes/company-management.routes').default;
   app.use('/api/platform-admin/companies', companyManagementRoutes);
-  
-  const analyticsRoutes = require('./routes/analytics.routes').default;
   app.use('/api/platform-admin/analytics', analyticsRoutes);
-  
-  const auditLogRoutes = require('./routes/audit-log.routes').default;
   app.use('/api/audit-logs', auditLogRoutes);
-  
-  const communicationRoutes = require('./routes/communication.routes').default;
   app.use('/api/platform-admin/communication', communicationRoutes);
-  
-  const contentModerationRoutes = require('./routes/content-moderation.routes').default;
   app.use('/api/platform-admin/moderation', contentModerationRoutes);
   
   const systemAdminRoutes = require('./routes/system-admin.routes').default;
@@ -179,17 +170,11 @@ export function createApp(): Application {
   
   const dashboardRoutes = require('./routes/dashboard.routes').default;
   app.use('/api/dashboard', dashboardRoutes);
-  
-  const availabilityRoutes = require('./routes/availability.routes').default;
+  app.use('/api/platform-admin/system', systemAdminRoutes);
+  app.use('/api/platform-admin/config', platformConfigRoutes);
   app.use('/api/availability', availabilityRoutes);
-  
-  const seedRoutes = require('./routes/seed.routes').default;
   app.use('/api/seed', seedRoutes);
-  
-  const userRoutes = require('./routes/user.routes').default;
   app.use('/api/user', userRoutes);
-  
-  const debugRoutes = require('./routes/debug.routes').default;
   app.use('/api/debug', debugRoutes);
 
   // 404 handler

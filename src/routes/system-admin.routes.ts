@@ -786,11 +786,11 @@ router.get('/audit/logs', async (req, res) => {
     const [logs, total] = await Promise.all([
       prisma.auditLog.findMany({
         where,
-        orderBy: { timestamp: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: Number(limit),
         skip: Number(offset),
         include: {
-          admin: {
+          adminUser: {
             select: {
               id: true,
               email: true,

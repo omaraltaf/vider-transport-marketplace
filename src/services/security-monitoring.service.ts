@@ -293,7 +293,7 @@ export class SecurityMonitoringService {
 
     // Check for unusual time patterns
     const currentHour = new Date().getHours();
-    const usualHours = recentLogins.logs.map(log => new Date(log.timestamp).getHours());
+    const usualHours = recentLogins.logs.map(log => new Date(log.createdAt).getHours());
     const isUnusualTime = usualHours.length > 0 && 
       !usualHours.some(hour => Math.abs(hour - currentHour) <= 2);
     
@@ -304,7 +304,7 @@ export class SecurityMonitoringService {
 
     // Check for rapid successive logins
     const recentSuccessfulLogins = recentLogins.logs.filter(log => 
-      new Date(log.timestamp) > new Date(Date.now() - 60 * 60 * 1000) // Last hour
+      new Date(log.createdAt) > new Date(Date.now() - 60 * 60 * 1000) // Last hour
     );
     
     if (recentSuccessfulLogins.length > 3) {
@@ -427,8 +427,8 @@ export class SecurityMonitoringService {
     }
 
     // Analyze time patterns
-    const recentHours = recentActivity.logs.map(log => new Date(log.timestamp).getHours());
-    const baselineHours = baselineActivity.logs.map(log => new Date(log.timestamp).getHours());
+    const recentHours = recentActivity.logs.map(log => new Date(log.createdAt).getHours());
+    const baselineHours = baselineActivity.logs.map(log => new Date(log.createdAt).getHours());
     const unusualHours = recentHours.filter(hour => 
       !baselineHours.some(baseHour => Math.abs(baseHour - hour) <= 1)
     );
