@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Settings,
   Upload,
@@ -90,7 +91,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/users/bulk-operations', {
+      const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -130,7 +131,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/users/bulk-operations', {
+      const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +176,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/users/bulk-operations', {
+      const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -220,7 +221,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/users/bulk-operations', {
+      const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

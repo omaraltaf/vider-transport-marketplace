@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Activity,
   Clock,
@@ -98,7 +99,7 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
         queryParams.append('endDate', now.toISOString());
       }
 
-      const response = await fetch(`/api/platform-admin/users/${userId}/activity?${queryParams}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/users/${userId}/activity?${queryParams}`), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
