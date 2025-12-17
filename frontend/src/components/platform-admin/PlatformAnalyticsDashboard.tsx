@@ -97,14 +97,28 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
       setLoading(true);
       setError(null);
 
-      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', token || '');
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+
+      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', token);
       if (result.success) {
         setKpis(result.data);
       } else {
         throw new Error(result.message || 'Failed to fetch KPIs');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load analytics data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load analytics data';
+      
+      // Check for authentication errors
+      if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
+        setError('Authentication expired. Please refresh the page and log in again.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        setError(errorMessage);
+      }
+      
       console.error('Error fetching KPIs:', err);
     } finally {
       setLoading(false);
@@ -188,11 +202,18 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
   if (error) {
     return (
       <div className={`flex items-center justify-center h-96 ${className}`}>
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={() => fetchKPIs()}>
-            Try Again
-          </Button>
+          <div className="space-y-2">
+            <Button onClick={() => fetchKPIs()}>
+              Try Again
+            </Button>
+            {error.includes('Authentication') && (
+              <p className="text-sm text-gray-600">
+                If the problem persists, try refreshing the page and logging in again.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     );

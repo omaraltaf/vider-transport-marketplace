@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Ban,
   Plus,
@@ -65,6 +66,7 @@ interface BlacklistStats {
 }
 
 const BlacklistManager: React.FC = () => {
+  const { token } = useAuth();
   const [entries, setEntries] = useState<BlacklistEntry[]>([]);
   const [stats, setStats] = useState<BlacklistStats | null>(null);
   const [loading, setLoading] = useState(true);

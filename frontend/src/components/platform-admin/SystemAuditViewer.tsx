@@ -7,6 +7,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AuditLog {
   id: string;
@@ -102,6 +103,7 @@ interface SystemAuditViewerProps {
 }
 
 const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
+  const { token } = useAuth();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [rateLimitRules, setRateLimitRules] = useState<RateLimitRule[]>([]);
   const [accessControlRules, setAccessControlRules] = useState<AccessControlRule[]>([]);

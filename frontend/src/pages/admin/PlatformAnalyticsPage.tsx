@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Badge } from '../../components/ui/badge';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -37,6 +38,7 @@ interface ActiveFilters {
 }
 
 const PlatformAnalyticsPage: React.FC = () => {
+  const { token } = useAuth();
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     timeRange: {
       startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -85,7 +87,7 @@ const PlatformAnalyticsPage: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           format,

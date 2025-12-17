@@ -6,9 +6,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   AlertTriangle,
   CheckCircle,
@@ -141,6 +141,7 @@ interface DisputeManagementProps {
 }
 
 const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' }) => {
+  const { token } = useAuth();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [disputeStats, setDisputeStats] = useState<DisputeStatistics | null>(null);
@@ -183,7 +184,16 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/financial/disputes', {
+      if (!token) {
+        console.warn('No authentication token available for disputes');
+        // Use mock data when not authenticated
+        setMockDisputeData();
+        setMockRefundData();
+        setMockStatistics();
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -196,7 +206,17 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
         throw new Error('Failed to fetch disputes');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load disputes');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load disputes';
+      
+      // Check for authentication errors
+      if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
+        setError('Authentication expired. Please refresh the page and log in again.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        setError(errorMessage);
+      }
+      
       console.error('Error fetching disputes:', err);
       
       // Set mock data for development
@@ -209,7 +229,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
   // Fetch refunds
   const fetchRefunds = async () => {
     try {
-      const response = await fetch('/api/platform-admin/financial/refunds/history', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/history`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -234,7 +254,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
 
       // Fetch dispute statistics
       const disputeStatsResponse = await fetch(
-        `/api/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -249,7 +269,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
 
       // Fetch refund statistics
       const refundStatsResponse = await fetch(
-        `/api/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`

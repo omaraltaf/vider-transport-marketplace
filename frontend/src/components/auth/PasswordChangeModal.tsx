@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
   onSuccess,
   userEmail
 }) => {
+  const { token } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,7 +65,7 @@ export const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           currentPassword,

@@ -7,6 +7,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface BackupJob {
   id: string;
@@ -78,6 +79,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
   onBackupCreated,
   onRestoreStarted
 }) => {
+  const { token } = useAuth();
   const [backupJobs, setBackupJobs] = useState<BackupJob[]>([]);
   const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
   const [restoreJobs, setRestoreJobs] = useState<RestoreJob[]>([]);

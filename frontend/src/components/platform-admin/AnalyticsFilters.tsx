@@ -13,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Calendar as CalendarIcon,
   Filter,
@@ -56,6 +57,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
   onFiltersChange,
   className = ''
 }) => {
+  const { token } = useAuth();
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     timeRange: {
       startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),

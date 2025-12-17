@@ -3,6 +3,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useAuth } from '../../contexts/AuthContext';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface SystemHealthMetrics {
@@ -63,6 +64,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   autoRefresh = true,
   refreshInterval = 30000
 }) => {
+  const { token } = useAuth();
   const [currentMetrics, setCurrentMetrics] = useState<SystemHealthMetrics | null>(null);
   const [metricsHistory, setMetricsHistory] = useState<SystemHealthMetrics[]>([]);
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);

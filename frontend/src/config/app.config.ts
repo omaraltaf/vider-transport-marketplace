@@ -1,0 +1,87 @@
+/**
+ * Application Configuration
+ * Centralized configuration for the Vider Transport Marketplace
+ */
+
+export interface AppConfig {
+  api: {
+    baseUrl: string;
+    timeout: number;
+  };
+  ui: {
+    refreshInterval: number;
+    notificationTimeout: number;
+    autoRefresh: boolean;
+  };
+  mock: {
+    enabled: boolean;
+    financial: {
+      totalRevenue: number;
+      commissionRate: number;
+      currency: string;
+    };
+  };
+  deployment: {
+    environment: 'development' | 'staging' | 'production';
+    frontendUrl: string;
+    backendUrl: string;
+  };
+}
+
+// Default configuration
+const defaultConfig: AppConfig = {
+  api: {
+    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+    timeout: 30000, // 30 seconds
+  },
+  ui: {
+    refreshInterval: parseInt(import.meta.env.VITE_REFRESH_INTERVAL || '30000'), // 30 seconds
+    notificationTimeout: parseInt(import.meta.env.VITE_NOTIFICATION_TIMEOUT || '5000'), // 5 seconds
+    autoRefresh: import.meta.env.VITE_AUTO_REFRESH !== 'false', // Default true
+  },
+  mock: {
+    enabled: import.meta.env.VITE_MOCK_DATA === 'true' || import.meta.env.NODE_ENV === 'development',
+    financial: {
+      totalRevenue: parseInt(import.meta.env.VITE_MOCK_REVENUE || '2500000'),
+      commissionRate: parseFloat(import.meta.env.VITE_MOCK_COMMISSION_RATE || '0.05'), // 5%
+      currency: import.meta.env.VITE_CURRENCY || 'NOK',
+    },
+  },
+  deployment: {
+    environment: (import.meta.env.VITE_ENVIRONMENT || 'development') as 'development' | 'staging' | 'production',
+    frontendUrl: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173',
+    backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+  },
+};
+
+// Export the configuration
+export const appConfig: AppConfig = defaultConfig;
+
+// Helper functions
+export const getApiUrl = (endpoint: string): string => {
+  return `${appConfig.api.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+};
+
+export const isMockEnabled = (): boolean => {
+  return appConfig.mock.enabled;
+};
+
+export const getRefreshInterval = (): number => {
+  return appConfig.ui.refreshInterval;
+};
+
+export const getCurrency = (): string => {
+  return appConfig.mock.financial.currency;
+};
+
+export const formatCurrency = (amount: number): string => {
+  const currency = getCurrency();
+  const locale = currency === 'NOK' ? 'no-NO' : 'en-US';
+  
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(amount);
+};

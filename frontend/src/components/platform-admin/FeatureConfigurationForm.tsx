@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 import type { PlatformFeature } from './FeatureTogglePanel';
 
 export interface FeatureConfigurationFormProps {
@@ -57,6 +58,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   selectedFeature,
   onFeatureUpdate
 }) => {
+  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geographicRestrictions, setGeographicRestrictions] = useState<GeographicRestriction[]>([]);

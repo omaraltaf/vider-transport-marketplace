@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Shield,
   AlertTriangle,
@@ -53,6 +54,7 @@ interface FraudStats {
 }
 
 const FraudDetectionDashboard: React.FC = () => {
+  const { token } = useAuth();
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
   const [stats, setStats] = useState<FraudStats | null>(null);
   const [loading, setLoading] = useState(true);

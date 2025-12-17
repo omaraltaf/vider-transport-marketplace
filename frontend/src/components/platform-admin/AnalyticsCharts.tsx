@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   LineChart, 
   Line, 
@@ -76,6 +77,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   timeRange, 
   className = '' 
 }) => {
+  const { token } = useAuth();
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [growthData, setGrowthData] = useState<GrowthTrendData[]>([]);
   const [geographicData, setGeographicData] = useState<GeographicData[]>([]);

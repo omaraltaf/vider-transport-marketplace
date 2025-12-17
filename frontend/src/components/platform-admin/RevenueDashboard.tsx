@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 // Using native select elements for simplicity
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -108,6 +109,7 @@ interface RevenueDashboardProps {
 }
 
 const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) => {
+  const { token } = useAuth();
   const [revenueSummary, setRevenueSummary] = useState<RevenueSummary | null>(null);
   const [revenueForecasts, setRevenueForecasts] = useState<RevenueForecast[]>([]);
   const [profitMargins, setProfitMargins] = useState<ProfitMarginAnalysis[]>([]);
@@ -134,13 +136,20 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
       setLoading(true);
       setError(null);
 
+      if (!token) {
+        console.warn('No authentication token available for revenue data');
+        // Use mock data when not authenticated
+        setMockData();
+        return;
+      }
+
       const endDate = new Date();
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - timeRanges[selectedTimeRange as keyof typeof timeRanges].days);
 
       // Fetch revenue summary
       const summaryResponse = await fetch(
-        `/api/platform-admin/financial/revenue/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -157,7 +166,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
 
       // Fetch forecasts
       const forecastsResponse = await fetch(
-        `/api/platform-admin/financial/revenue/forecasts?historicalMonths=6&forecastMonths=3`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/forecasts?historicalMonths=6&forecastMonths=3`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -172,7 +181,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
 
       // Fetch profit margins
       const marginsResponse = await fetch(
-        `/api/platform-admin/financial/profit-margins?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&segmentBy=${selectedSegment}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/profit-margins?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&segmentBy=${selectedSegment}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -187,7 +196,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
 
       // Fetch revenue breakdown
       const breakdownResponse = await fetch(
-        `/api/platform-admin/financial/revenue/breakdown?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/breakdown?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -201,7 +210,17 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
       }
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load revenue data');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load revenue data';
+      
+      // Check for authentication errors
+      if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
+        setError('Authentication expired. Please refresh the page and log in again.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        setError(errorMessage);
+      }
+      
       console.error('Error fetching revenue data:', err);
       
       // Set mock data for development

@@ -6,10 +6,10 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Plus,
   Edit,
@@ -63,6 +63,7 @@ interface CommissionRateManagerProps {
 }
 
 const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className = '' }) => {
+  const { token } = useAuth();
   const [commissionRates, setCommissionRates] = useState<CommissionRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +80,14 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/financial/commission-rates', {
+      if (!token) {
+        console.warn('No authentication token available for commission rates');
+        // Use mock data when not authenticated
+        setMockData();
+        return;
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/commission-rates`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -92,7 +100,17 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
         throw new Error('Failed to fetch commission rates');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load commission rates');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load commission rates';
+      
+      // Check for authentication errors
+      if (errorMessage.includes('Authentication') || errorMessage.includes('token') || errorMessage.includes('401')) {
+        setError('Authentication expired. Please refresh the page and log in again.');
+      } else if (errorMessage.includes('timeout')) {
+        setError('Request timed out. Please check your connection and try again.');
+      } else {
+        setError(errorMessage);
+      }
+      
       console.error('Error fetching commission rates:', err);
       
       // Set mock data for development

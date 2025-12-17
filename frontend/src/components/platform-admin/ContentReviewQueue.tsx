@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Flag,
   Eye,
@@ -39,6 +40,7 @@ interface ContentFlag {
 }
 
 const ContentReviewQueue: React.FC = () => {
+  const { token } = useAuth();
   const [flags, setFlags] = useState<ContentFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
