@@ -5,6 +5,15 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+
+// Extend Request interface to include user property
+interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+}
 import { commissionRateService, CommissionCalculationRequest } from '../services/commission-rate.service';
 import { revenueAnalyticsService } from '../services/revenue-analytics.service';
 import { disputeRefundService } from '../services/dispute-refund.service';
@@ -70,7 +79,7 @@ const RefundRequestSchema = z.object({
 });
 
 // Middleware for admin authentication (placeholder)
-const requirePlatformAdmin = (req: Request, res: Response, next: Function) => {
+const requirePlatformAdmin = (req: AuthenticatedRequest, res: Response, next: Function) => {
   // In real implementation, verify JWT token and platform admin role
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -79,11 +88,9 @@ const requirePlatformAdmin = (req: Request, res: Response, next: Function) => {
   
   // Mock admin user
   req.user = { 
-    id: 'admin-1', 
-    userId: 'admin-1',
+    id: 'admin-1',
     email: 'admin@platform.com',
-    role: 'PLATFORM_ADMIN',
-    companyId: 'platform-company'
+    role: 'PLATFORM_ADMIN'
   };
   next();
 };
@@ -158,7 +165,7 @@ router.get('/commission-rates/:id', async (req: Request, res: Response) => {
  * POST /api/platform-admin/financial/commission-rates
  * Create new commission rate
  */
-router.post('/commission-rates', async (req: Request, res: Response) => {
+router.post('/commission-rates', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const validatedData = CommissionRateSchema.parse(req.body);
     const createdBy = req.user?.id || 'unknown';
@@ -197,7 +204,7 @@ router.post('/commission-rates', async (req: Request, res: Response) => {
  * PUT /api/platform-admin/financial/commission-rates/:id
  * Update commission rate
  */
-router.put('/commission-rates/:id', async (req: Request, res: Response) => {
+router.put('/commission-rates/:id', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { reason, ...updates } = req.body;
@@ -250,7 +257,7 @@ router.put('/commission-rates/:id', async (req: Request, res: Response) => {
  * POST /api/platform-admin/financial/commission-rates/bulk-update
  * Bulk update commission rates
  */
-router.post('/commission-rates/bulk-update', async (req: Request, res: Response) => {
+router.post('/commission-rates/bulk-update', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { updates, reason } = BulkUpdateSchema.parse(req.body);
     const updatedBy = req.user?.id || 'unknown';
@@ -353,7 +360,7 @@ router.post('/commission-rates/calculate', async (req: Request, res: Response) =
       region: validatedData.region,
       companyType: validatedData.companyType,
       bookingDate: validatedData.bookingDate,
-      volumeData: validatedData.volumeData
+      ...(validatedData.volumeData && { volumeData: validatedData.volumeData })
     };
     
     const result = await commissionRateService.calculateCommission(calculationRequest);
@@ -667,7 +674,7 @@ router.get('/disputes/:id', async (req: Request, res: Response) => {
  * PUT /api/platform-admin/financial/disputes/:id/resolve
  * Resolve dispute
  */
-router.put('/disputes/:id/resolve', async (req: Request, res: Response) => {
+router.put('/disputes/:id/resolve', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
     const validatedResolution = DisputeResolutionSchema.parse(req.body);
@@ -707,7 +714,7 @@ router.put('/disputes/:id/resolve', async (req: Request, res: Response) => {
  * POST /api/platform-admin/financial/refunds/process
  * Process refund
  */
-router.post('/refunds/process', async (req: Request, res: Response) => {
+router.post('/refunds/process', async (req: AuthenticatedRequest, res: Response) => {
   try {
     const refundData = RefundRequestSchema.parse(req.body);
     const requestedBy = req.user?.id || 'unknown';
