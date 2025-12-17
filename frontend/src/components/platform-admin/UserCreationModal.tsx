@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { X, User, Building, Mail, Shield, AlertCircle, Loader2 } from 'lucide-react';
+import { getApiUrl } from '../../config/app.config';
 
 interface CompanyOption {
   id: string;
@@ -89,7 +90,7 @@ const UserCreationModal: React.FC<UserCreationModalProps> = ({
         queryParams.append('search', search);
       }
 
-      const response = await fetch(`/api/platform-admin/users/companies/options?${queryParams}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/users/companies/options?${queryParams}`), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

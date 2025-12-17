@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import AdminCreationForm from './AdminCreationForm';
 import UserCreationModal from './UserCreationModal';
 import BulkOperationsPanel from './BulkOperationsPanel';
+import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
 import UserActivityTimeline from './UserActivityTimeline';
@@ -165,7 +166,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         }
       });
 
-      const response = await fetch(`/api/platform-admin/users?${queryParams}`, {
+      const response = await fetch(getApiUrl(`/platform-admin/users?${queryParams}`), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

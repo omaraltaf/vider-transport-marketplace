@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatCurrency, formatNumber } from '../../utils/currency';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Users, 
   Building, 
@@ -108,7 +109,7 @@ export const PlatformAdminOverview: React.FC = () => {
       };
 
       // Fetch metrics with date range parameter
-      const metricsResponse = await fetch(`/api/platform-admin/overview/metrics?range=${currentRange}`, { headers });
+      const metricsResponse = await fetch(getApiUrl(`/platform-admin/overview/metrics?range=${currentRange}`), { headers });
       if (metricsResponse.ok) {
         const metricsData = await metricsResponse.json();
         setMetrics(metricsData);
@@ -118,7 +119,7 @@ export const PlatformAdminOverview: React.FC = () => {
       }
 
       // Fetch alerts
-      const alertsResponse = await fetch('/api/platform-admin/system/alerts', { headers });
+      const alertsResponse = await fetch(getApiUrl('/platform-admin/system/alerts'), { headers });
       if (alertsResponse.ok) {
         const alertsData = await alertsResponse.json();
         setAlerts(alertsData.alerts || []);
@@ -127,7 +128,7 @@ export const PlatformAdminOverview: React.FC = () => {
       }
 
       // Fetch recent activity with date range
-      const activityResponse = await fetch(`/api/platform-admin/overview/activity?range=${currentRange}`, { headers });
+      const activityResponse = await fetch(getApiUrl(`/platform-admin/overview/activity?range=${currentRange}`), { headers });
       if (activityResponse.ok) {
         const activityData = await activityResponse.json();
         setRecentActivity(activityData.activities || []);

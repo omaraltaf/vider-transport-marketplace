@@ -13,6 +13,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
+import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Search, 
@@ -186,7 +187,7 @@ export const PlatformAdminDashboard: React.FC = () => {
       };
 
       // Fetch global notifications
-      const notificationsResponse = await fetch('/api/platform-admin/notifications/global', { headers });
+      const notificationsResponse = await fetch(getApiUrl('/platform-admin/notifications/global'), { headers });
       if (notificationsResponse.ok) {
         const notificationsData = await notificationsResponse.json();
         setNotifications(notificationsData.notifications || []);
@@ -195,7 +196,7 @@ export const PlatformAdminDashboard: React.FC = () => {
       }
 
       // Fetch cross-panel data
-      const crossPanelResponse = await fetch('/api/platform-admin/cross-panel/data', { headers });
+      const crossPanelResponse = await fetch(getApiUrl('/platform-admin/cross-panel/data'), { headers });
       if (crossPanelResponse.ok) {
         const crossPanelDataResult = await crossPanelResponse.json();
         setCrossPanelData(crossPanelDataResult);
