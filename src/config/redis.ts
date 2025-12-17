@@ -9,8 +9,15 @@ import { logger } from './logger';
 class OptionalRedis {
   private redis: Redis | null = null;
   private isConnected = false;
+  private initializationAttempted = false;
 
   constructor() {
+    // Prevent multiple initialization attempts
+    if (this.initializationAttempted) {
+      return;
+    }
+    this.initializationAttempted = true;
+
     // Completely skip Redis initialization if no REDIS_URL is provided
     if (!process.env.REDIS_URL || process.env.REDIS_URL.trim() === '') {
       logger.info('Redis not configured - running without cache');
@@ -19,12 +26,12 @@ class OptionalRedis {
 
     try {
       this.redis = new Redis(process.env.REDIS_URL, {
-        maxRetriesPerRequest: 0, // Disable retries completely
+        maxRetriesPerRequest: null, // Completely disable retries
         lazyConnect: true,
         connectTimeout: 3000,
         commandTimeout: 3000,
         enableOfflineQueue: false,
-        retryDelayOnFailover: 0,
+        showFriendlyErrorStack: false,
       });
       
       this.redis.on('connect', () => {
@@ -34,9 +41,10 @@ class OptionalRedis {
 
       this.redis.on('error', (error) => {
         this.isConnected = false;
-        logger.warn('Redis connection error (continuing without cache)', { error: error.message });
-        // Immediately disconnect and cleanup to prevent further errors
+        // Only log once to prevent spam
         if (this.redis) {
+          logger.warn('Redis connection failed - disabling Redis cache permanently', { error: error.message });
+          // Immediately disconnect and cleanup to prevent further errors
           try {
             this.redis.removeAllListeners();
             this.redis.disconnect();
@@ -212,6 +220,78 @@ class OptionalRedis {
       logger.warn('Redis mget failed', { keys, error });
       return keys.map(() => null);
     }
+  }
+
+  async hmget(key: string, ...fields: string[]): Promise<(string | null)[]> {
+    if (!this.isConnected || !this.redis) {
+      return fields.map(() => null);
+    }
+    
+    try {
+      return await this.redis.hmget(key, ...fields);
+    } catch (error) {
+      logger.warn('Redis hmget failed', { key, fields, error });
+      return fields.map(() => null);
+    }
+  }
+
+  async info(section?: string): Promise<string> {
+    if (!this.isConnected || !this.redis) {
+      return '';
+    }
+    
+    try {
+      return await this.redis.info(section);
+    } catch (error) {
+      logger.warn('Redis info failed', { section, error });
+      return '';
+    }
+  }
+
+  async incr(key: string): Promise<number> {
+    if (!this.isConnected || !this.redis) {
+      return 0;
+    }
+    
+    try {
+      return await this.redis.incr(key);
+    } catch (error) {
+      logger.warn('Redis incr failed', { key, error });
+      return 0;
+    }
+  }
+
+  async expire(key: string, seconds: number): Promise<number> {
+    if (!this.isConnected || !this.redis) {
+      return 0;
+    }
+    
+    try {
+      return await this.redis.expire(key, seconds);
+    } catch (error) {
+      logger.warn('Redis expire failed', { key, seconds, error });
+      return 0;
+    }
+  }
+
+  multi() {
+    if (!this.isConnected || !this.redis) {
+      // Return a mock multi that does nothing
+      const mockMulti = {
+        set: () => mockMulti,
+        setex: () => mockMulti,
+        del: () => mockMulti,
+        hset: () => mockMulti,
+        hdel: () => mockMulti,
+        incr: () => mockMulti,
+        decr: () => mockMulti,
+        expire: () => mockMulti,
+        exec: async () => []
+      };
+      return mockMulti;
+    }
+    
+    return this.redis.multi();
   }
 
   pipeline() {

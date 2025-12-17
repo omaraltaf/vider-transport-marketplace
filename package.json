@@ -18,7 +18,9 @@
     "db:studio": "prisma studio",
     "fix-currency": "tsx scripts/fix-currency-and-reseed.ts",
     "test-platform": "tsx scripts/quick-platform-test.ts",
-    "seed-comprehensive": "tsx scripts/comprehensive-seed.ts"
+    "seed-comprehensive": "tsx scripts/comprehensive-seed.ts",
+    "sync-railway-db": "tsx scripts/sync-railway-database.ts",
+    "mirror-to-railway": "tsx scripts/sync-railway-database.ts"
   },
   "keywords": [
     "marketplace",

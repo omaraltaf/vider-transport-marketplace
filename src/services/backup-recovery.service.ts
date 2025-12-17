@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import Redis from 'ioredis';
+import { redis } from '../config/redis';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
@@ -8,7 +8,6 @@ import * as crypto from 'crypto';
 
 const execAsync = promisify(exec);
 const prisma = new PrismaClient();
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 export interface BackupJob {
   id: string;
