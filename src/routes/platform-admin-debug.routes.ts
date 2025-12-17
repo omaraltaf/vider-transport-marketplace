@@ -162,4 +162,114 @@ router.get('/users/companies/options', (req, res) => {
   });
 });
 
+// Content moderation endpoints
+router.get('/moderation/statistics', (req, res) => {
+  console.log('DEBUG: Moderation statistics endpoint hit');
+  res.json({
+    totalReports: 45,
+    pendingReview: 12,
+    resolvedToday: 8,
+    flaggedContent: 23,
+    suspendedUsers: 3,
+    averageResponseTime: '2.5 hours'
+  });
+});
+
+// System health endpoints
+router.get('/system/health', (req, res) => {
+  console.log('DEBUG: System health endpoint hit');
+  res.json({
+    status: 'healthy',
+    uptime: '99.8%',
+    responseTime: 145,
+    activeConnections: 1250,
+    memoryUsage: '78%',
+    diskSpace: '65%',
+    lastCheck: new Date()
+  });
+});
+
+router.get('/system/backup/jobs', (req, res) => {
+  console.log('DEBUG: Backup jobs endpoint hit');
+  res.json({
+    jobs: [
+      {
+        id: 'backup-1',
+        type: 'full',
+        status: 'completed',
+        startTime: new Date(Date.now() - 1000 * 60 * 60 * 2),
+        endTime: new Date(Date.now() - 1000 * 60 * 60 * 1.5),
+        size: '2.3 GB'
+      },
+      {
+        id: 'backup-2',
+        type: 'incremental',
+        status: 'running',
+        startTime: new Date(Date.now() - 1000 * 60 * 30),
+        progress: '65%'
+      }
+    ]
+  });
+});
+
+// Audit logs endpoints
+router.get('/audit/logs', (req, res) => {
+  console.log('DEBUG: Audit logs endpoint hit');
+  res.json({
+    logs: [
+      {
+        id: 'audit-1',
+        action: 'USER_SUSPENDED',
+        adminId: 'admin-1',
+        targetId: 'user-123',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15),
+        details: 'User suspended for policy violation'
+      },
+      {
+        id: 'audit-2',
+        action: 'COMPANY_VERIFIED',
+        adminId: 'admin-1',
+        targetId: 'company-456',
+        timestamp: new Date(Date.now() - 1000 * 60 * 45),
+        details: 'Company verification completed'
+      }
+    ],
+    total: 2,
+    pagination: {
+      page: 1,
+      limit: 50,
+      total: 2
+    }
+  });
+});
+
+// Platform configuration audit logs
+router.get('/config/audit-logs', (req, res) => {
+  console.log('DEBUG: Config audit logs endpoint hit');
+  res.json({
+    logs: [
+      {
+        id: 'config-1',
+        action: 'FEATURE_TOGGLE',
+        feature: 'hourly-bookings',
+        oldValue: false,
+        newValue: true,
+        adminId: 'admin-1',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60),
+        reason: 'Enable hourly bookings for pilot program'
+      },
+      {
+        id: 'config-2',
+        action: 'COMMISSION_RATE_UPDATE',
+        oldValue: '5%',
+        newValue: '4.5%',
+        adminId: 'admin-1',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
+        reason: 'Reduce commission rate for Q1 promotion'
+      }
+    ],
+    total: 2
+  });
+});
+
 export default router;
