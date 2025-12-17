@@ -18,10 +18,12 @@ export interface FeatureFlagCache {
   configVersion: number;
 }
 
+import { getApiUrl } from '../config/app.config';
+
 class FeatureFlagService {
   private cache: FeatureFlagCache | null = null;
   private readonly CACHE_TTL = 60 * 1000; // 1 minute
-  private readonly API_BASE = '/api/platform-admin/config/features';
+  private readonly API_BASE = '/platform-admin/config/features';
 
   /**
    * Get all feature flags with caching
@@ -34,7 +36,7 @@ class FeatureFlagService {
       }
 
       // Fetch from API
-      const response = await fetch(this.API_BASE, {
+      const response = await fetch(getApiUrl(this.API_BASE), {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
