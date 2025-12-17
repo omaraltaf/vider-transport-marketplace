@@ -7,7 +7,7 @@
     "dev": "tsx watch src/app.ts",
     "build": "npx prisma generate",
     "build:production": "./node_modules/.bin/tsc --project tsconfig.production.json",
-    "start": "npx prisma db push --accept-data-loss && npx ts-node src/app.ts",
+    "start": "npx prisma db push --accept-data-loss && npx ts-node --transpile-only src/app.ts",
     "start:compiled": "npx prisma db push --accept-data-loss && node dist/app.js",
     "test": "vitest --run",
     "test:watch": "vitest",

@@ -242,7 +242,7 @@ export class BookingService {
       
       const region = data.pickupLocation?.region || 'Norway';
       const paymentCheck = await checkPaymentMethodAvailability(
-        data.paymentMethod,
+        data.paymentMethod as any, // Type assertion for runtime compatibility
         region,
         data.totalAmount
       );
@@ -853,7 +853,7 @@ export class BookingService {
     }
 
     // Can only cancel PENDING, ACCEPTED, or ACTIVE bookings
-    if (![BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.ACTIVE].includes(booking.status)) {
+    if (![BookingStatus.PENDING, BookingStatus.ACCEPTED, BookingStatus.ACTIVE].includes(booking.status as any)) {
       throw new Error('INVALID_BOOKING_STATUS');
     }
 
