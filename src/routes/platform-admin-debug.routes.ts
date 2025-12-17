@@ -2,6 +2,8 @@ import { Router } from 'express';
 
 const router = Router();
 
+// NO AUTHENTICATION for debug routes - they provide fallback data
+
 // Debug endpoint to test if platform admin routes are working
 router.get('/debug/test', (req, res) => {
   res.json({

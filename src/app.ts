@@ -174,6 +174,10 @@ export function createApp(): Application {
   app.use('/api/seed', seedRoutes);
   app.use('/api/debug', debugRoutes);
   
+  // Debug routes for platform admin (temporary fix) - MOUNT FIRST, NO AUTH
+  const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
+  app.use('/api/platform-admin', platformAdminDebugRoutes);
+  
   // Platform Admin routes (mount in specific order to avoid conflicts)
   app.use('/api/platform-admin/security', securityMonitoringRoutes);
   app.use('/api/platform-admin/financial', financialRoutes);
@@ -186,10 +190,6 @@ export function createApp(): Application {
   
   const systemAdminRoutes = require('./routes/system-admin.routes').default;
   app.use('/api/platform-admin/system', systemAdminRoutes);
-  
-  // Debug routes for platform admin (temporary fix)
-  const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
-  app.use('/api/platform-admin', platformAdminDebugRoutes);
   
   // Main platform admin routes (mount after specific sub-routes)
   app.use('/api/platform-admin', platformAdminRoutes);
