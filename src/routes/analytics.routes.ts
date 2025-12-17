@@ -622,7 +622,8 @@ router.post('/scheduled-reports',
         schedule: req.body.schedule,
         recipients: req.body.recipients,
         filters: req.body.filters || {},
-        isActive: req.body.isActive
+        isActive: req.body.isActive,
+        createdBy: req.user?.id || 'system'
       };
 
       logger.info('Creating scheduled report', { 

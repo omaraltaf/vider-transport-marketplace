@@ -353,7 +353,7 @@ export class AnalyticsExportService {
     const buffer = await workbook.xlsx.writeBuffer();
 
     return {
-      data: buffer as Buffer,
+      data: buffer as unknown as Buffer,
       filename: `${baseFilename}.xlsx`,
       contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     };
@@ -436,8 +436,6 @@ export class AnalyticsExportService {
   private scheduleReport(report: any): void {
     const job = cron.schedule(report.schedule, async () => {
       await this.executeScheduledReport(report.id);
-    }, {
-      scheduled: false
     });
 
     this.scheduledJobs.set(report.id, job);

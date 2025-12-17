@@ -10,8 +10,10 @@ import { z } from 'zod';
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
+    userId: string;
     email: string;
-    role: string;
+    role: any; // Use any to match expected Role type
+    companyId: string;
   };
 }
 import { commissionRateService, CommissionCalculationRequest, CommissionRate } from '../services/commission-rate.service';
@@ -89,8 +91,10 @@ const requirePlatformAdmin = (req: AuthenticatedRequest, res: Response, next: Fu
   // Mock admin user
   req.user = { 
     id: 'admin-1',
+    userId: 'admin-1',
     email: 'admin@platform.com',
-    role: 'PLATFORM_ADMIN'
+    role: 'PLATFORM_ADMIN',
+    companyId: 'platform-company'
   };
   next();
 };

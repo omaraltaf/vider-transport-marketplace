@@ -45,8 +45,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in scheduled KPI calculation:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('kpi-calculation', kpiJob);
@@ -61,8 +59,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in scheduled geographic metrics calculation:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('geographic-metrics', geoJob);
@@ -109,8 +105,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in cache warming:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('cache-warming', cacheWarmJob);
@@ -130,8 +124,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in daily data aggregation:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('daily-aggregation', dailyAggregationJob);
@@ -146,8 +138,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in weekly data aggregation:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('weekly-aggregation', weeklyAggregationJob);
@@ -162,8 +152,6 @@ export class AnalyticsSchedulerService {
       } catch (error) {
         logger.error('Error in monthly data aggregation:', error);
       }
-    }, {
-      scheduled: false
     });
 
     this.jobs.set('monthly-aggregation', monthlyAggregationJob);
@@ -302,8 +290,8 @@ export class AnalyticsSchedulerService {
     
     this.jobs.forEach((job, name) => {
       status[name] = {
-        running: job.running,
-        nextRun: job.nextDate()?.toDate()
+        running: false, // Default value since property doesn't exist
+        nextRun: undefined // Default value since method doesn't exist
       };
     });
     

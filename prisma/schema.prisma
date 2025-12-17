@@ -657,3 +657,18 @@ enum SecurityAlertStatus {
   RESOLVED
   FALSE_POSITIVE
 }
+model ScheduledReport {
+  id         String   @id @default(uuid())
+  name       String
+  reportType String
+  format     String
+  schedule   String
+  recipients String[]
+  filters    Json
+  isActive   Boolean  @default(true)
+  createdBy  String
+  lastRun    DateTime?
+  nextRun    DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

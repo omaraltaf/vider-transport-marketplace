@@ -14,7 +14,7 @@ import { logger } from '../config/logger';
  */
 export class PlatformAdminFallbackService {
   private static instance: PlatformAdminFallbackService;
-  private logger = new Logger('PlatformAdminFallbackService');
+  private logger = console;
 
   public static getInstance(): PlatformAdminFallbackService {
     if (!PlatformAdminFallbackService.instance) {

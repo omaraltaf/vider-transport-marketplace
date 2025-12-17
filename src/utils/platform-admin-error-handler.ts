@@ -8,13 +8,13 @@ import { PlatformAdminFallbackService } from '../services/platform-admin-fallbac
  * for all platform admin services.
  */
 export class PlatformAdminErrorHandler {
-  private static logger = new Logger('PlatformAdminErrorHandler');
+  private static logger = console;
   private static fallbackService = PlatformAdminFallbackService.getInstance();
 
   /**
    * Handle database query errors with automatic fallback
    */
-  static async handleDatabaseError<T>(
+  static async handleDatabaseError<T extends object>(
     operation: () => Promise<T>,
     fallbackData: T,
     context: {
@@ -44,7 +44,7 @@ export class PlatformAdminErrorHandler {
   /**
    * Handle cache operations with fallback to database
    */
-  static async handleCacheOperation<T>(
+  static async handleCacheOperation<T extends object>(
     cacheKey: string,
     cacheOperation: () => Promise<T | null>,
     databaseOperation: () => Promise<T>,
@@ -94,7 +94,7 @@ export class PlatformAdminErrorHandler {
   ): Promise<void> {
     try {
       // Import Redis dynamically to avoid circular dependencies
-      const { getRedisClient } = await import('../config/redis');
+      const { redis } = await import('../config/redis');
       const redis = getRedisClient();
       
       if (redis) {
@@ -194,7 +194,7 @@ export class PlatformAdminErrorHandler {
   /**
    * Handle service-specific errors with appropriate fallbacks
    */
-  static async handleServiceError<T>(
+  static async handleServiceError<T extends object>(
     service: string,
     method: string,
     error: Error,

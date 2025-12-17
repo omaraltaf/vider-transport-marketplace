@@ -343,7 +343,8 @@ export class ApiRateLimitingService {
             allowed: true,
             limit: rule.limit,
             remaining,
-            resetTime: new Date(windowEnd)
+            resetTime: new Date(windowEnd),
+            retryAfter: undefined
           };
         }
       }
@@ -656,11 +657,9 @@ export class ApiRateLimitingService {
           action: `RATE_LIMIT_${action.toUpperCase()}`,
           entityType: 'rate_limit',
           entityId,
-          adminId: 'system',
+          adminUserId: 'system',
           changes: { description },
-          timestamp: new Date(),
-          ipAddress: 'system',
-          userAgent: 'rate-limit-service'
+          ipAddress: 'system'
         }
       });
     } catch (error) {

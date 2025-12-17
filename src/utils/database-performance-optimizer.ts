@@ -8,7 +8,7 @@ import { logger } from '../config/logger';
  * including query analysis, indexing recommendations, and performance monitoring.
  */
 export class DatabasePerformanceOptimizer {
-  private static logger = new Logger('DatabasePerformanceOptimizer');
+  private static logger = console;
   private static queryMetrics = new Map<string, {
     count: number;
     totalDuration: number;

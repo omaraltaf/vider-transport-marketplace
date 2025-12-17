@@ -233,7 +233,7 @@ router.get('/stats', async (req, res) => {
  */
 router.get('/fraud/alerts', async (req, res) => {
   try {
-    const filters = {
+    const filters: any = {
       status: req.query.status as string,
       type: req.query.type as string,
       severity: req.query.severity as string,
