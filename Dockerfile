@@ -31,7 +31,7 @@ COPY . .
 RUN npx prisma generate
 
 # Build the application
-RUN npm run build:docker
+RUN npm run build:production
 
 # Production image
 FROM base AS runner
