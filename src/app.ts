@@ -187,6 +187,10 @@ export function createApp(): Application {
   const systemAdminRoutes = require('./routes/system-admin.routes').default;
   app.use('/api/platform-admin/system', systemAdminRoutes);
   
+  // Debug routes for platform admin (temporary fix)
+  const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
+  app.use('/api/platform-admin', platformAdminDebugRoutes);
+  
   // Main platform admin routes (mount after specific sub-routes)
   app.use('/api/platform-admin', platformAdminRoutes);
   
