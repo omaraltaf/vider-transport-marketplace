@@ -1,6 +1,6 @@
 /**
  * Vider Transport Marketplace API
- * Build: 2025-12-17T16:45:00Z - Platform Admin Route Fix
+ * Build: 2025-12-17T17:35:00Z - Entry Point Fix (dist/index.js)
  */
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
@@ -140,7 +140,7 @@ export function createApp(): Application {
       version: '1.0.0',
       status: 'operational',
       timestamp: new Date().toISOString(),
-      deploymentVersion: '2025-12-17-platform-admin-fix',
+      deploymentVersion: '2025-12-17-entry-point-fix',
       documentation: '/api-docs',
       endpoints: {
         auth: '/api/auth',
