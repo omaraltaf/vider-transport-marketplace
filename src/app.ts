@@ -136,6 +136,7 @@ export function createApp(): Application {
       version: '1.0.0',
       status: 'operational',
       timestamp: new Date().toISOString(),
+      deploymentVersion: '2025-12-17-platform-admin-fix',
       documentation: '/api-docs',
       endpoints: {
         auth: '/api/auth',
