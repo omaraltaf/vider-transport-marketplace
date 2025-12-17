@@ -143,7 +143,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `/api/platform-admin/financial/revenue/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -160,7 +160,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `/api/platform-admin/financial/revenue/forecasts?historicalMonths=6&forecastMonths=3`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -175,7 +175,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `/api/platform-admin/financial/profit-margins?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&segmentBy=${selectedSegment}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -190,7 +190,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `/api/platform-admin/financial/revenue/breakdown?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );

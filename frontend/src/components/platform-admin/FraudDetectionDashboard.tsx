@@ -81,10 +81,10 @@ const FraudDetectionDashboard: React.FC = () => {
           limit: '50',
           offset: '0'
         })}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/platform-admin/moderation/fraud/stats', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
@@ -181,7 +181,7 @@ const FraudDetectionDashboard: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           notes: 'Investigation started from dashboard'
@@ -204,7 +204,7 @@ const FraudDetectionDashboard: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           resolution,

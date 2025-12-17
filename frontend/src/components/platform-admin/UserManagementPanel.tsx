@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import AdminCreationForm from './AdminCreationForm';
 import UserCreationModal from './UserCreationModal';
 import BulkOperationsPanel from './BulkOperationsPanel';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../services/api';
 import UserActivityTimeline from './UserActivityTimeline';
 import ContentModerationPanel from './ContentModerationPanel';
 import FraudDetectionDashboard from './FraudDetectionDashboard';
@@ -78,6 +80,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   className = '',
   initialSubSection = 'overview'
 }) => {
+  const { token } = useAuth();
   const [activeSubSection, setActiveSubSection] = useState(initialSubSection);
 
   // Update activeSubSection when initialSubSection prop changes
@@ -123,7 +126,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     try {
       const response = await fetch('/api/platform-admin/users/companies/options?limit=100', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -164,7 +167,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
 
       const response = await fetch(`/api/platform-admin/users?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -318,7 +321,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(adminData)
       });
@@ -342,7 +345,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(userData)
       });
@@ -376,7 +379,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -405,7 +408,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       const response = await fetch('/api/platform-admin/users/export', {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

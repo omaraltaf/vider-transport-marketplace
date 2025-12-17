@@ -156,7 +156,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
       const response = await fetch(`/api/platform-admin/system/audit/logs?${params}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -175,7 +175,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
     try {
       const response = await fetch('/api/platform-admin/system/rate-limits/rules', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -194,7 +194,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
     try {
       const response = await fetch('/api/platform-admin/system/access-control/rules', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -213,7 +213,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
     try {
       const response = await fetch('/api/platform-admin/system/api-usage/metrics', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -232,7 +232,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
     try {
       const response = await fetch('/api/platform-admin/system/api-usage/violations', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -253,7 +253,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...newRateLimitRule,
@@ -292,7 +292,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...newAccessControlRule,
@@ -331,7 +331,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ enabled })
       });
@@ -354,7 +354,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ enabled })
       });
@@ -380,7 +380,7 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
       const response = await fetch(`/api/platform-admin/system/rate-limits/rules/${ruleId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

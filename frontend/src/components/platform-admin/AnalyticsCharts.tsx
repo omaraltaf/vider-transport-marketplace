@@ -104,7 +104,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),
@@ -124,7 +124,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),
@@ -142,7 +142,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),

@@ -73,7 +73,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/health', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -93,7 +93,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/health/history?hours=24', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -112,7 +112,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/alerts?acknowledged=false', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -132,7 +132,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
       const response = await fetch(`/api/platform-admin/system/alerts/${alertId}/acknowledge`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -149,7 +149,7 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
       const response = await fetch(`/api/platform-admin/system/alerts/${alertId}/resolve`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

@@ -81,7 +81,7 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
 
       const response = await fetch('/api/platform-admin/financial/commission-rates', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

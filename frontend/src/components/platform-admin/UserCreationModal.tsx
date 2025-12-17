@@ -91,7 +91,7 @@ const UserCreationModal: React.FC<UserCreationModalProps> = ({
 
       const response = await fetch(`/api/platform-admin/users/companies/options?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

@@ -94,7 +94,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           type: 'STATUS_UPDATE',
@@ -134,7 +134,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           type: 'ROLE_ASSIGNMENT',
@@ -179,7 +179,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           type: 'FLAG_USERS',
@@ -224,7 +224,7 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           type: 'SEND_NOTIFICATION',

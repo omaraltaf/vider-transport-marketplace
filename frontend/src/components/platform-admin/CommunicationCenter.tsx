@@ -252,7 +252,7 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
       // Try to fetch from API, but fall back to mock data if it fails
       try {
         const headers = {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         };
 

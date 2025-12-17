@@ -103,10 +103,10 @@ const BlacklistManager: React.FC = () => {
           limit: '50',
           offset: '0'
         })}`, {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         }),
         fetch('/api/platform-admin/moderation/blacklist/stats', {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+          headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
@@ -211,7 +211,7 @@ const BlacklistManager: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...newEntry,
@@ -244,7 +244,7 @@ const BlacklistManager: React.FC = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           reason: 'Removed from admin panel'
@@ -267,7 +267,7 @@ const BlacklistManager: React.FC = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ type, value })
       });

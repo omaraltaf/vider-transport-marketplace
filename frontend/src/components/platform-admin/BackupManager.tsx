@@ -119,7 +119,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/backup/jobs', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -138,7 +138,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/backup/schedules', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -157,7 +157,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
     try {
       const response = await fetch('/api/platform-admin/system/backup/restore/jobs', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -178,7 +178,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           type: createBackupForm.type,
@@ -220,7 +220,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           ...createScheduleForm,
@@ -259,7 +259,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           backupId: restoreForm.backupId,
@@ -302,7 +302,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
       const response = await fetch(`/api/platform-admin/system/backup/jobs/${backupId}/cancel`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -323,7 +323,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
       const response = await fetch(`/api/platform-admin/system/backup/jobs/${backupId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -340,7 +340,7 @@ const BackupManager: React.FC<BackupManagerProps> = ({
       const response = await fetch(`/api/platform-admin/system/backup/verify/${backupId}`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

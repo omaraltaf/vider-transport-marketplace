@@ -272,7 +272,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       setLoading(true);
       const response = await fetch('/api/platform-admin/companies', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -311,7 +311,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       const response = await fetch('/api/platform-admin/companies', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(companyData),
@@ -346,7 +346,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
     try {
       const response = await fetch('/api/platform-admin/companies/stats', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -367,7 +367,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       const response = await fetch(`/api/platform-admin/companies/${companyId}/verify`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -397,7 +397,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       const response = await fetch(`/api/platform-admin/companies/${companyId}/suspend`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ reason })

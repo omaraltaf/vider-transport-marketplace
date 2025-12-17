@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { formatCurrency, formatNumber, formatPercentage } from '../../utils/currency';
+import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../services/api';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -51,6 +53,7 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
   className = '',
   initialSubSection = 'dashboard'
 }) => {
+  const { token } = useAuth();
   const [kpis, setKpis] = useState<PlatformKPIs | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,19 +97,7 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/platform-admin/analytics/kpis?useCache=true', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch KPIs: ${response.statusText}`);
-      }
-
-      const result = await response.json();
+      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', token || '');
       if (result.success) {
         setKpis(result.data);
       } else {
@@ -137,11 +128,11 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
   // Handle export
   const handleExport = async (format: 'csv' | 'excel' | 'json') => {
     try {
-      const response = await fetch('/api/platform-admin/analytics/export', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/analytics/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           reportType: 'kpis',

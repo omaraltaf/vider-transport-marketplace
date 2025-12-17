@@ -128,7 +128,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
       
       const response = await fetch('/api/platform-admin/analytics/filter-options', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

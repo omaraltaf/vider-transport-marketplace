@@ -185,7 +185,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
 
       const response = await fetch('/api/platform-admin/financial/disputes', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -211,7 +211,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
     try {
       const response = await fetch('/api/platform-admin/financial/refunds/history', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -237,7 +237,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
         `/api/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -252,7 +252,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
         `/api/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );

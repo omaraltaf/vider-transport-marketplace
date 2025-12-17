@@ -70,7 +70,7 @@ const FinancialManagementPanel: React.FC<FinancialManagementPanelProps> = ({
         `/api/platform-admin/financial/revenue/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );

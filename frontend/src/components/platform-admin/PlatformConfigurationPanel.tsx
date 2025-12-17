@@ -62,7 +62,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
 
       const response = await fetch('/api/platform-admin/system/config', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -351,7 +351,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ updates })
       });

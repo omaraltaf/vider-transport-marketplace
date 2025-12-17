@@ -100,7 +100,7 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
 
       const response = await fetch(`/api/platform-admin/users/${userId}/activity?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 

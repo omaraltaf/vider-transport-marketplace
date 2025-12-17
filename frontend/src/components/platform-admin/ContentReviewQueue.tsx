@@ -72,7 +72,7 @@ const ContentReviewQueue: React.FC = () => {
 
       const response = await fetch(`/api/platform-admin/moderation/content/flagged?${queryParams}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
@@ -148,7 +148,7 @@ const ContentReviewQueue: React.FC = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           decision,

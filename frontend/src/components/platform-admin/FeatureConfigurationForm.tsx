@@ -82,7 +82,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load geographic restrictions
       const geoResponse = await fetch('/api/platform-admin/config/geographic-restrictions', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -95,7 +95,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load payment method configurations
       const paymentResponse = await fetch('/api/platform-admin/config/payment-methods', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -108,7 +108,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load feature schedules
       const scheduleResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/schedules`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -121,7 +121,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load rollout configurations
       const rolloutResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/rollouts`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -144,7 +144,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch('/api/platform-admin/config/geographic-restrictions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(restriction),
@@ -166,7 +166,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch(`/api/platform-admin/config/payment-methods/${config.paymentMethod}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(config),
@@ -188,7 +188,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/schedules`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -213,7 +213,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/rollouts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -238,7 +238,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch('/api/platform-admin/config/features/bulk-update', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ updates }),
@@ -260,7 +260,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch(`/api/platform-admin/config/features/${featureId}/rollback`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ reason }),
@@ -588,7 +588,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
                                       await fetch(`/api/platform-admin/config/features/schedules/${schedule.id}`, {
                                         method: 'DELETE',
                                         headers: {
-                                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                                          'Authorization': `Bearer ${token}`,
                                         },
                                       });
                                       await loadFeatureConfiguration();
