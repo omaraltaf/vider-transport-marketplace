@@ -164,33 +164,35 @@ export function createApp(): Application {
   app.use('/api/messages', messagingRoutes);
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/admin', adminRoutes);
-  app.use('/api/platform-admin', platformAdminRoutes);
+  app.use('/api/user', userRoutes);
+  app.use('/api/availability', availabilityRoutes);
+  app.use('/api/seed', seedRoutes);
+  app.use('/api/debug', debugRoutes);
+  
+  // Platform Admin routes (mount in specific order to avoid conflicts)
   app.use('/api/platform-admin/security', securityMonitoringRoutes);
   app.use('/api/platform-admin/financial', financialRoutes);
   app.use('/api/platform-admin/users', userManagementRoutes);
   app.use('/api/platform-admin/companies', companyManagementRoutes);
   app.use('/api/platform-admin/analytics', analyticsRoutes);
-  app.use('/api/audit-logs', auditLogRoutes);
   app.use('/api/platform-admin/communication', communicationRoutes);
   app.use('/api/platform-admin/moderation', contentModerationRoutes);
+  app.use('/api/platform-admin/config', platformConfigRoutes);
   
   const systemAdminRoutes = require('./routes/system-admin.routes').default;
   app.use('/api/platform-admin/system', systemAdminRoutes);
   
-  const platformAdminGlobalRoutes = require('./routes/platform-admin-global.routes').default;
-  app.use('/api/platform-admin', platformAdminGlobalRoutes);
+  // Main platform admin routes (mount after specific sub-routes)
+  app.use('/api/platform-admin', platformAdminRoutes);
+  
+  // Other routes
+  app.use('/api/audit-logs', auditLogRoutes);
   
   const gdprRoutes = require('./routes/gdpr.routes').default;
   app.use('/api/gdpr', gdprRoutes);
   
   const dashboardRoutes = require('./routes/dashboard.routes').default;
   app.use('/api/dashboard', dashboardRoutes);
-  app.use('/api/platform-admin/system', systemAdminRoutes);
-  app.use('/api/platform-admin/config', platformConfigRoutes);
-  app.use('/api/availability', availabilityRoutes);
-  app.use('/api/seed', seedRoutes);
-  app.use('/api/user', userRoutes);
-  app.use('/api/debug', debugRoutes);
 
   // 404 handler
   app.use((req: Request, res: Response) => {
