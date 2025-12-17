@@ -8,6 +8,7 @@ import { FeatureToggleList } from './FeatureToggleList';
 import { FeatureConfigurationForm } from './FeatureConfigurationForm';
 import { FeatureImpactAnalysis } from './FeatureImpactAnalysis';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../services/api';
 
 export interface PlatformFeature {
   id: string;
@@ -63,18 +64,7 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/platform-admin/config/features', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to load features: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const data = await apiClient.get('/platform-admin/config/features', token || '');
       
       // Transform API response to match our interface
       const transformedFeatures: PlatformFeature[] = [
@@ -169,18 +159,7 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
         if (!confirmed) return;
       }
 
-      const response = await fetch(`/api/platform-admin/config/features/${featureId}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ enabled }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update feature: ${response.statusText}`);
-      }
+      await apiClient.put(`/platform-admin/config/features/${featureId}`, { enabled }, token || '');
 
       // Update local state
       setFeatures(prev => prev.map(f => 
@@ -200,18 +179,7 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
 
   const handleBulkUpdate = async (updates: Array<{ featureId: string; enabled: boolean }>) => {
     try {
-      const response = await fetch('/api/platform-admin/config/features/bulk-update', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ updates }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to bulk update features: ${response.statusText}`);
-      }
+      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, token || '');
 
       // Reload features to get updated state
       await loadFeatures();
