@@ -41,10 +41,15 @@ export function createApp(): Application {
   // Middleware
   const allowedOrigins = [
     'https://vider-transport-marketplace.vercel.app',
+    'https://vider-transport-marketplace-production.up.railway.app',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
     'http://localhost:3000',
+    // Allow any Vercel deployment URLs
+    /^https:\/\/.*\.vercel\.app$/,
+    // Allow Railway URLs
+    /^https:\/\/.*\.railway\.app$/,
   ];
   
   app.use(cors({
@@ -52,9 +57,18 @@ export function createApp(): Application {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       
-      if (allowedOrigins.includes(origin)) {
+      // Check string origins
+      if (typeof origin === 'string' && allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') {
+          return allowed === origin;
+        } else if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      })) {
         callback(null, true);
       } else {
+        console.log(`CORS blocked origin: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     },
