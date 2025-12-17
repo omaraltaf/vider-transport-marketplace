@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
+import { getApiUrl } from '../../config/app.config';
 import { 
   LineChart, 
   Line, 
@@ -102,7 +103,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       setLoading(true);
 
       // Fetch trend data
-      const trendResponse = await fetch('/api/platform-admin/analytics/trends', {
+      const trendResponse = await fetch(getApiUrl('/platform-admin/analytics/trends'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       }
 
       // Fetch geographic data
-      const geoResponse = await fetch('/api/platform-admin/analytics/geographic', {
+      const geoResponse = await fetch(getApiUrl('/platform-admin/analytics/geographic'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,7 +141,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       }
 
       // Fetch feature usage data
-      const featureResponse = await fetch('/api/platform-admin/analytics/features', {
+      const featureResponse = await fetch(getApiUrl('/platform-admin/analytics/features'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

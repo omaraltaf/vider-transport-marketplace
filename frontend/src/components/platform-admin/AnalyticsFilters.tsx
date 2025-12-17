@@ -13,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Calendar as CalendarIcon,
@@ -128,7 +129,7 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     try {
       setLoading(true);
       
-      const response = await fetch('/api/platform-admin/analytics/filter-options', {
+      const response = await fetch(getApiUrl('/platform-admin/analytics/filter-options'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
