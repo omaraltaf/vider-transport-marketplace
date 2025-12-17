@@ -11,9 +11,17 @@ class OptionalRedis {
   private isConnected = false;
 
   constructor() {
-    if (process.env.REDIS_URL) {
+    // Only attempt Redis connection if REDIS_URL is provided and not empty
+    if (process.env.REDIS_URL && process.env.REDIS_URL.trim() !== '') {
       try {
-        this.redis = new Redis(process.env.REDIS_URL);
+        this.redis = new Redis(process.env.REDIS_URL, {
+          retryDelayOnFailover: 100,
+          maxRetriesPerRequest: 1,
+          lazyConnect: true,
+          connectTimeout: 5000,
+          commandTimeout: 5000,
+          enableOfflineQueue: false,
+        });
         
         this.redis.on('connect', () => {
           this.isConnected = true;
@@ -23,14 +31,43 @@ class OptionalRedis {
         this.redis.on('error', (error) => {
           this.isConnected = false;
           logger.warn('Redis connection error (continuing without cache)', { error: error.message });
+          // Prevent unhandled error events by cleaning up
+          if (this.redis) {
+            try {
+              this.redis.disconnect();
+            } catch (e) {
+              // Ignore disconnect errors
+            }
+            this.redis = null;
+          }
         });
 
         this.redis.on('close', () => {
           this.isConnected = false;
-          logger.warn('Redis connection closed');
+          logger.info('Redis connection closed - continuing without cache');
         });
+
+        // Attempt connection with timeout - but don't block startup
+        setTimeout(() => {
+          if (this.redis) {
+            this.redis.connect().catch((error) => {
+              logger.warn('Redis connection failed (continuing without cache)', { error: error.message });
+              this.isConnected = false;
+              if (this.redis) {
+                try {
+                  this.redis.disconnect();
+                } catch (e) {
+                  // Ignore disconnect errors
+                }
+                this.redis = null;
+              }
+            });
+          }
+        }, 100);
       } catch (error) {
         logger.warn('Failed to initialize Redis (continuing without cache)', { error });
+        this.redis = null;
+        this.isConnected = false;
       }
     } else {
       logger.info('Redis not configured - running without cache');
