@@ -3,7 +3,7 @@
  * Main interface for content review, fraud detection, and blacklist management
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -57,7 +57,7 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  const fetchModerationStats = async () => {
+  const fetchModerationStats = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -171,11 +171,11 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchModerationStats();
-  }, [token]);
+  }, [fetchModerationStats]);
 
   if (loading) {
     return (
