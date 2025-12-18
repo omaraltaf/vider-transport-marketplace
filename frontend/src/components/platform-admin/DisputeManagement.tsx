@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { 
   AlertTriangle,
   CheckCircle,
@@ -183,28 +184,9 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       setLoading(true);
       setError(null);
 
-      if (!token) {
-        console.warn('No authentication token available for disputes');
-        // Use mock data when not authenticated
-        setMockDisputeData();
-        setMockRefundData();
-        setMockStatistics();
-        return;
-      }
-
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setDisputes(data.data || []);
-      } else {
-        throw new Error('Failed to fetch disputes');
-      }
+      const data = await apiClient.get('/platform-admin/financial/disputes', validToken);
+      setDisputes(data.data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load disputes';
       
@@ -230,16 +212,8 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
   const fetchRefunds = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/history`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setRefunds(data.data.refunds || []);
-      }
+      const data = await apiClient.get('/platform-admin/financial/refunds/history', validToken);
+      setRefunds(data.data.refunds || []);
     } catch (err) {
       console.error('Error fetching refunds:', err);
       setMockRefundData();
@@ -253,36 +227,21 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 30);
 
-      // Fetch dispute statistics
       const validToken = await tokenManager.getValidToken();
-      const disputeStatsResponse = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${validToken}`
-          }
-        }
+      
+      // Fetch dispute statistics
+      const disputeStatsData = await apiClient.get(
+        `/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        validToken
       );
-
-      if (disputeStatsResponse.ok) {
-        const disputeStatsData = await disputeStatsResponse.json();
-        setDisputeStats(disputeStatsData.data);
-      }
+      setDisputeStats(disputeStatsData.data);
 
       // Fetch refund statistics
-      const refundStatsResponse = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${validToken}`
-          }
-        }
+      const refundStatsData = await apiClient.get(
+        `/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        validToken
       );
-
-      if (refundStatsResponse.ok) {
-        const refundStatsData = await refundStatsResponse.json();
-        setRefundStats(refundStatsData.data);
-      }
+      setRefundStats(refundStatsData.data);
     } catch (err) {
       console.error('Error fetching statistics:', err);
       setMockStatistics();
