@@ -63,7 +63,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
       setError(null);
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/config'), {
+      const response = await fetch(getApiUrl('/platform-admin/config/config'), {
         headers: {
           'Authorization': `Bearer ${validToken}`
         }
@@ -351,7 +351,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
       }));
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/config/bulk-update'), {
+      const response = await fetch(getApiUrl('/platform-admin/config/config/bulk-update'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
