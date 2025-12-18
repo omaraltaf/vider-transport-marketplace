@@ -31,22 +31,41 @@ export class TokenManager implements ITokenManager {
    * Gets a valid token, refreshing if necessary
    */
   async getValidToken(): Promise<string> {
+    console.log('TokenManager.getValidToken called, current state:', {
+      hasAccessToken: !!this.tokenState.accessToken,
+      hasRefreshToken: !!this.tokenState.refreshToken,
+      isRefreshing: this.tokenState.isRefreshing
+    });
+
     // If we have a valid token, return it
     if (this.isTokenValid(this.tokenState.accessToken)) {
+      console.log('Returning valid access token');
       return this.tokenState.accessToken!;
     }
 
     // If we're already refreshing, wait for that to complete
     if (this.refreshPromise) {
+      console.log('Waiting for existing refresh promise');
       return this.refreshPromise;
     }
 
     // If we have a refresh token, try to refresh
     if (this.tokenState.refreshToken) {
+      console.log('Attempting to refresh token');
       return this.refreshToken();
     }
 
+    // Try to re-initialize from storage in case tokens were added after initialization
+    console.log('Re-initializing from storage as fallback');
+    this.initializeFromStorage();
+    
+    if (this.isTokenValid(this.tokenState.accessToken)) {
+      console.log('Found valid token after re-initialization');
+      return this.tokenState.accessToken!;
+    }
+
     // No valid token and no refresh token - throw error
+    console.error('No valid authentication token available. Token state:', this.tokenState);
     throw new Error('No valid authentication token available');
   }
 
@@ -179,10 +198,23 @@ export class TokenManager implements ITokenManager {
    */
   private initializeFromStorage(): void {
     try {
-      const storedToken = localStorage.getItem('auth_token');
-      const storedRefreshToken = localStorage.getItem('auth_refresh_token');
+      let storedToken = localStorage.getItem('auth_token');
+      let storedRefreshToken = localStorage.getItem('auth_refresh_token');
       const storedUser = localStorage.getItem('auth_user');
       const storedExpiresAt = localStorage.getItem('auth_expires_at');
+
+      // Fallback to old token format if new format not found
+      if (!storedToken) {
+        storedToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      }
+      
+      // For refresh token, we might need to create a fallback
+      if (!storedRefreshToken && storedToken) {
+        // If we have an access token but no refresh token, use the access token as both
+        // This is not ideal but allows the system to work
+        storedRefreshToken = storedToken;
+        console.warn('Using access token as refresh token - this is a fallback behavior');
+      }
 
       if (storedToken && storedRefreshToken) {
         this.tokenState = {
@@ -193,9 +225,17 @@ export class TokenManager implements ITokenManager {
           lastRefresh: null
         };
 
+        // Update storage to new format
+        localStorage.setItem('auth_token', storedToken);
+        localStorage.setItem('auth_refresh_token', storedRefreshToken);
+        
         // Also maintain compatibility with existing keys
         localStorage.setItem('token', storedToken);
         localStorage.setItem('adminToken', storedToken);
+        
+        console.log('TokenManager initialized with tokens');
+      } else {
+        console.warn('No valid tokens found in localStorage');
       }
     } catch (error) {
       console.warn('Failed to initialize tokens from storage:', error);
