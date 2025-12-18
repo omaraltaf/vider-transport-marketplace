@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import AdminPanelPage from '../AdminPanelPage';
 import { Container, Card, Grid, Button, Input, Spinner } from '../../design-system/components';
 
@@ -27,7 +28,7 @@ interface AnalyticsReport {
 }
 
 export default function AdminAnalyticsPage() {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
@@ -38,9 +39,10 @@ export default function AdminAnalyticsPage() {
   const { data: analytics, isLoading, error } = useQuery<AnalyticsReport>({
     queryKey: ['admin-analytics', startDate, endDate],
     queryFn: async () => {
-      return apiClient.get<AnalyticsReport>(`/admin/analytics?startDate=${startDate}&endDate=${endDate}`, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<AnalyticsReport>(`/admin/analytics?startDate=${startDate}&endDate=${endDate}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const handleApplyFilters = () => {

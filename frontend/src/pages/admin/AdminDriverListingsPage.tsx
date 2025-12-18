@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { Container, Table, Badge, Button, SearchBar, Spinner } from '../../design-system/components';
 import { CheckBadgeIcon } from '@heroicons/react/24/outline';
 
@@ -40,7 +41,7 @@ interface SearchResult {
 }
 
 const AdminDriverListingsPage = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -55,19 +56,21 @@ const AdminDriverListingsPage = () => {
   const { data, isLoading, error } = useQuery<SearchResult>({
     queryKey: ['admin-driver-listings', debouncedQuery, page],
     queryFn: async () => {
+      const validToken = await tokenManager.getValidToken();
       const params = new URLSearchParams();
       if (debouncedQuery) params.append('query', debouncedQuery);
       params.append('page', page.toString());
       params.append('pageSize', '20');
       
-      return apiClient.get(`/admin/listings/drivers?${params.toString()}`, token!);
+      return apiClient.get(`/admin/listings/drivers?${params.toString()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const verifyMutation = useMutation({
     mutationFn: async (driverId: string) => {
-      return apiClient.post(`/admin/listings/drivers/${driverId}/verify`, {}, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/admin/listings/drivers/${driverId}/verify`, {}, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-driver-listings'] });
@@ -76,7 +79,8 @@ const AdminDriverListingsPage = () => {
 
   const suspendMutation = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      return apiClient.post(`/admin/listings/driver/${id}/suspend`, { reason }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/admin/listings/driver/${id}/suspend`, { reason }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-driver-listings'] });
@@ -85,7 +89,8 @@ const AdminDriverListingsPage = () => {
 
   const removeMutation = useMutation({
     mutationFn: async ({ id }: { id: string; reason: string }) => {
-      return apiClient.delete(`/admin/listings/driver/${id}`, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.delete(`/admin/listings/driver/${id}`, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-driver-listings'] });

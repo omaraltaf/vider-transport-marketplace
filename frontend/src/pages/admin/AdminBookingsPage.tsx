@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { Container, Table, Badge, Button, SearchBar, Spinner } from '../../design-system/components';
 
 interface Booking {
@@ -31,7 +32,7 @@ interface SearchResult {
 }
 
 const AdminBookingsPage = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -44,13 +45,14 @@ const AdminBookingsPage = () => {
   const { data, isLoading, error } = useQuery<SearchResult>({
     queryKey: ['admin-bookings', debouncedQuery, page],
     queryFn: async () => {
+      const validToken = await tokenManager.getValidToken();
       const params = new URLSearchParams();
       if (debouncedQuery) params.append('query', debouncedQuery);
       params.append('page', page.toString());
       params.append('pageSize', '20');
-      return apiClient.get(`/admin/bookings?${params.toString()}`, token!);
+      return apiClient.get(`/admin/bookings?${params.toString()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   return (

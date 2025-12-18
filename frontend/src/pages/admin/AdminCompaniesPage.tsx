@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Container, 
   Table, 
@@ -78,7 +79,7 @@ type SortField = 'name' | 'createdAt' | 'totalBookings' | 'totalRevenue' | 'aggr
 type SortOrder = 'asc' | 'desc';
 
 const AdminCompaniesPage = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   
   // Search and filtering state
@@ -131,15 +132,17 @@ const AdminCompaniesPage = () => {
   const { data, isLoading, error } = useQuery<CompanySearchResult>({
     queryKey: ['platform-admin-companies', debouncedQuery, statusFilter, verifiedFilter, fylkeFilter, page, pageSize, sortBy, sortOrder],
     queryFn: async () => {
-      return apiClient.get(`/platform-admin/companies?${buildQueryParams()}`, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get(`/platform-admin/companies?${buildQueryParams()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   // Mutations
   const verifyMutation = useMutation({
     mutationFn: async ({ companyId, notes }: { companyId: string; notes?: string }) => {
-      return apiClient.post(`/platform-admin/companies/${companyId}/verify`, { notes }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/platform-admin/companies/${companyId}/verify`, { notes }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-admin-companies'] });
@@ -151,7 +154,8 @@ const AdminCompaniesPage = () => {
 
   const suspendMutation = useMutation({
     mutationFn: async ({ companyId, reason }: { companyId: string; reason: string }) => {
-      return apiClient.post(`/platform-admin/companies/${companyId}/suspend`, { reason }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/platform-admin/companies/${companyId}/suspend`, { reason }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-admin-companies'] });
@@ -163,7 +167,8 @@ const AdminCompaniesPage = () => {
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ companyId, status, reason }: { companyId: string; status: string; reason?: string }) => {
-      return apiClient.put(`/platform-admin/companies/${companyId}/status`, { status, reason }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.put(`/platform-admin/companies/${companyId}/status`, { status, reason }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-admin-companies'] });
@@ -172,7 +177,8 @@ const AdminCompaniesPage = () => {
 
   const bulkSuspendMutation = useMutation({
     mutationFn: async ({ companyIds, reason }: { companyIds: string[]; reason: string }) => {
-      return apiClient.post('/platform-admin/companies/bulk-suspend', { companyIds, reason }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post('/platform-admin/companies/bulk-suspend', { companyIds, reason }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-admin-companies'] });
@@ -182,7 +188,8 @@ const AdminCompaniesPage = () => {
 
   const bulkVerifyMutation = useMutation({
     mutationFn: async ({ companyIds, notes }: { companyIds: string[]; notes?: string }) => {
-      return apiClient.post('/platform-admin/companies/bulk-verify', { companyIds, notes }, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post('/platform-admin/companies/bulk-verify', { companyIds, notes }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['platform-admin-companies'] });

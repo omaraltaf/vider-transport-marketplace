@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { Container, Table, Badge, Button, Spinner } from '../../design-system/components';
 
 interface Transaction {
@@ -32,18 +33,19 @@ interface SearchResult {
 }
 
 const AdminTransactionsPage = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [page, setPage] = useState(1);
 
   const { data, isLoading, error } = useQuery<SearchResult>({
     queryKey: ['admin-transactions', page],
     queryFn: async () => {
+      const validToken = await tokenManager.getValidToken();
       const params = new URLSearchParams();
       params.append('page', page.toString());
       params.append('pageSize', '20');
-      return apiClient.get(`/admin/transactions?${params.toString()}`, token!);
+      return apiClient.get(`/admin/transactions?${params.toString()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   return (

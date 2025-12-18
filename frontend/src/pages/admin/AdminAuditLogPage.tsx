@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import AdminPanelPage from '../AdminPanelPage';
 import { Container, Card, Table, Badge, Button, Select, Input, Spinner } from '../../design-system/components';
 
@@ -32,7 +33,7 @@ interface AuditLogResult {
 }
 
 export default function AdminAuditLogPage() {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     action: '',
@@ -44,6 +45,7 @@ export default function AdminAuditLogPage() {
   const { data, isLoading } = useQuery<AuditLogResult>({
     queryKey: ['admin-audit-log', page, filters],
     queryFn: async () => {
+      const validToken = await tokenManager.getValidToken();
       const params = new URLSearchParams({
         page: page.toString(),
         pageSize: '20',
@@ -54,9 +56,9 @@ export default function AdminAuditLogPage() {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
-      return apiClient.get<AuditLogResult>(`/admin/audit-log?${params.toString()}`, token!);
+      return apiClient.get<AuditLogResult>(`/admin/audit-log?${params.toString()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const handleFilterChange = (key: string, value: string) => {

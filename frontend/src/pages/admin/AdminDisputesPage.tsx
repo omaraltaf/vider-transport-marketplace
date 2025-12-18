@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import AdminPanelPage from '../AdminPanelPage';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { Container, Table, Badge, Button, SearchBar, Spinner } from '../../design-system/components';
 
 interface Dispute {
@@ -30,7 +31,7 @@ interface SearchResult {
 }
 
 const AdminDisputesPage = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -44,13 +45,14 @@ const AdminDisputesPage = () => {
   const { data, isLoading, error } = useQuery<SearchResult>({
     queryKey: ['admin-disputes', debouncedQuery, page],
     queryFn: async () => {
+      const validToken = await tokenManager.getValidToken();
       const params = new URLSearchParams();
       if (debouncedQuery) params.append('query', debouncedQuery);
       params.append('page', page.toString());
       params.append('pageSize', '20');
-      return apiClient.get(`/admin/disputes?${params.toString()}`, token!);
+      return apiClient.get(`/admin/disputes?${params.toString()}`, validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   return (

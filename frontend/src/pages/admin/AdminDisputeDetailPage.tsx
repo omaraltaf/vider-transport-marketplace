@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import AdminPanelPage from '../AdminPanelPage';
 import { Container, Card, Badge, Button, Stack, FormField, Textarea, Input, Spinner } from '../../design-system/components';
 
@@ -46,7 +47,7 @@ interface Booking {
 
 export default function AdminDisputeDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -57,22 +58,25 @@ export default function AdminDisputeDetailPage() {
   const { data: dispute, isLoading: disputeLoading } = useQuery<Dispute>({
     queryKey: ['admin-dispute', id],
     queryFn: async () => {
-      return apiClient.get<Dispute>(`/admin/disputes/${id}`, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<Dispute>(`/admin/disputes/${id}`, validToken);
     },
-    enabled: !!id && !!token,
+    enabled: !!id && !!user,
   });
 
   const { data: booking, isLoading: bookingLoading } = useQuery<Booking>({
     queryKey: ['booking', dispute?.bookingId],
     queryFn: async () => {
-      return apiClient.get<Booking>(`/bookings/${dispute?.bookingId}`, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<Booking>(`/bookings/${dispute?.bookingId}`, validToken);
     },
-    enabled: !!dispute?.bookingId && !!token,
+    enabled: !!dispute?.bookingId && !!user,
   });
 
   const resolveMutation = useMutation({
     mutationFn: async (data: { resolution: string; refundAmount?: number; notes?: string }) => {
-      return apiClient.post<Dispute>(`/admin/disputes/${id}/resolve`, data, token!);
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post<Dispute>(`/admin/disputes/${id}/resolve`, data, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-dispute', id] });
