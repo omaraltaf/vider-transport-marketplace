@@ -182,14 +182,19 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('DEBUG: Response data:', data);
+        console.log('DEBUG: data.users:', data.users);
+        console.log('DEBUG: data.users type:', typeof data.users);
+        console.log('DEBUG: data.users is array:', Array.isArray(data.users));
         
         // Handle both API response formats
         if (data.success) {
           // Standard API format: {success: true, data: [...]}
-          setUsers(data.data || []);
+          console.log('DEBUG: Using standard format, setting users to:', data.data);
+          setUsers(Array.isArray(data.data) ? data.data : []);
         } else if (data.users) {
           // Debug/direct format: {users: [...], total: 2, pagination: {...}}
-          setUsers(data.users || []);
+          console.log('DEBUG: Using debug format, setting users to:', data.users);
+          setUsers(Array.isArray(data.users) ? data.users : []);
         } else {
           throw new Error(data.error || 'Failed to fetch users');
         }
@@ -651,11 +656,11 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Users ({users.length})</CardTitle>
-            {selectedUsers.length > 0 && (
+            <CardTitle>Users ({users?.length || 0})</CardTitle>
+            {selectedUsers?.length > 0 && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">
-                  {selectedUsers.length} selected
+                  {selectedUsers?.length || 0} selected
                 </span>
                 <Button variant="outline" size="sm" onClick={() => setShowBulkOperations(true)}>
                   <Settings className="h-4 w-4 mr-2" />
@@ -667,7 +672,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {users.map(user => (
+            {users?.map(user => (
               <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="flex items-center space-x-4">
                   <Checkbox
@@ -690,9 +695,9 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
                       <Badge variant="outline">
                         {user.role}
                       </Badge>
-                      {user.flags.length > 0 && (
+                      {user.flags?.length > 0 && (
                         <Badge variant="destructive">
-                          {user.flags.length} Flag{user.flags.length > 1 ? 's' : ''}
+                          {user.flags?.length || 0} Flag{(user.flags?.length || 0) > 1 ? 's' : ''}
                         </Badge>
                       )}
                     </div>
