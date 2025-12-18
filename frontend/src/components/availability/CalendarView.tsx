@@ -6,6 +6,7 @@ import { CalendarSkeleton } from './CalendarSkeleton';
 import { ErrorState } from './ErrorState';
 import { ErrorBoundary } from './ErrorBoundary';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import styles from './CalendarView.module.css';
 
 export interface CalendarDay {
@@ -125,10 +126,7 @@ const CalendarViewComponent: React.FC<CalendarViewProps> = ({
     setInternalError(null);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      const validToken = await tokenManager.getValidToken();
 
       // Calculate date range for current month
       const startDate = new Date(currentYear, currentMonth, 1);
@@ -450,11 +448,8 @@ const CalendarViewComponent: React.FC<CalendarViewProps> = ({
     setIsExporting(true);
 
     try {
-      // Get auth token from localStorage
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      // Get auth token from tokenManager
+      const validToken = await tokenManager.getValidToken();
 
       // Build export URL with query parameters
       const params = new URLSearchParams({
@@ -468,7 +463,7 @@ const CalendarViewComponent: React.FC<CalendarViewProps> = ({
         {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${validToken}`,
           },
         }
       );

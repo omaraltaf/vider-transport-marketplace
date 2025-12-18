@@ -3,6 +3,7 @@ import { Card } from '../../design-system/components/Card';
 import { Button } from '../../design-system/components/Button';
 import { Spinner } from '../../design-system/components/Spinner';
 import { Badge } from '../../design-system/components/Badge';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import styles from './AnalyticsDashboard.module.css';
 
 export interface AnalyticsData {
@@ -61,7 +62,7 @@ const AnalyticsDashboardComponent: React.FC<AnalyticsDashboardProps> = ({
 
     try {
       const { startDate, endDate } = getDateRange(period);
-      const token = localStorage.getItem('auth_token');
+      const validToken = await tokenManager.getValidToken();
 
       // Add pagination for large time periods (year)
       const pageSize = period === 'year' ? 30 : 100; // Limit data points for performance
@@ -70,7 +71,7 @@ const AnalyticsDashboardComponent: React.FC<AnalyticsDashboardProps> = ({
         `/api/availability/analytics/${listingId}?listingType=${listingType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&page=${page}&pageSize=${pageSize}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${validToken}`,
           },
         }
       );
