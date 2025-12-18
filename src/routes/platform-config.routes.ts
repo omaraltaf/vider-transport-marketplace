@@ -390,21 +390,19 @@ router.put('/config/:key',
           break;
           
         case 'min_booking_amount':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 0 || value > 10000) {
             throw new Error('Minimum booking amount must be between 0 and 10000');
           }
-          oldValue = 500; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.minBookingAmount;
+          updateData.minBookingAmount = value;
           break;
           
         case 'max_booking_amount':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 1000 || value > 1000000) {
             throw new Error('Maximum booking amount must be between 1000 and 1000000');
           }
-          oldValue = 100000; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.maxBookingAmount;
+          updateData.maxBookingAmount = value;
           break;
           
         case 'booking_timeout_hours':
@@ -416,12 +414,11 @@ router.put('/config/:key',
           break;
           
         case 'session_timeout_minutes':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 15 || value > 480) {
             throw new Error('Session timeout must be between 15 and 480 minutes');
           }
-          oldValue = 60; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.sessionTimeoutMinutes;
+          updateData.sessionTimeoutMinutes = value;
           break;
           
         case 'maintenance_mode':
@@ -449,48 +446,43 @@ router.put('/config/:key',
           break;
           
         case 'driver_ratings_enabled':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'boolean') {
             throw new Error('Driver ratings enabled must be a boolean');
           }
-          oldValue = true; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.driverRatingsEnabled;
+          updateData.driverRatingsEnabled = value;
           break;
           
         case 'max_login_attempts':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 3 || value > 10) {
             throw new Error('Max login attempts must be between 3 and 10');
           }
-          oldValue = 5; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.maxLoginAttempts;
+          updateData.maxLoginAttempts = value;
           break;
           
         case 'password_min_length':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 6 || value > 20) {
             throw new Error('Password minimum length must be between 6 and 20');
           }
-          oldValue = 8; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.passwordMinLength;
+          updateData.passwordMinLength = value;
           break;
           
         case 'cache_ttl_seconds':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 60 || value > 3600) {
             throw new Error('Cache TTL must be between 60 and 3600 seconds');
           }
-          oldValue = 300; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.cacheTtlSeconds;
+          updateData.cacheTtlSeconds = value;
           break;
           
         case 'api_rate_limit_per_minute':
-          // This field doesn't exist in the schema, so we'll just return success without updating
           if (typeof value !== 'number' || value < 10 || value > 1000) {
             throw new Error('API rate limit must be between 10 and 1000 requests per minute');
           }
-          oldValue = 100; // Default value
-          // No actual update since field doesn't exist in schema
+          oldValue = currentConfig.apiRateLimitPerMinute;
+          updateData.apiRateLimitPerMinute = value;
           break;
           
         default:

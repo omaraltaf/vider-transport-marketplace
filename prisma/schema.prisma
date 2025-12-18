@@ -266,6 +266,14 @@ model PlatformConfig {
   taxRate                Float
   bookingTimeoutHours    Int
   defaultCurrency        String                  @default("NOK")
+  minBookingAmount       Int                     @default(500)
+  maxBookingAmount       Int                     @default(100000)
+  sessionTimeoutMinutes  Int                     @default(60)
+  driverRatingsEnabled   Boolean                 @default(true)
+  maxLoginAttempts       Int                     @default(5)
+  passwordMinLength      Int                     @default(8)
+  cacheTtlSeconds        Int                     @default(300)
+  apiRateLimitPerMinute  Int                     @default(100)
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   activatedAt            DateTime?
