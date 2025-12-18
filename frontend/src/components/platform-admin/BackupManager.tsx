@@ -10,6 +10,7 @@ import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiUrl } from '../../config/app.config';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 
 interface BackupJob {
   id: string;
@@ -120,67 +121,34 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchBackupJobs = async () => {
     try {
-      // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
-      
-      const response = await fetch(getApiUrl('/platform-admin/system/backup/jobs'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch backup jobs');
-      }
-
-      const data = await response.json();
-      setBackupJobs(data.data);
+      const data = await apiClient.get('/platform-admin/system/backup/jobs', validToken);
+      setBackupJobs(data.data || []);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
+      setBackupJobs([]); // Ensure it's always an array
     }
   };
 
   const fetchSchedules = async () => {
     try {
-      // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
-      
-      const response = await fetch(getApiUrl('/platform-admin/system/backup/schedules'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch backup schedules');
-      }
-
-      const data = await response.json();
-      setSchedules(data.data);
+      const data = await apiClient.get('/platform-admin/system/backup/schedules', validToken);
+      setSchedules(data.data || []);
     } catch (err) {
       console.error('Error fetching schedules:', err);
+      setSchedules([]); // Ensure it's always an array
     }
   };
 
   const fetchRestoreJobs = async () => {
     try {
-      // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
-      
-      const response = await fetch(getApiUrl('/platform-admin/system/backup/restore/jobs'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch restore jobs');
-      }
-
-      const data = await response.json();
-      setRestoreJobs(data.data);
+      const data = await apiClient.get('/platform-admin/system/backup/restore/jobs', validToken);
+      setRestoreJobs(data.data || []);
     } catch (err) {
       console.error('Error fetching restore jobs:', err);
+      setRestoreJobs([]); // Ensure it's always an array
     }
   };
 
