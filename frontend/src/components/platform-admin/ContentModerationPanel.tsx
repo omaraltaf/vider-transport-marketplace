@@ -163,7 +163,7 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     fetchModerationStats();
