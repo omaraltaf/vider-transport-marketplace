@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { 
   Plus,
   Edit,
@@ -79,26 +80,9 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
       setLoading(true);
       setError(null);
 
-      if (!token) {
-        console.warn('No authentication token available for commission rates');
-        // Use mock data when not authenticated
-        setMockData();
-        return;
-      }
-
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/commission-rates`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCommissionRates(data.data || []);
-      } else {
-        throw new Error('Failed to fetch commission rates');
-      }
+      const data = await apiClient.get('/platform-admin/financial/commission-rates', validToken);
+      setCommissionRates(data.data || []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load commission rates';
       

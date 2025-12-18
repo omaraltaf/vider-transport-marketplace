@@ -3,20 +3,18 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { 
   Shield, 
   AlertTriangle, 
   Eye, 
   Users, 
   Activity, 
-  TrendingUp,
   Clock,
   CheckCircle,
-  XCircle,
   RefreshCw,
-  Bell,
-  Search,
-  Filter
+  Bell
 } from 'lucide-react';
 
 interface SecurityEvent {
@@ -53,6 +51,7 @@ export const SecurityDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<SecurityEvent | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [activeTab, setActiveTab] = useState('events');
 
   useEffect(() => {
     fetchSecurityData();
@@ -66,17 +65,17 @@ export const SecurityDashboard: React.FC = () => {
     try {
       setLoading(true);
       
+      const validToken = await tokenManager.getValidToken();
+      
       // Fetch security events
-      const eventsResponse = await fetch('/api/security/events');
-      const eventsData = await eventsResponse.json();
+      const eventsData = await apiClient.get('/security/events', validToken) as any;
       setEvents(eventsData.events.map((event: any) => ({
         ...event,
         timestamp: new Date(event.timestamp)
       })));
 
       // Fetch security metrics
-      const metricsResponse = await fetch('/api/security/metrics');
-      const metricsData = await metricsResponse.json();
+      const metricsData = await apiClient.get('/security/metrics', validToken) as any;
       setMetrics(metricsData);
 
     } catch (error) {
@@ -205,7 +204,7 @@ export const SecurityDashboard: React.FC = () => {
         </div>
       )}
 
-      <Tabs defaultValue="events" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="events">Security Events</TabsTrigger>
           <TabsTrigger value="threats">Threat Analysis</TabsTrigger>

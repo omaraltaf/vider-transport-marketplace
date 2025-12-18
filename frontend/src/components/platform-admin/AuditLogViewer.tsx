@@ -8,6 +8,8 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { 
   Search, 
   Download, 
@@ -119,8 +121,8 @@ export const AuditLogViewer: React.FC = () => {
 
   const fetchMetadata = async () => {
     try {
-      const response = await fetch('/api/audit-logs/metadata');
-      const data = await response.json();
+      const validToken = await tokenManager.getValidToken();
+      const data = await apiClient.get('/audit-logs/metadata', validToken);
       setMetadata(data);
     } catch (error) {
       console.error('Error fetching audit log metadata:', error);
@@ -145,8 +147,8 @@ export const AuditLogViewer: React.FC = () => {
         params.append('endDate', filters.endDate.toISOString());
       }
 
-      const response = await fetch(`/api/audit-logs?${params}`);
-      const data = await response.json();
+      const validToken = await tokenManager.getValidToken();
+      const data = await apiClient.get(`/audit-logs?${params}`, validToken);
       
       setLogs(data.logs.map((log: any) => ({
         ...log,
@@ -172,8 +174,8 @@ export const AuditLogViewer: React.FC = () => {
       if (filters.endDate) params.append('endDate', filters.endDate.toISOString());
       if (filters.companyId) params.append('companyId', filters.companyId);
 
-      const response = await fetch(`/api/audit-logs/summary?${params}`);
-      const data = await response.json();
+      const validToken = await tokenManager.getValidToken();
+      const data = await apiClient.get(`/audit-logs/summary?${params}`, validToken);
       setSummary({
         ...data,
         timeRange: {
@@ -188,8 +190,8 @@ export const AuditLogViewer: React.FC = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const response = await fetch('/api/audit-logs/dashboard-stats?days=30');
-      const data = await response.json();
+      const validToken = await tokenManager.getValidToken();
+      const data = await apiClient.get('/audit-logs/dashboard-stats?days=30', validToken);
       setDashboardStats(data);
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
@@ -211,7 +213,12 @@ export const AuditLogViewer: React.FC = () => {
         params.append('endDate', filters.endDate.toISOString());
       }
 
-      const response = await fetch(`/api/audit-logs/export?${params}`);
+      const validToken = await tokenManager.getValidToken();
+      const response = await fetch(`/api/audit-logs/export?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${validToken}`
+        }
+      });
       const blob = await response.blob();
       
       const url = window.URL.createObjectURL(blob);

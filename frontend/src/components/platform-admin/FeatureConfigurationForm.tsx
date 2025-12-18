@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { getApiUrl } from '../../config/app.config';
 import type { PlatformFeature } from './FeatureTogglePanel';
 
@@ -81,58 +82,23 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       setLoading(true);
       setError(null);
 
-      // Load geographic restrictions
       const validToken = await tokenManager.getValidToken();
-      const geoResponse = await fetch(getApiUrl('/platform-admin/config/geographic-restrictions'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
 
-      if (geoResponse.ok) {
-        const geoData = await geoResponse.json();
-        setGeographicRestrictions(geoData.restrictions || []);
-      }
+      // Load geographic restrictions
+      const geoData = await apiClient.get('/platform-admin/config/geographic-restrictions', validToken);
+      setGeographicRestrictions(geoData.restrictions || []);
 
       // Load payment method configurations
-      const paymentResponse = await fetch(getApiUrl('/platform-admin/config/payment-methods'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (paymentResponse.ok) {
-        const paymentData = await paymentResponse.json();
-        setPaymentMethods(paymentData.paymentMethods || []);
-      }
+      const paymentData = await apiClient.get('/platform-admin/config/payment-methods', validToken);
+      setPaymentMethods(paymentData.paymentMethods || []);
 
       // Load feature schedules
-      const scheduleResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/schedules`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (scheduleResponse.ok) {
-        const scheduleData = await scheduleResponse.json();
-        setFeatureSchedules(scheduleData.schedules || []);
-      }
+      const scheduleData = await apiClient.get(`/platform-admin/config/features/${selectedFeature.id}/schedules`, validToken);
+      setFeatureSchedules(scheduleData.schedules || []);
 
       // Load rollout configurations
-      const rolloutResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/rollouts`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (rolloutResponse.ok) {
-        const rolloutData = await rolloutResponse.json();
-        setRolloutConfigs(rolloutData.rollouts || []);
-      }
+      const rolloutData = await apiClient.get(`/platform-admin/config/features/${selectedFeature.id}/rollouts`, validToken);
+      setRolloutConfigs(rolloutData.rollouts || []);
 
     } catch (err) {
       console.error('Error loading feature configuration:', err);
@@ -145,19 +111,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleAddGeographicRestriction = async (restriction: Omit<GeographicRestriction, 'id'>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/config/geographic-restrictions'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(restriction),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to add restriction: ${response.statusText}`);
-      }
-
+      await apiClient.post('/platform-admin/config/geographic-restrictions', restriction, validToken);
       await loadFeatureConfiguration();
     } catch (err) {
       console.error('Error adding geographic restriction:', err);
@@ -167,19 +121,8 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleUpdatePaymentMethod = async (config: PaymentMethodConfig) => {
     try {
-      const response = await fetch(`/api/platform-admin/config/payment-methods/${config.paymentMethod}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(config),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update payment method: ${response.statusText}`);
-      }
-
+      const validToken = await tokenManager.getValidToken();
+      await apiClient.put(`/platform-admin/config/payment-methods/${config.paymentMethod}`, config, validToken);
       await loadFeatureConfiguration();
     } catch (err) {
       console.error('Error updating payment method:', err);
@@ -190,22 +133,10 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleScheduleFeature = async (schedule: Omit<FeatureSchedule, 'id' | 'status'>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/schedules`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...schedule,
-          status: 'PENDING'
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to schedule feature: ${response.statusText}`);
-      }
-
+      await apiClient.post(`/platform-admin/config/features/${selectedFeature?.id}/schedules`, {
+        ...schedule,
+        status: 'PENDING'
+      }, validToken);
       await loadFeatureConfiguration();
     } catch (err) {
       console.error('Error scheduling feature:', err);
@@ -216,22 +147,10 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleCreateRollout = async (rollout: Omit<RolloutConfig, 'id' | 'status'>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/rollouts`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...rollout,
-          status: 'DRAFT'
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to create rollout: ${response.statusText}`);
-      }
-
+      await apiClient.post(`/platform-admin/config/features/${selectedFeature?.id}/rollouts`, {
+        ...rollout,
+        status: 'DRAFT'
+      }, validToken);
       await loadFeatureConfiguration();
     } catch (err) {
       console.error('Error creating rollout:', err);
@@ -242,19 +161,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleBulkFeatureUpdate = async (updates: Array<{ featureId: string; enabled: boolean; reason: string }>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/config/features/bulk-update'), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ updates }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to bulk update features: ${response.statusText}`);
-      }
-
+      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, validToken);
       onFeatureUpdate();
     } catch (err) {
       console.error('Error bulk updating features:', err);
@@ -265,19 +172,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleRollbackFeature = async (featureId: string, reason: string) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/config/features/${featureId}/rollback`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${validToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ reason }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to rollback feature: ${response.statusText}`);
-      }
-
+      await apiClient.post(`/platform-admin/config/features/${featureId}/rollback`, { reason }, validToken);
       onFeatureUpdate();
     } catch (err) {
       console.error('Error rolling back feature:', err);
@@ -594,12 +489,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
                                   if (confirm('Cancel this scheduled action?')) {
                                     try {
                                       const validToken = await tokenManager.getValidToken();
-                                      await fetch(`/api/platform-admin/config/features/schedules/${schedule.id}`, {
-                                        method: 'DELETE',
-                                        headers: {
-                                          'Authorization': `Bearer ${validToken}`,
-                                        },
-                                      });
+                                      await apiClient.delete(`/platform-admin/config/features/schedules/${schedule.id}`, validToken);
                                       await loadFeatureConfiguration();
                                     } catch (err) {
                                       setError('Failed to cancel scheduled action');

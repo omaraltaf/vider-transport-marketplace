@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiClient } from '../../services/api';
 import { getApiUrl } from '../../config/app.config';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
@@ -106,60 +107,30 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       const validToken = await tokenManager.getValidToken();
       
       // Fetch trend data
-      const trendResponse = await fetch(getApiUrl('/platform-admin/analytics/trends'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({
-          startDate: timeRange.startDate.toISOString(),
-          endDate: timeRange.endDate.toISOString(),
-          granularity: 'daily'
-        })
-      });
-
-      if (trendResponse.ok) {
-        const trendData = await trendResponse.json();
-        setChartData(trendData.dailyMetrics || []);
-        setGrowthData(trendData.growthTrends || []);
-      }
+      const trendData = await apiClient.post('/platform-admin/analytics/trends', {
+        startDate: timeRange.startDate.toISOString(),
+        endDate: timeRange.endDate.toISOString(),
+        granularity: 'daily'
+      }, validToken);
+      
+      setChartData(trendData.dailyMetrics || []);
+      setGrowthData(trendData.growthTrends || []);
 
       // Fetch geographic data
-      const geoResponse = await fetch(getApiUrl('/platform-admin/analytics/geographic'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({
-          startDate: timeRange.startDate.toISOString(),
-          endDate: timeRange.endDate.toISOString()
-        })
-      });
-
-      if (geoResponse.ok) {
-        const geoData = await geoResponse.json();
-        setGeographicData(geoData.regions || []);
-      }
+      const geoData = await apiClient.post('/platform-admin/analytics/geographic', {
+        startDate: timeRange.startDate.toISOString(),
+        endDate: timeRange.endDate.toISOString()
+      }, validToken);
+      
+      setGeographicData(geoData.regions || []);
 
       // Fetch feature usage data
-      const featureResponse = await fetch(getApiUrl('/platform-admin/analytics/features'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({
-          startDate: timeRange.startDate.toISOString(),
-          endDate: timeRange.endDate.toISOString()
-        })
-      });
-
-      if (featureResponse.ok) {
-        const featureData = await featureResponse.json();
-        setFeatureData(featureData.features || []);
-      }
+      const featureData = await apiClient.post('/platform-admin/analytics/features', {
+        startDate: timeRange.startDate.toISOString(),
+        endDate: timeRange.endDate.toISOString()
+      }, validToken);
+      
+      setFeatureData(featureData.features || []);
 
     } catch (error) {
       console.error('Error fetching chart data:', error);
