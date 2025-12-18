@@ -14,7 +14,7 @@ import { Checkbox } from '../ui/checkbox';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { getApiUrl } from '../../config/app.config';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Calendar as CalendarIcon,
   Filter,
@@ -58,7 +58,6 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
   onFiltersChange,
   className = ''
 }) => {
-  const { token } = useAuth();
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     timeRange: {
       startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -129,9 +128,10 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     try {
       setLoading(true);
       
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/analytics/filter-options'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Button } from '../../components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Badge } from '../../components/ui/badge';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -38,7 +38,6 @@ interface ActiveFilters {
 }
 
 const PlatformAnalyticsPage: React.FC = () => {
-  const { token } = useAuth();
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     timeRange: {
       startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
@@ -83,11 +82,12 @@ const PlatformAnalyticsPage: React.FC = () => {
   // Handle bulk export
   const handleBulkExport = async (format: 'csv' | 'excel' | 'json') => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/analytics/bulk-export', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           format,

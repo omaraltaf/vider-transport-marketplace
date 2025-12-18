@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   AlertTriangle,
   CheckCircle,
@@ -141,7 +141,6 @@ interface DisputeManagementProps {
 }
 
 const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' }) => {
-  const { token } = useAuth();
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [refunds, setRefunds] = useState<Refund[]>([]);
   const [disputeStats, setDisputeStats] = useState<DisputeStatistics | null>(null);
@@ -193,9 +192,10 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
         return;
       }
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -229,9 +229,10 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
   // Fetch refunds
   const fetchRefunds = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/history`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -253,11 +254,12 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       startDate.setDate(startDate.getDate() - 30);
 
       // Fetch dispute statistics
+      const validToken = await tokenManager.getValidToken();
       const disputeStatsResponse = await fetch(
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/disputes/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );
@@ -272,7 +274,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/refunds/statistics?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );
