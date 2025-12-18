@@ -175,6 +175,42 @@ router.get('/moderation/statistics', (req, res) => {
   });
 });
 
+router.get('/moderation/stats', (req, res) => {
+  console.log('DEBUG: Moderation stats endpoint hit');
+  res.json({
+    totalReports: 45,
+    pendingReview: 12,
+    resolvedToday: 8,
+    flaggedContent: 23,
+    suspendedUsers: 3,
+    averageResponseTime: '2.5 hours'
+  });
+});
+
+router.get('/moderation/fraud/stats', (req, res) => {
+  console.log('DEBUG: Fraud stats endpoint hit');
+  res.json({
+    totalFraudCases: 12,
+    activeCases: 3,
+    resolvedCases: 9,
+    suspiciousTransactions: 15,
+    blockedUsers: 5,
+    riskScore: 'Medium'
+  });
+});
+
+router.get('/moderation/blacklist/stats', (req, res) => {
+  console.log('DEBUG: Blacklist stats endpoint hit');
+  res.json({
+    totalBlacklisted: 28,
+    emailBlacklist: 15,
+    ipBlacklist: 8,
+    domainBlacklist: 5,
+    recentAdditions: 3,
+    lastUpdated: new Date()
+  });
+});
+
 // System health endpoints
 router.get('/system/health', (req, res) => {
   console.log('DEBUG: System health endpoint hit');

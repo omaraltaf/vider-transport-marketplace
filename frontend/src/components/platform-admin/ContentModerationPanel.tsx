@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import ContentReviewQueue from './ContentReviewQueue';
 import FraudDetectionDashboard from './FraudDetectionDashboard';
 import BlacklistManager from './BlacklistManager';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Shield,
   Flag,
@@ -66,13 +67,13 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
 
       // Fetch stats from all moderation systems
       const [contentStats, fraudStats, blacklistStats] = await Promise.all([
-        fetch('/api/platform-admin/moderation/stats', {
+        fetch(getApiUrl('/platform-admin/moderation/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => res.json()),
-        fetch('/api/platform-admin/moderation/fraud/stats', {
+        fetch(getApiUrl('/platform-admin/moderation/fraud/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => res.json()),
-        fetch('/api/platform-admin/moderation/blacklist/stats', {
+        fetch(getApiUrl('/platform-admin/moderation/blacklist/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => res.json())
       ]);
