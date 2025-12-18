@@ -461,11 +461,10 @@ router.get('/revenue/summary', async (req: Request, res: Response) => {
         averageBookingValue: 0,
         currency: 'NOK',
         period: {
-          startDate: new Date(startDate as string || new Date()),
-          endDate: new Date(endDate as string || new Date())
+          startDate: new Date(),
+          endDate: new Date()
         }
       }
-      error: 'Failed to fetch revenue summary'
     });
   }
 });
@@ -692,8 +691,8 @@ router.get('/disputes', async (req: Request, res: Response) => {
       data: [],
       total: 0,
       pagination: {
-        limit: parseInt(limit as string || '50'),
-        offset: parseInt(offset as string || '0'),
+        limit: 50,
+        offset: 0,
         hasMore: false
       }
     });
@@ -859,8 +858,8 @@ router.get('/refunds/history', async (req: Request, res: Response) => {
       data: [],
       total: 0,
       pagination: {
-        limit: parseInt(limit as string || '50'),
-        offset: parseInt(offset as string || '0'),
+        limit: 50,
+        offset: 0,
         hasMore: false
       }
     });
