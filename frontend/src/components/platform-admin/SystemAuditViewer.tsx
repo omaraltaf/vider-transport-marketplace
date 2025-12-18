@@ -7,7 +7,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 
 interface AuditLog {
   id: string;
@@ -103,7 +103,6 @@ interface SystemAuditViewerProps {
 }
 
 const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
-  const { token } = useAuth();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [rateLimitRules, setRateLimitRules] = useState<RateLimitRule[]>([]);
   const [accessControlRules, setAccessControlRules] = useState<AccessControlRule[]>([]);
@@ -156,9 +155,10 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
       params.append('limit', auditFilters.limit.toString());
       params.append('offset', auditFilters.offset.toString());
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/system/audit/logs?${params}`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -175,9 +175,10 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const fetchRateLimitRules = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/rate-limits/rules', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -194,9 +195,10 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const fetchAccessControlRules = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/access-control/rules', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -213,9 +215,10 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const fetchApiUsageMetrics = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/api-usage/metrics', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -232,9 +235,10 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const fetchRateLimitViolations = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/api-usage/violations', {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -251,11 +255,12 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const createRateLimitRule = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/rate-limits/rules', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           ...newRateLimitRule,
@@ -290,11 +295,12 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const createAccessControlRule = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/system/access-control/rules', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           ...newAccessControlRule,
@@ -329,11 +335,12 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const toggleRateLimitRule = async (ruleId: string, enabled: boolean) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/system/rate-limits/rules/${ruleId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({ enabled })
       });
@@ -352,11 +359,12 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
   const toggleAccessControlRule = async (ruleId: string, enabled: boolean) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/system/access-control/rules/${ruleId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({ enabled })
       });
@@ -379,10 +387,11 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
     }
 
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/system/rate-limits/rules/${ruleId}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

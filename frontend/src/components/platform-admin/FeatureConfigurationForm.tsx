@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import type { PlatformFeature } from './FeatureTogglePanel';
 
 export interface FeatureConfigurationFormProps {
@@ -58,7 +58,6 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   selectedFeature,
   onFeatureUpdate
 }) => {
-  const { token } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geographicRestrictions, setGeographicRestrictions] = useState<GeographicRestriction[]>([]);
@@ -82,9 +81,10 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       setError(null);
 
       // Load geographic restrictions
+      const validToken = await tokenManager.getValidToken();
       const geoResponse = await fetch('/api/platform-admin/config/geographic-restrictions', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -97,7 +97,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load payment method configurations
       const paymentResponse = await fetch('/api/platform-admin/config/payment-methods', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -110,7 +110,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load feature schedules
       const scheduleResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/schedules`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -123,7 +123,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       // Load rollout configurations
       const rolloutResponse = await fetch(`/api/platform-admin/config/features/${selectedFeature.id}/rollouts`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
       });
@@ -143,10 +143,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleAddGeographicRestriction = async (restriction: Omit<GeographicRestriction, 'id'>) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/config/geographic-restrictions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(restriction),
@@ -168,7 +169,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const response = await fetch(`/api/platform-admin/config/payment-methods/${config.paymentMethod}`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(config),
