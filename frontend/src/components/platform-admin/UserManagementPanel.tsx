@@ -166,14 +166,22 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         }
       });
 
-      const response = await fetch(getApiUrl(`/platform-admin/users?${queryParams}`), {
+      const apiUrl = getApiUrl(`/platform-admin/users?${queryParams}`);
+      console.log('DEBUG: Fetching users from:', apiUrl);
+      console.log('DEBUG: Token present:', !!token);
+      
+      const response = await fetch(apiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      console.log('DEBUG: Response status:', response.status);
+      console.log('DEBUG: Response ok:', response.ok);
 
       if (response.ok) {
         const data = await response.json();
+        console.log('DEBUG: Response data:', data);
         if (data.success) {
           setUsers(data.data || []);
         } else {
@@ -181,6 +189,7 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
         }
       } else {
         const data = await response.json();
+        console.log('DEBUG: Error response data:', data);
         throw new Error(data.error || 'Failed to fetch users');
       }
     } catch (err) {
