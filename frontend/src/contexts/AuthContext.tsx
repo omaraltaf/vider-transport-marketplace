@@ -1,10 +1,11 @@
 /**
  * Authentication Context
- * Manages user authentication state and tokens
+ * Manages user authentication state and tokens using TokenManager
  */
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { authService } from '../services/authService';
+import { tokenManager } from '../services/error-handling/TokenManager';
 
 interface User {
   id: string;
@@ -23,6 +24,7 @@ interface AuthContextType {
   refreshAccessToken: () => Promise<void>;
   clearPasswordChangeRequirement: () => void;
   isAuthenticated: boolean;
+  getEnhancedToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -116,6 +118,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Enhanced token getter that uses TokenManager as fallback
+  const getEnhancedToken = async () => {
+    if (token) {
+      return token;
+    }
+    
+    try {
+      const validToken = await tokenManager.getValidToken();
+      if (validToken) {
+        setToken(validToken);
+        localStorage.setItem('token', validToken);
+        localStorage.setItem('adminToken', validToken);
+        return validToken;
+      }
+    } catch (error) {
+      console.warn('TokenManager fallback failed:', error);
+    }
+    
+    return token;
+  };
+
   const value = {
     user,
     token,
@@ -126,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshAccessToken,
     clearPasswordChangeRequirement,
     isAuthenticated: !!token && !!user,
+    getEnhancedToken, // Add this for components that need guaranteed token access
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
