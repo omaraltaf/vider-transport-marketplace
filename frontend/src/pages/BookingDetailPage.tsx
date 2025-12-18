@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';
 import { RatingForm } from '../components/RatingForm';
@@ -32,26 +33,29 @@ export default function BookingDetailPage() {
   const { data: booking, isLoading, error } = useQuery<any>({
     queryKey: ['booking', id],
     queryFn: async () => {
-      return apiClient.get<any>(`/bookings/${id}`, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<any>(`/bookings/${id}`, validToken);
     },
-    enabled: !!token && !!id,
+    enabled: !!user && !!id,
   });
 
   const { data: existingRating } = useQuery<Rating | null>({
     queryKey: ['rating', 'booking', id],
     queryFn: async () => {
       try {
-        return await apiClient.get<Rating>(`/ratings/booking/${id}`, token || '');
+        const validToken = await tokenManager.getValidToken();
+        return await apiClient.get<Rating>(`/ratings/booking/${id}`, validToken);
       } catch (err) {
         return null;
       }
     },
-    enabled: !!token && !!id && booking?.status === 'COMPLETED',
+    enabled: !!user && !!id && booking?.status === 'COMPLETED',
   });
 
   const acceptMutation = useMutation({
     mutationFn: async () => {
-      return apiClient.post(`/bookings/${id}/accept`, {}, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/bookings/${id}/accept`, {}, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
@@ -61,7 +65,8 @@ export default function BookingDetailPage() {
 
   const declineMutation = useMutation({
     mutationFn: async (reason: string) => {
-      return apiClient.post(`/bookings/${id}/decline`, { reason }, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/bookings/${id}/decline`, { reason }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
@@ -73,7 +78,8 @@ export default function BookingDetailPage() {
 
   const proposeMutation = useMutation({
     mutationFn: async (terms: any) => {
-      return apiClient.post(`/bookings/${id}/propose-terms`, terms, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post(`/bookings/${id}/propose-terms`, terms, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
@@ -84,7 +90,8 @@ export default function BookingDetailPage() {
 
   const submitRatingMutation = useMutation({
     mutationFn: async (ratingData: any) => {
-      return apiClient.post('/ratings', { bookingId: id, ...ratingData }, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post('/ratings', { bookingId: id, ...ratingData }, validToken);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rating', 'booking', id] });

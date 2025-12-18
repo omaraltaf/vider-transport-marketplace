@@ -6,6 +6,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { VehicleListing } from '../types';
 import Navbar from '../components/Navbar';
@@ -18,9 +19,10 @@ export default function VehicleListingsPage() {
   const { data: listings, isLoading, error } = useQuery<VehicleListing[]>({
     queryKey: ['vehicleListings'],
     queryFn: async () => {
-      return apiClient.get<VehicleListing[]>('/listings/vehicles', token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<VehicleListing[]>('/listings/vehicles', validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'default' => {

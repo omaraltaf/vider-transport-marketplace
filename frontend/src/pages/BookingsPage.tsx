@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { Booking } from '../types';
 import Navbar from '../components/Navbar';
@@ -23,9 +24,10 @@ export default function BookingsPage() {
   const { data: bookings, isLoading, error } = useQuery<Booking[]>({
     queryKey: ['bookings'],
     queryFn: async () => {
-      return apiClient.get<Booking[]>('/bookings', token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<Booking[]>('/bookings', validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
