@@ -10,6 +10,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Activity,
   Clock,
@@ -99,9 +100,10 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
         queryParams.append('endDate', now.toISOString());
       }
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl(`/platform-admin/users/${userId}/activity?${queryParams}`), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Bell, 
   MessageSquare, 
@@ -251,8 +252,9 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
 
       // Try to fetch from API, but fall back to mock data if it fails
       try {
+        const validToken = await tokenManager.getValidToken();
         const headers = {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
         };
 

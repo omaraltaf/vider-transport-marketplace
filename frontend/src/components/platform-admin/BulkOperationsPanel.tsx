@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Settings,
   Upload,
@@ -91,11 +92,12 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           type: 'STATUS_UPDATE',
@@ -131,11 +133,12 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           type: 'ROLE_ASSIGNMENT',
@@ -176,11 +179,12 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           type: 'FLAG_USERS',
@@ -221,11 +225,12 @@ const BulkOperationsPanel: React.FC<BulkOperationsPanelProps> = ({
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/users/bulk-operations'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           type: 'SEND_NOTIFICATION',
