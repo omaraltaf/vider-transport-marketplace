@@ -8,6 +8,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { apiClient } from '../../services/api';
 import { getApiUrl } from '../../config/app.config';
 
 interface AuditLog {
@@ -157,125 +158,72 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
       params.append('offset', auditFilters.offset.toString());
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/system/audit/logs?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch audit logs');
-      }
-
-      const data = await response.json();
-      setAuditLogs(data.data);
+      const data = await apiClient.get(`/platform-admin/system/audit/logs?${params}`, validToken);
+      setAuditLogs(data.data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error fetching audit logs:', err);
+      setAuditLogs([]); // Ensure it's always an array
+      // Don't set error for missing endpoints - just log it
+      if (err instanceof Error && !err.message.includes('404')) {
+        setError(err.message);
+      }
     }
   };
 
   const fetchRateLimitRules = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/rate-limits/rules'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch rate limit rules');
-      }
-
-      const data = await response.json();
-      setRateLimitRules(data.data);
+      const data = await apiClient.get('/platform-admin/system/rate-limits/rules', validToken);
+      setRateLimitRules(data.data || []);
     } catch (err) {
       console.error('Error fetching rate limit rules:', err);
+      setRateLimitRules([]); // Ensure it's always an array
     }
   };
 
   const fetchAccessControlRules = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/access-control/rules'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch access control rules');
-      }
-
-      const data = await response.json();
-      setAccessControlRules(data.data);
+      const data = await apiClient.get('/platform-admin/system/access-control/rules', validToken);
+      setAccessControlRules(data.data || []);
     } catch (err) {
       console.error('Error fetching access control rules:', err);
+      setAccessControlRules([]); // Ensure it's always an array
     }
   };
 
   const fetchApiUsageMetrics = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/api-usage/metrics'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch API usage metrics');
-      }
-
-      const data = await response.json();
-      setApiUsageMetrics(data.data);
+      const data = await apiClient.get('/platform-admin/system/api-usage/metrics', validToken);
+      setApiUsageMetrics(data.data || {});
     } catch (err) {
       console.error('Error fetching API usage metrics:', err);
+      setApiUsageMetrics({}); // Ensure it's always an object
     }
   };
 
   const fetchRateLimitViolations = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/api-usage/violations'), {
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch rate limit violations');
-      }
-
-      const data = await response.json();
-      setRateLimitViolations(data.data);
+      const data = await apiClient.get('/platform-admin/system/api-usage/violations', validToken);
+      setRateLimitViolations(data.data || []);
     } catch (err) {
       console.error('Error fetching rate limit violations:', err);
+      setRateLimitViolations([]); // Ensure it's always an array
     }
   };
 
   const createRateLimitRule = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/rate-limits/rules'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({
-          ...newRateLimitRule,
-          skipSuccessfulRequests: false,
-          skipFailedRequests: false,
-          keyGenerator: 'ip'
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create rate limit rule');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.post('/platform-admin/system/rate-limits/rules', {
+        ...newRateLimitRule,
+        skipSuccessfulRequests: false,
+        skipFailedRequests: false,
+        keyGenerator: 'ip'
+      }, validToken);
+      
       setRateLimitRules(prev => [data.data, ...prev]);
       
       // Reset form
@@ -297,25 +245,13 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
   const createAccessControlRule = async () => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(getApiUrl('/platform-admin/system/access-control/rules'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({
-          ...newAccessControlRule,
-          values: newAccessControlRule.values.filter(v => v.trim()),
-          endpoints: newAccessControlRule.endpoints.filter(e => e.trim()),
-          methods: newAccessControlRule.methods
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create access control rule');
-      }
-
-      const data = await response.json();
+      const data = await apiClient.post('/platform-admin/system/access-control/rules', {
+        ...newAccessControlRule,
+        values: newAccessControlRule.values.filter(v => v.trim()),
+        endpoints: newAccessControlRule.endpoints.filter(e => e.trim()),
+        methods: newAccessControlRule.methods
+      }, validToken);
+      
       setAccessControlRules(prev => [data.data, ...prev]);
       
       // Reset form
@@ -337,22 +273,13 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
   const toggleRateLimitRule = async (ruleId: string, enabled: boolean) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/system/rate-limits/rules/${ruleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({ enabled })
-      });
-
-      if (response.ok) {
-        setRateLimitRules(prev => 
-          prev.map(rule => 
-            rule.id === ruleId ? { ...rule, enabled } : rule
-          )
-        );
-      }
+      await apiClient.put(`/platform-admin/system/rate-limits/rules/${ruleId}`, { enabled }, validToken);
+      
+      setRateLimitRules(prev => 
+        prev.map(rule => 
+          rule.id === ruleId ? { ...rule, enabled } : rule
+        )
+      );
     } catch (err) {
       console.error('Error toggling rate limit rule:', err);
     }
@@ -361,22 +288,13 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
   const toggleAccessControlRule = async (ruleId: string, enabled: boolean) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/system/access-control/rules/${ruleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${validToken}`
-        },
-        body: JSON.stringify({ enabled })
-      });
-
-      if (response.ok) {
-        setAccessControlRules(prev => 
-          prev.map(rule => 
-            rule.id === ruleId ? { ...rule, enabled } : rule
-          )
-        );
-      }
+      await apiClient.put(`/platform-admin/system/access-control/rules/${ruleId}`, { enabled }, validToken);
+      
+      setAccessControlRules(prev => 
+        prev.map(rule => 
+          rule.id === ruleId ? { ...rule, enabled } : rule
+        )
+      );
     } catch (err) {
       console.error('Error toggling access control rule:', err);
     }
@@ -389,16 +307,8 @@ const SystemAuditViewer: React.FC<SystemAuditViewerProps> = ({ onExport }) => {
 
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/system/rate-limits/rules/${ruleId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${validToken}`
-        }
-      });
-
-      if (response.ok) {
-        setRateLimitRules(prev => prev.filter(rule => rule.id !== ruleId));
-      }
+      await apiClient.delete(`/platform-admin/system/rate-limits/rules/${ruleId}`, validToken);
+      setRateLimitRules(prev => prev.filter(rule => rule.id !== ruleId));
     } catch (err) {
       console.error('Error deleting rate limit rule:', err);
     }
