@@ -50,16 +50,44 @@ router.get('/config',
       });
 
       // Get platform configuration from database
-      const platformConfig = await prisma.platformConfig.findFirst({
+      let platformConfig = await prisma.platformConfig.findFirst({
         where: { isActive: true },
         orderBy: { createdAt: 'desc' }
       });
 
+      // If no active configuration exists, create a default one
       if (!platformConfig) {
-        return res.status(404).json({
-          success: false,
-          message: 'No active platform configuration found'
+        logger.info('No active platform configuration found, creating default configuration');
+        
+        platformConfig = await prisma.platformConfig.create({
+          data: {
+            commissionRate: 5.0,
+            taxRate: 25.0,
+            bookingTimeoutHours: 24,
+            defaultCurrency: 'NOK',
+            minBookingAmount: 500,
+            maxBookingAmount: 100000,
+            sessionTimeoutMinutes: 60,
+            driverRatingsEnabled: true,
+            maxLoginAttempts: 5,
+            passwordMinLength: 8,
+            cacheTtlSeconds: 300,
+            apiRateLimitPerMinute: 100,
+            autoApprovalEnabled: false,
+            hourlyBookings: true,
+            instantBooking: false,
+            isActive: true,
+            maintenanceMode: false,
+            maxBookingDuration: 30,
+            minBookingAdvance: 2,
+            recurringBookings: true,
+            version: 1,
+            withoutDriverListings: true,
+            activatedBy: req.user?.userId || 'system'
+          }
         });
+        
+        logger.info('Created default platform configuration', { configId: platformConfig.id });
       }
 
       // Convert platform config to structured configuration format
