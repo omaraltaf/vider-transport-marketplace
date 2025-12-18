@@ -85,20 +85,26 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       const validToken = await tokenManager.getValidToken();
 
       // Load geographic restrictions
-      const geoData = await apiClient.get('/platform-admin/config/geographic-restrictions', validToken);
-      setGeographicRestrictions(geoData.restrictions || []);
+      try {
+        const geoData = await apiClient.get('/platform-admin/config/geographic-restrictions', validToken);
+        setGeographicRestrictions(geoData.restrictions || []);
+      } catch (err) {
+        console.warn('Geographic restrictions not available:', err);
+        setGeographicRestrictions([]);
+      }
 
       // Load payment method configurations
-      const paymentData = await apiClient.get('/platform-admin/config/payment-methods', validToken);
-      setPaymentMethods(paymentData.paymentMethods || []);
+      try {
+        const paymentData = await apiClient.get('/platform-admin/config/payment-methods', validToken);
+        setPaymentMethods(paymentData.paymentMethods || []);
+      } catch (err) {
+        console.warn('Payment methods not available:', err);
+        setPaymentMethods([]);
+      }
 
-      // Load feature schedules
-      const scheduleData = await apiClient.get(`/platform-admin/config/features/${selectedFeature.id}/schedules`, validToken);
-      setFeatureSchedules(scheduleData.schedules || []);
-
-      // Load rollout configurations
-      const rolloutData = await apiClient.get(`/platform-admin/config/features/${selectedFeature.id}/rollouts`, validToken);
-      setRolloutConfigs(rolloutData.rollouts || []);
+      // Feature schedules and rollouts endpoints don't exist yet - set empty arrays
+      setFeatureSchedules([]);
+      setRolloutConfigs([]);
 
     } catch (err) {
       console.error('Error loading feature configuration:', err);

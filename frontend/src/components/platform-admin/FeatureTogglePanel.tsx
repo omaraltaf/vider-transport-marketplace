@@ -182,7 +182,11 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
   const handleBulkUpdate = async (updates: Array<{ featureId: string; enabled: boolean }>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, validToken);
+      // Backend expects 'features' array, not 'updates'
+      const features = updates.map(({ featureId, enabled }) => ({ featureId, enabled }));
+      const reason = 'Bulk feature update';
+      
+      await apiClient.post('/platform-admin/config/features/bulk-update', { features, reason }, validToken);
 
       // Reload features to get updated state
       await loadFeatures();
