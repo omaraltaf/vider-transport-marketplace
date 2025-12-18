@@ -57,10 +57,6 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
 
-  useEffect(() => {
-    fetchModerationStats();
-  }, [token]);
-
   const fetchModerationStats = async () => {
     try {
       setLoading(true);
@@ -176,6 +172,10 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchModerationStats();
+  }, [token]);
 
   if (loading) {
     return (
