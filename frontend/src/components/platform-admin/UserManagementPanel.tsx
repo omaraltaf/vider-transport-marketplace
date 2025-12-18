@@ -182,8 +182,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       if (response.ok) {
         const data = await response.json();
         console.log('DEBUG: Response data:', data);
+        
+        // Handle both API response formats
         if (data.success) {
+          // Standard API format: {success: true, data: [...]}
           setUsers(data.data || []);
+        } else if (data.users) {
+          // Debug/direct format: {users: [...], total: 2, pagination: {...}}
+          setUsers(data.users || []);
         } else {
           throw new Error(data.error || 'Failed to fetch users');
         }
