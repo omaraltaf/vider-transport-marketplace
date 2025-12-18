@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { DriverListing } from '../types';
 import Navbar from '../components/Navbar';
@@ -57,7 +58,8 @@ export default function CreateDriverListingPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: DriverListingFormData) => {
-      return apiClient.post<DriverListing>('/listings/drivers', data, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post<DriverListing>('/listings/drivers', data, validToken);
     },
     onSuccess: async (listing) => {
       // Upload license document if provided
@@ -66,10 +68,11 @@ export default function CreateDriverListingPage() {
         formData.append('license', licenseDocument);
 
         try {
+          const validToken = await tokenManager.getValidToken();
           await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/listings/drivers/${listing.id}/license`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${validToken}`,
             },
             body: formData,
           });

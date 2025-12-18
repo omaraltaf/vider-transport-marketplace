@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { Transaction, Booking } from '../types';
 import Navbar from '../components/Navbar';
@@ -27,18 +28,20 @@ export default function BillingPage() {
   const { data: bookings, isLoading: bookingsLoading } = useQuery<Booking[]>({
     queryKey: ['bookings'],
     queryFn: async () => {
-      return apiClient.get<Booking[]>('/bookings', token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<Booking[]>('/bookings', validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   // Fetch transactions
   const { data: transactions, isLoading: transactionsLoading } = useQuery<TransactionWithBooking[]>({
     queryKey: ['transactions'],
     queryFn: async () => {
-      return apiClient.get<TransactionWithBooking[]>('/payments/transactions', token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.get<TransactionWithBooking[]>('/payments/transactions', validToken);
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 
   const formatDate = (dateString: string) => {
@@ -61,9 +64,10 @@ export default function BillingPage() {
 
   const downloadInvoice = async (bookingId: string, bookingNumber: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/payments/invoices/${bookingId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
         },
       });
 
@@ -88,9 +92,10 @@ export default function BillingPage() {
 
   const downloadReceipt = async (bookingId: string, bookingNumber: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/payments/receipts/${bookingId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
         },
       });
 

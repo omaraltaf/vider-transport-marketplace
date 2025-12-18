@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
+import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { VehicleListing } from '../types';
 import Navbar from '../components/Navbar';
@@ -81,7 +82,8 @@ export default function CreateVehicleListingPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: VehicleListingFormData) => {
-      return apiClient.post<VehicleListing>('/listings/vehicles', data, token || '');
+      const validToken = await tokenManager.getValidToken();
+      return apiClient.post<VehicleListing>('/listings/vehicles', data, validToken);
     },
     onSuccess: async (listing) => {
       // Upload photos if any
@@ -92,10 +94,11 @@ export default function CreateVehicleListingPage() {
         });
 
         try {
+          const validToken = await tokenManager.getValidToken();
           await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/listings/vehicles/${listing.id}/photos`, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${token}`,
+              'Authorization': `Bearer ${validToken}`,
             },
             body: formData,
           });
