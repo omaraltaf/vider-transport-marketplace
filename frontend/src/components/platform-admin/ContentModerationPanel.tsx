@@ -68,33 +68,56 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
 
       // Fetch stats from all moderation systems
       console.log('DEBUG: Fetching moderation stats...');
+      console.log('DEBUG: Token available:', !!token);
+      console.log('DEBUG: API Base URL:', getApiUrl('/platform-admin/moderation/stats'));
       const [contentStats, fraudStats, blacklistStats] = await Promise.all([
         fetch(getApiUrl('/platform-admin/moderation/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => {
           console.log('DEBUG: Content stats response status:', res.status);
+          console.log('DEBUG: Content stats response ok:', res.ok);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
           return res.json();
         }).then(data => {
           console.log('DEBUG: Content stats data:', data);
           return data;
+        }).catch(err => {
+          console.error('DEBUG: Content stats fetch error:', err);
+          throw err;
         }),
         fetch(getApiUrl('/platform-admin/moderation/fraud/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => {
           console.log('DEBUG: Fraud stats response status:', res.status);
+          console.log('DEBUG: Fraud stats response ok:', res.ok);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
           return res.json();
         }).then(data => {
           console.log('DEBUG: Fraud stats data:', data);
           return data;
+        }).catch(err => {
+          console.error('DEBUG: Fraud stats fetch error:', err);
+          throw err;
         }),
         fetch(getApiUrl('/platform-admin/moderation/blacklist/stats'), {
           headers: { 'Authorization': `Bearer ${token}` }
         }).then(res => {
           console.log('DEBUG: Blacklist stats response status:', res.status);
+          console.log('DEBUG: Blacklist stats response ok:', res.ok);
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+          }
           return res.json();
         }).then(data => {
           console.log('DEBUG: Blacklist stats data:', data);
           return data;
+        }).catch(err => {
+          console.error('DEBUG: Blacklist stats fetch error:', err);
+          throw err;
         })
       ]);
 
