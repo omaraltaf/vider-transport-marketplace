@@ -188,10 +188,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleScheduleFeature = async (schedule: Omit<FeatureSchedule, 'id' | 'status'>) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/schedules`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -213,10 +214,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleCreateRollout = async (rollout: Omit<RolloutConfig, 'id' | 'status'>) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/config/features/${selectedFeature?.id}/rollouts`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -238,10 +240,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleBulkFeatureUpdate = async (updates: Array<{ featureId: string; enabled: boolean; reason: string }>) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/config/features/bulk-update', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ updates }),
@@ -260,10 +263,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
   const handleRollbackFeature = async (featureId: string, reason: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/config/features/${featureId}/rollback`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ reason }),
@@ -588,10 +592,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
                                 onClick={async () => {
                                   if (confirm('Cancel this scheduled action?')) {
                                     try {
+                                      const validToken = await tokenManager.getValidToken();
                                       await fetch(`/api/platform-admin/config/features/schedules/${schedule.id}`, {
                                         method: 'DELETE',
                                         headers: {
-                                          'Authorization': `Bearer ${token}`,
+                                          'Authorization': `Bearer ${validToken}`,
                                         },
                                       });
                                       await loadFeatureConfiguration();
