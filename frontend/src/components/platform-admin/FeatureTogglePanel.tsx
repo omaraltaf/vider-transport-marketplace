@@ -64,7 +64,8 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
       setLoading(true);
       setError(null);
       
-      const data = await apiClient.get('/platform-admin/config/features', token || '');
+      const validToken = await tokenManager.getValidToken();
+      const data = await apiClient.get('/platform-admin/config/features', validToken);
       
       // Transform API response to match our interface
       const transformedFeatures: PlatformFeature[] = [
@@ -159,7 +160,8 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
         if (!confirmed) return;
       }
 
-      await apiClient.put(`/platform-admin/config/features/${featureId}`, { enabled }, token || '');
+      const validToken = await tokenManager.getValidToken();
+      await apiClient.put(`/platform-admin/config/features/${featureId}`, { enabled }, validToken);
 
       // Update local state
       setFeatures(prev => prev.map(f => 
@@ -179,7 +181,8 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
 
   const handleBulkUpdate = async (updates: Array<{ featureId: string; enabled: boolean }>) => {
     try {
-      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, token || '');
+      const validToken = await tokenManager.getValidToken();
+      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, validToken);
 
       // Reload features to get updated state
       await loadFeatures();
