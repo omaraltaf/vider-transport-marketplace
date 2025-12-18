@@ -10,6 +10,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { X, User, Building, Mail, Shield, AlertCircle, Loader2 } from 'lucide-react';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 
 interface CompanyOption {
   id: string;
@@ -90,9 +91,12 @@ const UserCreationModal: React.FC<UserCreationModalProps> = ({
         queryParams.append('search', search);
       }
 
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/users/companies/options?${queryParams}`), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

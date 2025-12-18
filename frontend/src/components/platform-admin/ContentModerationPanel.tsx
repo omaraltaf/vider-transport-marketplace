@@ -13,6 +13,8 @@ import FraudDetectionDashboard from './FraudDetectionDashboard';
 import BlacklistManager from './BlacklistManager';
 import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
+import { safeJsonParse } from '../../services/error-handling/utils/safeJsonParser';
 import { 
   Shield,
   Flag,
@@ -62,65 +64,56 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
       setLoading(true);
       setError(null);
 
-      // Check if token is available
-      if (!token) {
-        console.log('DEBUG: No token available, using mock data');
+      // Get valid token using TokenManager
+      let validToken: string;
+      try {
+        validToken = await tokenManager.getValidToken();
+        console.log('DEBUG: Valid token obtained');
+      } catch (tokenError) {
+        console.log('DEBUG: No valid token available, using mock data');
         throw new Error('No authentication token available');
       }
 
-      // Fetch stats from all moderation systems
+      // Safe fetch function with error handling
+      const safeFetch = async (url: string, description: string) => {
+        try {
+          console.log(`DEBUG: Fetching ${description} from:`, url);
+          const response = await fetch(url, {
+            headers: { 
+              'Authorization': `Bearer ${validToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log(`DEBUG: ${description} response status:`, response.status);
+          console.log(`DEBUG: ${description} response ok:`, response.ok);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const responseText = await response.text();
+          const parseResult = safeJsonParse(responseText);
+          
+          if (!parseResult.success) {
+            console.error(`DEBUG: ${description} JSON parse error:`, parseResult.error);
+            throw parseResult.error || new Error('Failed to parse response');
+          }
+          
+          console.log(`DEBUG: ${description} data:`, parseResult.data);
+          return parseResult.data;
+        } catch (err) {
+          console.error(`DEBUG: ${description} fetch error:`, err);
+          throw err;
+        }
+      };
+
+      // Fetch stats from all moderation systems with safe error handling
       console.log('DEBUG: Fetching moderation stats...');
-      console.log('DEBUG: Token available:', !!token);
-      console.log('DEBUG: API Base URL:', getApiUrl('/platform-admin/moderation/stats'));
       const [contentStats, fraudStats, blacklistStats] = await Promise.all([
-        fetch(getApiUrl('/platform-admin/moderation/stats'), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          console.log('DEBUG: Content stats response status:', res.status);
-          console.log('DEBUG: Content stats response ok:', res.ok);
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          }
-          return res.json();
-        }).then(data => {
-          console.log('DEBUG: Content stats data:', data);
-          return data;
-        }).catch(err => {
-          console.error('DEBUG: Content stats fetch error:', err);
-          throw err;
-        }),
-        fetch(getApiUrl('/platform-admin/moderation/fraud/stats'), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          console.log('DEBUG: Fraud stats response status:', res.status);
-          console.log('DEBUG: Fraud stats response ok:', res.ok);
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          }
-          return res.json();
-        }).then(data => {
-          console.log('DEBUG: Fraud stats data:', data);
-          return data;
-        }).catch(err => {
-          console.error('DEBUG: Fraud stats fetch error:', err);
-          throw err;
-        }),
-        fetch(getApiUrl('/platform-admin/moderation/blacklist/stats'), {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).then(res => {
-          console.log('DEBUG: Blacklist stats response status:', res.status);
-          console.log('DEBUG: Blacklist stats response ok:', res.ok);
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          }
-          return res.json();
-        }).then(data => {
-          console.log('DEBUG: Blacklist stats data:', data);
-          return data;
-        }).catch(err => {
-          console.error('DEBUG: Blacklist stats fetch error:', err);
-          throw err;
-        })
+        safeFetch(getApiUrl('/platform-admin/moderation/stats'), 'Content stats'),
+        safeFetch(getApiUrl('/platform-admin/moderation/fraud/stats'), 'Fraud stats'),
+        safeFetch(getApiUrl('/platform-admin/moderation/blacklist/stats'), 'Blacklist stats')
       ]);
 
       setStats({

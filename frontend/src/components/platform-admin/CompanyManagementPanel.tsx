@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { formatCurrency } from '../../utils/currency';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import {
   Building2,
   Users,
@@ -270,9 +271,13 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
   const loadCompanies = async () => {
     try {
       setLoading(true);
+      
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch('/api/platform-admin/companies', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -308,10 +313,13 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
   }) => {
     setCreateLoading(true);
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch('/api/platform-admin/companies', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(companyData),
@@ -344,9 +352,12 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
 
   const loadStats = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch('/api/platform-admin/companies/stats', {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -364,10 +375,13 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
 
   const handleVerifyCompany = async (companyId: string) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(`/api/platform-admin/companies/${companyId}/verify`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -394,10 +408,13 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
 
   const handleSuspendCompany = async (companyId: string, reason: string) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(`/api/platform-admin/companies/${companyId}/suspend`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ reason })
