@@ -10,6 +10,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -109,7 +110,6 @@ interface RevenueDashboardProps {
 }
 
 const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) => {
-  const { token } = useAuth();
   const [revenueSummary, setRevenueSummary] = useState<RevenueSummary | null>(null);
   const [revenueForecasts, setRevenueForecasts] = useState<RevenueForecast[]>([]);
   const [profitMargins, setProfitMargins] = useState<ProfitMarginAnalysis[]>([]);
@@ -136,12 +136,8 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
       setLoading(true);
       setError(null);
 
-      if (!token) {
-        console.warn('No authentication token available for revenue data');
-        // Use mock data when not authenticated
-        setMockData();
-        return;
-      }
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
 
       const endDate = new Date();
       const startDate = new Date();
@@ -152,7 +148,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/summary?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );
@@ -169,7 +165,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/forecasts?historicalMonths=6&forecastMonths=3`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );
@@ -184,7 +180,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/profit-margins?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}&segmentBy=${selectedSegment}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );
@@ -199,7 +195,7 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
         `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/revenue/breakdown?startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${validToken}`
           }
         }
       );

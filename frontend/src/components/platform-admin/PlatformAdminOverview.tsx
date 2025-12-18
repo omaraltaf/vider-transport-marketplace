@@ -3,6 +3,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { formatCurrency, formatNumber } from '../../utils/currency';
 import { getApiUrl } from '../../config/app.config';
 import { 
@@ -73,7 +74,6 @@ interface RecentActivity {
 
 
 export const PlatformAdminOverview: React.FC = () => {
-  const { token } = useAuth();
   const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -93,18 +93,14 @@ export const PlatformAdminOverview: React.FC = () => {
     const currentRange = range || dateRange;
     console.log('Fetching data for range:', currentRange);
     
-    if (!token) {
-      setMockData();
-      setLoading(false);
-      setRefreshing(false);
-      return;
-    }
-
     try {
       setRefreshing(true);
       
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const headers = {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${validToken}`,
         'Content-Type': 'application/json'
       };
 

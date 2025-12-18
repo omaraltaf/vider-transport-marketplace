@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Flag,
   Eye,
@@ -41,7 +42,6 @@ interface ContentFlag {
 }
 
 const ContentReviewQueue: React.FC = () => {
-  const { token } = useAuth();
   const [flags, setFlags] = useState<ContentFlag[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,9 +73,12 @@ const ContentReviewQueue: React.FC = () => {
         }
       });
 
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/moderation/content/flagged?${queryParams}`), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -147,11 +150,14 @@ const ContentReviewQueue: React.FC = () => {
 
   const handleReview = async (flagId: string, decision: 'APPROVE' | 'REJECT' | 'ESCALATE', notes?: string) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/moderation/content/${flagId}/review`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           decision,

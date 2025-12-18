@@ -15,6 +15,7 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Search, 
   Download, 
@@ -64,7 +65,6 @@ interface CrossPanelData {
 }
 
 export const PlatformAdminDashboard: React.FC = () => {
-  const { token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [currentSection, setCurrentSection] = useState('overview');
@@ -180,9 +180,11 @@ export const PlatformAdminDashboard: React.FC = () => {
 
     try {
       
-      // Create headers with authorization
+      // Get valid token using TokenManager and create headers
+      const validToken = await tokenManager.getValidToken();
+      
       const headers = {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${validToken}`,
         'Content-Type': 'application/json'
       };
 
@@ -247,8 +249,11 @@ export const PlatformAdminDashboard: React.FC = () => {
     if (!token) return;
     
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const headers = {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${validToken}`,
         'Content-Type': 'application/json'
       };
       

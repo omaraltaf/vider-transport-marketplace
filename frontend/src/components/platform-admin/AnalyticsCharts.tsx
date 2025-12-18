@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Badge } from '../ui/badge';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   LineChart, 
   Line, 
@@ -78,7 +79,6 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
   timeRange, 
   className = '' 
 }) => {
-  const { token } = useAuth();
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
   const [growthData, setGrowthData] = useState<GrowthTrendData[]>([]);
   const [geographicData, setGeographicData] = useState<GeographicData[]>([]);
@@ -102,12 +102,15 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
     try {
       setLoading(true);
 
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       // Fetch trend data
       const trendResponse = await fetch(getApiUrl('/platform-admin/analytics/trends'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),
@@ -127,7 +130,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),
@@ -145,7 +148,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           startDate: timeRange.startDate.toISOString(),

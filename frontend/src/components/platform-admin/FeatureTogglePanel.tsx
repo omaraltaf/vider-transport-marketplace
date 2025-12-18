@@ -8,6 +8,7 @@ import { FeatureToggleList } from './FeatureToggleList';
 import { FeatureConfigurationForm } from './FeatureConfigurationForm';
 import { FeatureImpactAnalysis } from './FeatureImpactAnalysis';
 import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { apiClient } from '../../services/api';
 
 export interface PlatformFeature {
@@ -32,7 +33,6 @@ export const FeatureTogglePanel: React.FC<FeatureTogglePanelProps> = ({
   className = '',
   initialSubSection = 'list'
 }) => {
-  const { token } = useAuth();
   const [features, setFeatures] = useState<PlatformFeature[]>([]);
   const [selectedFeature, setSelectedFeature] = useState<PlatformFeature | null>(null);
   const [activeTab, setActiveTab] = useState<'list' | 'config' | 'analysis'>('list');

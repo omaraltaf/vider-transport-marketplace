@@ -16,6 +16,7 @@ import BulkOperationsPanel from './BulkOperationsPanel';
 import { getApiUrl } from '../../config/app.config';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import UserActivityTimeline from './UserActivityTimeline';
 import ContentModerationPanel from './ContentModerationPanel';
 import FraudDetectionDashboard from './FraudDetectionDashboard';
@@ -81,7 +82,6 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   className = '',
   initialSubSection = 'overview'
 }) => {
-  const { token } = useAuth();
   const [activeSubSection, setActiveSubSection] = useState(initialSubSection);
 
   // Update activeSubSection when initialSubSection prop changes
@@ -125,9 +125,12 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Fetch companies for filter dropdown
   const fetchCompanies = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/users/companies/options?limit=100'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -168,11 +171,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
 
       const apiUrl = getApiUrl(`/platform-admin/users?${queryParams}`);
       console.log('DEBUG: Fetching users from:', apiUrl);
-      console.log('DEBUG: Token present:', !!token);
+      
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      console.log('DEBUG: Token present:', !!validToken);
       
       const response = await fetch(apiUrl, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
       
@@ -338,11 +344,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle admin creation
   const handleCreateAdmin = async (adminData: any) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/users/admins'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify(adminData)
       });
@@ -362,11 +371,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle user creation
   const handleCreateUser = async (userData: any) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/users'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify(userData)
       });
@@ -396,11 +408,14 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
     }
 
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/users/${user.id}/reset-password`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -426,10 +441,13 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
   // Handle user export
   const handleExportUsers = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/users/export'), {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

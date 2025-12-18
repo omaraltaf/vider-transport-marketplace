@@ -53,7 +53,6 @@ interface ContentModerationPanelProps {
 }
 
 const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ className = '' }) => {
-  const { token } = useAuth();
   const [stats, setStats] = useState<ModerationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

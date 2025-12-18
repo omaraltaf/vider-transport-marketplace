@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../ui/checkbox';
 import { useAuth } from '../../contexts/AuthContext';
 import { getApiUrl } from '../../config/app.config';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 
 interface BackupJob {
   id: string;
@@ -80,7 +81,6 @@ const BackupManager: React.FC<BackupManagerProps> = ({
   onBackupCreated,
   onRestoreStarted
 }) => {
-  const { token } = useAuth();
   const [backupJobs, setBackupJobs] = useState<BackupJob[]>([]);
   const [schedules, setSchedules] = useState<BackupSchedule[]>([]);
   const [restoreJobs, setRestoreJobs] = useState<RestoreJob[]>([]);
@@ -120,9 +120,12 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchBackupJobs = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/jobs'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -139,9 +142,12 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchSchedules = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/schedules'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -158,9 +164,12 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const fetchRestoreJobs = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/restore/jobs'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -177,11 +186,14 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const createBackup = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/create'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           type: createBackupForm.type,
@@ -219,11 +231,14 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const createSchedule = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/schedules'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           ...createScheduleForm,
@@ -258,11 +273,14 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const startRestore = async () => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl('/platform-admin/system/backup/restore'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           backupId: restoreForm.backupId,
@@ -302,10 +320,13 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const cancelBackup = async (backupId: string) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/system/backup/jobs/${backupId}/cancel`), {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -323,10 +344,13 @@ const BackupManager: React.FC<BackupManagerProps> = ({
     }
 
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/system/backup/jobs/${backupId}`), {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -340,10 +364,13 @@ const BackupManager: React.FC<BackupManagerProps> = ({
 
   const verifyBackup = async (backupId: string) => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(getApiUrl(`/platform-admin/system/backup/verify/${backupId}`), {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

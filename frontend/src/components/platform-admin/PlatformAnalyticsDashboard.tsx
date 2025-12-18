@@ -10,6 +10,7 @@ import { Badge } from '../ui/badge';
 import { formatCurrency, formatNumber, formatPercentage } from '../../utils/currency';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -53,7 +54,6 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
   className = '',
   initialSubSection = 'dashboard'
 }) => {
-  const { token } = useAuth();
   const [kpis, setKpis] = useState<PlatformKPIs | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -97,11 +97,10 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
       setLoading(true);
       setError(null);
 
-      if (!token) {
-        throw new Error('Authentication required. Please log in again.');
-      }
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
 
-      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', token);
+      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', validToken);
       if (result.success) {
         setKpis(result.data);
       } else {
@@ -142,11 +141,14 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
   // Handle export
   const handleExport = async (format: 'csv' | 'excel' | 'json') => {
     try {
+      // Get valid token using TokenManager
+      const validToken = await tokenManager.getValidToken();
+      
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/analytics/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           reportType: 'kpis',
