@@ -59,12 +59,18 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
 
   useEffect(() => {
     fetchModerationStats();
-  }, []);
+  }, [token]);
 
   const fetchModerationStats = async () => {
     try {
       setLoading(true);
       setError(null);
+
+      // Check if token is available
+      if (!token) {
+        console.log('DEBUG: No token available, using mock data');
+        throw new Error('No authentication token available');
+      }
 
       // Fetch stats from all moderation systems
       console.log('DEBUG: Fetching moderation stats...');
