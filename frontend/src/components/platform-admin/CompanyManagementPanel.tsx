@@ -6,6 +6,7 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { formatCurrency } from '../../utils/currency';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { getApiUrl } from '../../config/app.config';
 import {
   Building2,
   Users,
@@ -275,7 +276,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      const response = await fetch('/api/platform-admin/companies', {
+      const response = await fetch(getApiUrl('/platform-admin/companies'), {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
@@ -316,7 +317,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      const response = await fetch('/api/platform-admin/companies', {
+      const response = await fetch(getApiUrl('/platform-admin/companies'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${validToken}`,
@@ -355,7 +356,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      const response = await fetch('/api/platform-admin/companies/stats', {
+      const response = await fetch(getApiUrl('/platform-admin/companies/stats'), {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json'
@@ -378,7 +379,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      const response = await fetch(`/api/platform-admin/companies/${companyId}/verify`, {
+      const response = await fetch(getApiUrl(`/platform-admin/companies/${companyId}/verify`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${validToken}`,
@@ -411,7 +412,7 @@ export const CompanyManagementPanel: React.FC<CompanyManagementPanelProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      const response = await fetch(`/api/platform-admin/companies/${companyId}/suspend`, {
+      const response = await fetch(getApiUrl(`/platform-admin/companies/${companyId}/suspend`), {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${validToken}`,

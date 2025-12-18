@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Shield,
   AlertTriangle,
@@ -78,14 +79,14 @@ const FraudDetectionDashboard: React.FC = () => {
 
       const validToken = await tokenManager.getValidToken();
       const [alertsResponse, statsResponse] = await Promise.all([
-        fetch(`/api/platform-admin/moderation/fraud/alerts?${new URLSearchParams({
+        fetch(getApiUrl(`/platform-admin/moderation/fraud/alerts?${new URLSearchParams({
           ...filters,
           limit: '50',
           offset: '0'
-        })}`, {
+        })}`), {
           headers: { 'Authorization': `Bearer ${validToken}` }
         }),
-        fetch('/api/platform-admin/moderation/fraud/stats', {
+        fetch(getApiUrl('/platform-admin/moderation/fraud/stats'), {
           headers: { 'Authorization': `Bearer ${validToken}` }
         })
       ]);
@@ -180,7 +181,7 @@ const FraudDetectionDashboard: React.FC = () => {
   const handleInvestigate = async (alertId: string) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/moderation/fraud/${alertId}/investigate`, {
+      const response = await fetch(getApiUrl(`/platform-admin/moderation/fraud/${alertId}/investigate`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -204,7 +205,7 @@ const FraudDetectionDashboard: React.FC = () => {
   const handleResolve = async (alertId: string, resolution: 'CONFIRMED_FRAUD' | 'FALSE_POSITIVE', notes: string) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch(`/api/platform-admin/moderation/fraud/${alertId}/resolve`, {
+      const response = await fetch(getApiUrl(`/platform-admin/moderation/fraud/${alertId}/resolve`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
