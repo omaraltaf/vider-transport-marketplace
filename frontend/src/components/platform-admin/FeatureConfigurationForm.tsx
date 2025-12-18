@@ -161,7 +161,11 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleBulkFeatureUpdate = async (updates: Array<{ featureId: string; enabled: boolean; reason: string }>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      await apiClient.post('/platform-admin/config/features/bulk-update', { updates }, validToken);
+      // Backend expects 'features' array, not 'updates'
+      const features = updates.map(({ featureId, enabled }) => ({ featureId, enabled }));
+      const reason = updates[0]?.reason || 'Bulk feature update';
+      
+      await apiClient.post('/platform-admin/config/features/bulk-update', { features, reason }, validToken);
       onFeatureUpdate();
     } catch (err) {
       console.error('Error bulk updating features:', err);
@@ -172,8 +176,10 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleRollbackFeature = async (featureId: string, reason: string) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      await apiClient.post(`/platform-admin/config/features/${featureId}/rollback`, { reason }, validToken);
-      onFeatureUpdate();
+      // Backend expects different structure - need targetConfigId and features array
+      // For now, we'll use a placeholder implementation
+      console.warn('Rollback feature not fully implemented - endpoint mismatch');
+      setError('Rollback feature is not available at this time');
     } catch (err) {
       console.error('Error rolling back feature:', err);
       setError(err instanceof Error ? err.message : 'Failed to rollback feature');
