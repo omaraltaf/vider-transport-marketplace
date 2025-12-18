@@ -699,6 +699,59 @@ router.get('/disputes', async (req: Request, res: Response) => {
   }
 });
 
+// Add the endpoint that frontend is expecting (disputes/statistics)
+router.get('/disputes/statistics', async (req: Request, res: Response) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Start date and end date are required'
+      });
+    }
+    
+    let stats;
+    try {
+      stats = await disputeRefundService.getDisputeStatistics(
+        new Date(startDate as string),
+        new Date(endDate as string)
+      );
+    } catch (serviceError) {
+      console.warn('Dispute statistics service failed, using fallback data:', serviceError);
+      // Provide fallback data to prevent 502 errors
+      stats = {
+        totalDisputes: 0,
+        resolvedDisputes: 0,
+        pendingDisputes: 0,
+        averageResolutionTime: 0,
+        disputesByType: {},
+        disputesByPriority: {}
+      };
+    }
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error fetching dispute statistics:', error);
+    // Return fallback data instead of 500 to prevent 502
+    res.json({
+      success: false,
+      error: 'Service temporarily unavailable',
+      data: {
+        totalDisputes: 0,
+        resolvedDisputes: 0,
+        pendingDisputes: 0,
+        averageResolutionTime: 0,
+        disputesByType: {},
+        disputesByPriority: {}
+      }
+    });
+  }
+});
+
 /**
  * GET /api/platform-admin/financial/disputes/:id
  * Get dispute by ID
@@ -871,59 +924,6 @@ router.get('/refunds/history', async (req: Request, res: Response) => {
  * Get dispute statistics
  */
 router.get('/statistics/disputes', async (req: Request, res: Response) => {
-  try {
-    const { startDate, endDate } = req.query;
-    
-    if (!startDate || !endDate) {
-      return res.status(400).json({
-        success: false,
-        error: 'Start date and end date are required'
-      });
-    }
-    
-    let stats;
-    try {
-      stats = await disputeRefundService.getDisputeStatistics(
-        new Date(startDate as string),
-        new Date(endDate as string)
-      );
-    } catch (serviceError) {
-      console.warn('Dispute statistics service failed, using fallback data:', serviceError);
-      // Provide fallback data to prevent 502 errors
-      stats = {
-        totalDisputes: 0,
-        resolvedDisputes: 0,
-        pendingDisputes: 0,
-        averageResolutionTime: 0,
-        disputesByType: {},
-        disputesByPriority: {}
-      };
-    }
-    
-    res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error) {
-    console.error('Error fetching dispute statistics:', error);
-    // Return fallback data instead of 500 to prevent 502
-    res.json({
-      success: false,
-      error: 'Service temporarily unavailable',
-      data: {
-        totalDisputes: 0,
-        resolvedDisputes: 0,
-        pendingDisputes: 0,
-        averageResolutionTime: 0,
-        disputesByType: {},
-        disputesByPriority: {}
-      }
-    });
-  }
-});
-
-// Add the endpoint that frontend is expecting (disputes/statistics)
-router.get('/disputes/statistics', async (req: Request, res: Response) => {
   try {
     const { startDate, endDate } = req.query;
     
