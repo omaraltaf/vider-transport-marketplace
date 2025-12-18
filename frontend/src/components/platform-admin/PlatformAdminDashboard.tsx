@@ -67,6 +67,7 @@ interface CrossPanelData {
 export const PlatformAdminDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [currentSection, setCurrentSection] = useState('overview');
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [globalSearchResults, setGlobalSearchResults] = useState<GlobalSearchResult[]>([]);
