@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { getApiUrl } from '../../config/app.config';
 import { 
   HelpCircle, 
   Search, 
@@ -95,7 +96,7 @@ export const HelpCenterManager: React.FC<HelpCenterManagerProps> = ({
 
   const fetchArticles = async () => {
     try {
-      const response = await fetch('/api/platform-admin/communication/help-center/articles');
+      const response = await fetch(getApiUrl('/platform-admin/communication/help-center/articles'));
       const data = await response.json();
       setArticles(data.articles || []);
     } catch (error) {
@@ -105,7 +106,7 @@ export const HelpCenterManager: React.FC<HelpCenterManagerProps> = ({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/platform-admin/communication/help-center/categories');
+      const response = await fetch(getApiUrl('/platform-admin/communication/help-center/categories'));
       const data = await response.json();
       setCategories(data.categories || []);
     } catch (error) {
@@ -115,7 +116,7 @@ export const HelpCenterManager: React.FC<HelpCenterManagerProps> = ({
 
   const fetchAnalytics = async () => {
     try {
-      const response = await fetch('/api/platform-admin/communication/help-center/analytics');
+      const response = await fetch(getApiUrl('/platform-admin/communication/help-center/analytics'));
       const data = await response.json();
       setAnalytics(data);
     } catch (error) {

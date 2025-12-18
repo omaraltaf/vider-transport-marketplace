@@ -12,6 +12,7 @@ import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Settings,
   Save,
@@ -62,7 +63,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
       setError(null);
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/system/config', {
+      const response = await fetch(getApiUrl('/platform-admin/system/config'), {
         headers: {
           'Authorization': `Bearer ${validToken}`
         }
@@ -350,7 +351,7 @@ const PlatformConfigurationPanel: React.FC<ConfigurationPanelProps> = ({ classNa
       }));
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/system/config/bulk-update', {
+      const response = await fetch(getApiUrl('/platform-admin/system/config/bulk-update'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

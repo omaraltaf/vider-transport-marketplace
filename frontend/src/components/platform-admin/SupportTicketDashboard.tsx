@@ -6,6 +6,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { getApiUrl } from '../../config/app.config';
 import { 
   MessageSquare, 
   Clock, 
@@ -90,7 +91,7 @@ export const SupportTicketDashboard: React.FC<SupportTicketDashboardProps> = ({
 
   const fetchTickets = async () => {
     try {
-      const response = await fetch('/api/platform-admin/communication/tickets');
+      const response = await fetch(getApiUrl('/platform-admin/communication/tickets'));
       const data = await response.json();
       setTickets(data.tickets || []);
     } catch (error) {
@@ -100,7 +101,7 @@ export const SupportTicketDashboard: React.FC<SupportTicketDashboardProps> = ({
 
   const fetchMetrics = async () => {
     try {
-      const response = await fetch('/api/platform-admin/communication/tickets/metrics');
+      const response = await fetch(getApiUrl('/platform-admin/communication/tickets/metrics'));
       const data = await response.json();
       setMetrics(data);
     } catch (error) {

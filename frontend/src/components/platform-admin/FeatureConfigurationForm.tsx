@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { getApiUrl } from '../../config/app.config';
 import type { PlatformFeature } from './FeatureTogglePanel';
 
 export interface FeatureConfigurationFormProps {
@@ -82,7 +83,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
 
       // Load geographic restrictions
       const validToken = await tokenManager.getValidToken();
-      const geoResponse = await fetch('/api/platform-admin/config/geographic-restrictions', {
+      const geoResponse = await fetch(getApiUrl('/platform-admin/config/geographic-restrictions'), {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
       }
 
       // Load payment method configurations
-      const paymentResponse = await fetch('/api/platform-admin/config/payment-methods', {
+      const paymentResponse = await fetch(getApiUrl('/platform-admin/config/payment-methods'), {
         headers: {
           'Authorization': `Bearer ${validToken}`,
           'Content-Type': 'application/json',
@@ -144,7 +145,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleAddGeographicRestriction = async (restriction: Omit<GeographicRestriction, 'id'>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/config/geographic-restrictions', {
+      const response = await fetch(getApiUrl('/platform-admin/config/geographic-restrictions'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${validToken}`,
@@ -241,7 +242,7 @@ export const FeatureConfigurationForm: React.FC<FeatureConfigurationFormProps> =
   const handleBulkFeatureUpdate = async (updates: Array<{ featureId: string; enabled: boolean; reason: string }>) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/config/features/bulk-update', {
+      const response = await fetch(getApiUrl('/platform-admin/config/features/bulk-update'), {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${validToken}`,

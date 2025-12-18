@@ -11,6 +11,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { tokenManager } from '../../services/error-handling/TokenManager';
+import { getApiUrl } from '../../config/app.config';
 import { 
   Ban,
   Plus,
@@ -107,7 +108,7 @@ const BlacklistManager: React.FC = () => {
         })}`, {
           headers: { 'Authorization': `Bearer ${validToken}` }
         }),
-        fetch('/api/platform-admin/moderation/blacklist/stats', {
+        fetch(getApiUrl('/platform-admin/moderation/blacklist/stats'), {
           headers: { 'Authorization': `Bearer ${validToken}` }
         })
       ]);
@@ -210,7 +211,7 @@ const BlacklistManager: React.FC = () => {
       }
 
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/moderation/blacklist/add', {
+      const response = await fetch(getApiUrl('/platform-admin/moderation/blacklist/add'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -268,7 +269,7 @@ const BlacklistManager: React.FC = () => {
   const handleCheckValue = async (type: string, value: string) => {
     try {
       const validToken = await tokenManager.getValidToken();
-      const response = await fetch('/api/platform-admin/moderation/blacklist/check', {
+      const response = await fetch(getApiUrl('/platform-admin/moderation/blacklist/check'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

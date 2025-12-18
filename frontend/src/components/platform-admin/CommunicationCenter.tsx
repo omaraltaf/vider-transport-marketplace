@@ -259,7 +259,7 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
         };
 
         // Fetch announcements
-        const announcementsResponse = await fetch('/api/platform-admin/communication/announcements', { headers });
+        const announcementsResponse = await fetch(getApiUrl('/platform-admin/communication/announcements'), { headers });
         if (announcementsResponse.ok) {
           const announcementsData = await announcementsResponse.json();
           setAnnouncements(announcementsData.announcements || mockAnnouncements);
@@ -268,7 +268,7 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
         }
 
         // Fetch support tickets
-        const ticketsResponse = await fetch('/api/platform-admin/communication/tickets', { headers });
+        const ticketsResponse = await fetch(getApiUrl('/platform-admin/communication/tickets'), { headers });
         if (ticketsResponse.ok) {
           const ticketsData = await ticketsResponse.json();
           setTickets(ticketsData.tickets || mockTickets);
@@ -277,7 +277,7 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
         }
 
         // Fetch help articles
-        const articlesResponse = await fetch('/api/platform-admin/communication/help-center/articles', { headers });
+        const articlesResponse = await fetch(getApiUrl('/platform-admin/communication/help-center/articles'), { headers });
         if (articlesResponse.ok) {
           const articlesData = await articlesResponse.json();
           setArticles(articlesData.articles || mockArticles);
@@ -286,7 +286,7 @@ export const CommunicationCenter: React.FC<CommunicationCenterProps> = ({
         }
 
         // Fetch communication stats
-        const statsResponse = await fetch('/api/platform-admin/communication/analytics', { headers });
+        const statsResponse = await fetch(getApiUrl('/platform-admin/communication/analytics'), { headers });
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           setStats(statsData || mockStats);
