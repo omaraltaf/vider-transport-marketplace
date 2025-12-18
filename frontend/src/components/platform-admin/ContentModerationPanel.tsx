@@ -12,6 +12,7 @@ import ContentReviewQueue from './ContentReviewQueue';
 import FraudDetectionDashboard from './FraudDetectionDashboard';
 import BlacklistManager from './BlacklistManager';
 import { getApiUrl } from '../../config/app.config';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Shield,
   Flag,
@@ -21,7 +22,6 @@ import {
   TrendingUp,
   Clock,
   CheckCircle,
-  XCircle,
   RefreshCw
 } from 'lucide-react';
 
@@ -51,6 +51,7 @@ interface ContentModerationPanelProps {
 }
 
 const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ className = '' }) => {
+  const { token } = useAuth();
   const [stats, setStats] = useState<ModerationStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
