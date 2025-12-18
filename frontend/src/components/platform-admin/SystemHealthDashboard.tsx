@@ -3,7 +3,7 @@ import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { getApiUrl } from '../../config/app.config';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
@@ -65,7 +65,6 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
   autoRefresh = true,
   refreshInterval = 30000
 }) => {
-  const { token } = useAuth();
   const [currentMetrics, setCurrentMetrics] = useState<SystemHealthMetrics | null>(null);
   const [metricsHistory, setMetricsHistory] = useState<SystemHealthMetrics[]>([]);
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
@@ -74,9 +73,10 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchSystemHealth = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/system/health'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -94,9 +94,10 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchMetricsHistory = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/system/health/history?hours=24'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -113,9 +114,10 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const fetchAlerts = async () => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl('/platform-admin/system/alerts?acknowledged=false'), {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -132,10 +134,11 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const acknowledgeAlert = async (alertId: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl(`/platform-admin/system/alerts/${alertId}/acknowledge`), {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
@@ -149,10 +152,11 @@ const SystemHealthDashboard: React.FC<SystemHealthDashboardProps> = ({
 
   const resolveAlert = async (alertId: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(getApiUrl(`/platform-admin/system/alerts/${alertId}/resolve`), {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 

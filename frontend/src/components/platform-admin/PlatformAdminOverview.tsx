@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { useAuth } from '../../contexts/AuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { formatCurrency, formatNumber } from '../../utils/currency';
 import { getApiUrl } from '../../config/app.config';

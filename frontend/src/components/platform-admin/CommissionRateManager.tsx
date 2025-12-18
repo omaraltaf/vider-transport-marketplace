@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Checkbox } from '../ui/checkbox';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Plus,
   Edit,
@@ -63,7 +63,6 @@ interface CommissionRateManagerProps {
 }
 
 const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className = '' }) => {
-  const { token } = useAuth();
   const [commissionRates, setCommissionRates] = useState<CommissionRate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,9 +86,10 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
         return;
       }
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/platform-admin/financial/commission-rates`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         }
       });
 
