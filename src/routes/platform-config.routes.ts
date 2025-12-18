@@ -580,7 +580,7 @@ router.post('/config/bulk-update',
       for (const update of updates) {
         try {
           // Make individual update request
-          const updateResponse = await fetch(`${req.protocol}://${req.get('host')}/api/platform-admin/system/config/${update.key}`, {
+          const updateResponse = await fetch(`${req.protocol}://${req.get('host')}/api/platform-admin/config/config/${update.key}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
