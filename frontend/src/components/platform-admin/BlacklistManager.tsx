@@ -10,7 +10,7 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Ban,
   Plus,
@@ -66,7 +66,6 @@ interface BlacklistStats {
 }
 
 const BlacklistManager: React.FC = () => {
-  const { token } = useAuth();
   const [entries, setEntries] = useState<BlacklistEntry[]>([]);
   const [stats, setStats] = useState<BlacklistStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,6 +97,7 @@ const BlacklistManager: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const [entriesResponse, statsResponse] = await Promise.all([
         fetch(`/api/platform-admin/moderation/blacklist?${new URLSearchParams({
           ...filters,
@@ -105,10 +105,10 @@ const BlacklistManager: React.FC = () => {
           limit: '50',
           offset: '0'
         })}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${validToken}` }
         }),
         fetch('/api/platform-admin/moderation/blacklist/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${validToken}` }
         })
       ]);
 
@@ -209,11 +209,12 @@ const BlacklistManager: React.FC = () => {
         return;
       }
 
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/moderation/blacklist/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           ...newEntry,
@@ -242,11 +243,12 @@ const BlacklistManager: React.FC = () => {
 
   const handleRemoveEntry = async (entryId: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/moderation/blacklist/${entryId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           reason: 'Removed from admin panel'
@@ -265,11 +267,12 @@ const BlacklistManager: React.FC = () => {
 
   const handleCheckValue = async (type: string, value: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch('/api/platform-admin/moderation/blacklist/check', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({ type, value })
       });

@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { useAuth } from '../../contexts/AuthContext';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Shield,
   AlertTriangle,
@@ -54,7 +54,6 @@ interface FraudStats {
 }
 
 const FraudDetectionDashboard: React.FC = () => {
-  const { token } = useAuth();
   const [alerts, setAlerts] = useState<FraudAlert[]>([]);
   const [stats, setStats] = useState<FraudStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,16 +76,17 @@ const FraudDetectionDashboard: React.FC = () => {
       setLoading(true);
       setError(null);
 
+      const validToken = await tokenManager.getValidToken();
       const [alertsResponse, statsResponse] = await Promise.all([
         fetch(`/api/platform-admin/moderation/fraud/alerts?${new URLSearchParams({
           ...filters,
           limit: '50',
           offset: '0'
         })}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${validToken}` }
         }),
         fetch('/api/platform-admin/moderation/fraud/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${validToken}` }
         })
       ]);
 
@@ -179,11 +179,12 @@ const FraudDetectionDashboard: React.FC = () => {
 
   const handleInvestigate = async (alertId: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/moderation/fraud/${alertId}/investigate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           notes: 'Investigation started from dashboard'
@@ -202,11 +203,12 @@ const FraudDetectionDashboard: React.FC = () => {
 
   const handleResolve = async (alertId: string, resolution: 'CONFIRMED_FRAUD' | 'FALSE_POSITIVE', notes: string) => {
     try {
+      const validToken = await tokenManager.getValidToken();
       const response = await fetch(`/api/platform-admin/moderation/fraud/${alertId}/resolve`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${validToken}`
         },
         body: JSON.stringify({
           resolution,
