@@ -1,0 +1,9 @@
+-- Add missing platform configuration fields
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "minBookingAmount" INTEGER DEFAULT 500;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "maxBookingAmount" INTEGER DEFAULT 100000;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "sessionTimeoutMinutes" INTEGER DEFAULT 60;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "driverRatingsEnabled" BOOLEAN DEFAULT true;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "maxLoginAttempts" INTEGER DEFAULT 5;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "passwordMinLength" INTEGER DEFAULT 8;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "cacheTtlSeconds" INTEGER DEFAULT 300;
+ALTER TABLE "PlatformConfig" ADD COLUMN IF NOT EXISTS "apiRateLimitPerMinute" INTEGER DEFAULT 100;
