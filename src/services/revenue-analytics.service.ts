@@ -635,8 +635,12 @@ export class RevenueAnalyticsService {
       return JSON.parse(cached);
     }
 
-    // Mock reconciliation data
-    const totalBookingValue = 2500000;
+    // Get actual reconciliation data from database
+    const actualBookingValue = await prisma.booking.aggregate({
+      where: { status: 'COMPLETED' },
+      _sum: { total: true }
+    });
+    const totalBookingValue = actualBookingValue._sum.total || 0;
     const expectedCommissions = totalBookingValue * 0.15; // 15% commission rate
     const actualCommissions = expectedCommissions * 0.98; // 2% variance
     const variance = expectedCommissions - actualCommissions;

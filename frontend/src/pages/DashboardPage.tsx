@@ -13,6 +13,7 @@ import { Component, useEffect, useMemo, memo, lazy, Suspense } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
 import Navbar from '../components/Navbar';
 import { Container, Card, Stack, Skeleton, Button } from '../design-system/components';
+import { UserStateGuard } from '../components/auth/UserStateGuard';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { useToast } from '../contexts/ToastContext';
@@ -228,7 +229,12 @@ export default function DashboardPage() {
       
       <Navbar />
       
-      <Container>
+      <UserStateGuard 
+        requireAuth={true}
+        requiredRole="COMPANY_ADMIN"
+        loadingMessage="Loading your company dashboard..."
+      >
+        <Container>
         <div className="dashboard-container">
           {/* Page Header */}
           <div className="dashboard-header">
@@ -353,7 +359,8 @@ export default function DashboardPage() {
             </DashboardErrorBoundary>
           </div>
         </div>
-      </Container>
+        </Container>
+      </UserStateGuard>
 
       <style>{`
         /* Skip Link Styles - Hidden until focused */

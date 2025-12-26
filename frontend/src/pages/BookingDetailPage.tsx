@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';

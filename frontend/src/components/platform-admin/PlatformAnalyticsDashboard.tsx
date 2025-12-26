@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { formatCurrency, formatNumber, formatPercentage } from '../../utils/currency';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
@@ -46,11 +46,24 @@ interface TimeRange {
 }
 
 interface PlatformAnalyticsDashboardProps {
+  filters?: {
+    timeRange: {
+      startDate: Date;
+      endDate: Date;
+      label: string;
+    };
+    regions: string[];
+    companyTypes: string[];
+    userSegments: string[];
+    features: string[];
+    searchQuery: string;
+  };
   className?: string;
   initialSubSection?: string;
 }
 
 const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({ 
+  filters,
   className = '',
   initialSubSection = 'dashboard'
 }) => {
@@ -100,7 +113,21 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
 
-      const result = await apiClient.get('/platform-admin/analytics/kpis?useCache=true', validToken);
+      // Build query parameters including filters
+      const queryParams = new URLSearchParams({
+        useCache: 'true',
+        ...(filters && {
+          startDate: filters.timeRange.startDate.toISOString(),
+          endDate: filters.timeRange.endDate.toISOString(),
+          ...(filters.regions.length > 0 && { regions: filters.regions.join(',') }),
+          ...(filters.companyTypes.length > 0 && { companyTypes: filters.companyTypes.join(',') }),
+          ...(filters.userSegments.length > 0 && { userSegments: filters.userSegments.join(',') }),
+          ...(filters.features.length > 0 && { features: filters.features.join(',') }),
+          ...(filters.searchQuery && { search: filters.searchQuery })
+        })
+      });
+
+      const result = await apiClient.get(`/platform-admin/analytics/kpis?${queryParams.toString()}`, validToken);
       if (result.success) {
         setKpis(result.data);
       } else {
@@ -183,10 +210,26 @@ const PlatformAnalyticsDashboard: React.FC<PlatformAnalyticsDashboardProps> = ({
     }
   };
 
-  // Load initial data and refresh when time range changes
+  // Load initial data and refresh when filters change
   useEffect(() => {
     fetchKPIs();
-  }, [selectedTimeRange]);
+  }, [selectedTimeRange, filters]);
+
+  // Add a separate effect to handle filter changes more reliably
+  useEffect(() => {
+    if (filters) {
+      console.log('Filters changed, refreshing data:', filters);
+      fetchKPIs();
+    }
+  }, [
+    filters?.timeRange?.startDate,
+    filters?.timeRange?.endDate,
+    filters?.regions?.length,
+    filters?.companyTypes?.length,
+    filters?.userSegments?.length,
+    filters?.features?.length,
+    filters?.searchQuery
+  ]);
 
 
 

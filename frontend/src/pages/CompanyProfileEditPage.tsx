@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { companyService, type UpdateCompanyProfileData } from '../services/companyService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import Layout from '../components/Layout';
 import { useEffect } from 'react';
 import { Button, Card, Container, Stack, Input, Textarea, Select, Spinner, Icon } from '../design-system/components';

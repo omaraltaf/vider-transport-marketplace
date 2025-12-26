@@ -3,14 +3,13 @@
  * Provides sensible defaults for all error handling components
  */
 
-import {
+import type {
   ErrorHandlingConfig,
-  RetryConfig,
-  MonitoringThresholds,
   CacheConfig,
   LoggingConfig,
   FallbackConfig
 } from '../interfaces';
+import type { RetryConfig, MonitoringThresholds } from '../../../types/error.types';
 import { ApiErrorType } from '../../../types/error.types';
 
 /**
@@ -88,10 +87,10 @@ export const defaultFallbackConfig: FallbackConfig = {
       }
     },
     userStats: {
-      totalUsers: 1500,
-      activeUsers: 850,
-      newUsersToday: 12,
-      verifiedUsers: 1200
+      totalUsers: 0,
+      activeUsers: 0,
+      newUsersToday: 0,
+      verifiedUsers: 0
     },
     systemHealth: {
       status: 'healthy',
@@ -121,7 +120,9 @@ export const defaultErrorHandlingConfig: ErrorHandlingConfig = {
  * Environment-specific configuration overrides
  */
 export const getEnvironmentConfig = (): Partial<ErrorHandlingConfig> => {
-  const env = process.env.NODE_ENV || 'development';
+  // In frontend, we'll determine environment based on build mode
+  // This should be set by the build process (Vite/Webpack)
+  const env = import.meta.env?.MODE || 'development';
   
   switch (env) {
     case 'production':

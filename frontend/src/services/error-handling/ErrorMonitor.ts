@@ -256,6 +256,8 @@ export class ErrorMonitor implements IErrorMonitor {
       errorsByType: {
         [ApiErrorType.NETWORK]: 0,
         [ApiErrorType.AUTH]: 0,
+        [ApiErrorType.PERMISSION]: 0,
+        [ApiErrorType.PARSING]: 0,
         [ApiErrorType.VALIDATION]: 0,
         [ApiErrorType.SERVER]: 0,
         [ApiErrorType.CLIENT]: 0,

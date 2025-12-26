@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Badge } from '../ui/badge';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { getApiUrl } from '../../config/app.config';
 import { tokenManager } from '../../services/error-handling/TokenManager';
@@ -59,6 +59,7 @@ interface GeographicData {
   bookingCount: number;
   revenue: number;
   percentage: number;
+  [key: string]: string | number; // Add index signature for chart compatibility
 }
 
 interface FeatureUsageData {
@@ -73,11 +74,24 @@ interface AnalyticsChartsProps {
     startDate: Date;
     endDate: Date;
   };
+  filters?: {
+    timeRange: {
+      startDate: Date;
+      endDate: Date;
+      label: string;
+    };
+    regions: string[];
+    companyTypes: string[];
+    userSegments: string[];
+    features: string[];
+    searchQuery: string;
+  };
   className?: string;
 }
 
 const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ 
   timeRange, 
+  filters,
   className = '' 
 }) => {
   const [chartData, setChartData] = useState<ChartDataPoint[]>([]);
@@ -106,86 +120,64 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
       // Get valid token using TokenManager
       const validToken = await tokenManager.getValidToken();
       
-      // Fetch trend data
-      const trendData = await apiClient.post('/platform-admin/analytics/trends', {
+      // Prepare filter parameters
+      const filterParams = {
         startDate: timeRange.startDate.toISOString(),
         endDate: timeRange.endDate.toISOString(),
-        granularity: 'daily'
-      }, validToken);
+        granularity: 'daily',
+        ...(filters && {
+          regions: filters.regions,
+          companyTypes: filters.companyTypes,
+          userSegments: filters.userSegments,
+          features: filters.features,
+          searchQuery: filters.searchQuery
+        })
+      };
       
-      setChartData(trendData.dailyMetrics || []);
-      setGrowthData(trendData.growthTrends || []);
+      // Fetch trend data
+      const trendData = await apiClient.post('/platform-admin/analytics/trends', filterParams, validToken);
+      
+      setChartData((trendData as any).dailyMetrics || []);
+      setGrowthData((trendData as any).growthTrends || []);
 
       // Fetch geographic data
-      const geoData = await apiClient.post('/platform-admin/analytics/geographic', {
-        startDate: timeRange.startDate.toISOString(),
-        endDate: timeRange.endDate.toISOString()
-      }, validToken);
+      const geoData = await apiClient.post('/platform-admin/analytics/geographic', filterParams, validToken);
       
-      setGeographicData(geoData.regions || []);
+      setGeographicData((geoData as any).regions || []);
 
       // Fetch feature usage data
-      const featureData = await apiClient.post('/platform-admin/analytics/features', {
-        startDate: timeRange.startDate.toISOString(),
-        endDate: timeRange.endDate.toISOString()
-      }, validToken);
+      const featureData = await apiClient.post('/platform-admin/analytics/features', filterParams, validToken);
       
-      setFeatureData(featureData.features || []);
+      setFeatureData((featureData as any).features || []);
 
     } catch (error) {
       console.error('Error fetching chart data:', error);
-      // Set mock data for development
-      setMockData();
+      setError('Failed to load analytics data. Please try again.');
+      setChartData([]); // Set empty array instead of mock data
     } finally {
       setLoading(false);
     }
   };
 
-  // Set mock data for development/testing
-  const setMockData = () => {
-    const mockChartData: ChartDataPoint[] = Array.from({ length: 30 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (29 - i));
-      return {
-        date: date.toISOString().split('T')[0],
-        users: Math.floor(Math.random() * 1000) + 5000,
-        bookings: Math.floor(Math.random() * 500) + 1000,
-        revenue: Math.floor(Math.random() * 50000) + 100000,
-        companies: Math.floor(Math.random() * 50) + 200
-      };
-    });
-
-    const mockGrowthData: GrowthTrendData[] = [
-      { period: 'Week 1', userGrowth: 12.5, bookingGrowth: 8.3, revenueGrowth: 15.2 },
-      { period: 'Week 2', userGrowth: 15.8, bookingGrowth: 12.1, revenueGrowth: 18.7 },
-      { period: 'Week 3', userGrowth: 9.2, bookingGrowth: 6.8, revenueGrowth: 11.4 },
-      { period: 'Week 4', userGrowth: 18.6, bookingGrowth: 22.3, revenueGrowth: 25.1 }
-    ];
-
-    const mockGeographicData: GeographicData[] = [
-      { region: 'Oslo', userCount: 2500, bookingCount: 1200, revenue: 450000, percentage: 35 },
-      { region: 'Bergen', userCount: 1800, bookingCount: 850, revenue: 320000, percentage: 25 },
-      { region: 'Trondheim', userCount: 1200, bookingCount: 580, revenue: 210000, percentage: 17 },
-      { region: 'Stavanger', userCount: 900, bookingCount: 420, revenue: 160000, percentage: 13 },
-      { region: 'Other', userCount: 600, bookingCount: 280, revenue: 110000, percentage: 10 }
-    ];
-
-    const mockFeatureData: FeatureUsageData[] = [
-      { feature: 'Instant Booking', adoptionRate: 78.5, activeUsers: 3920, totalUsage: 15680 },
-      { feature: 'Recurring Bookings', adoptionRate: 45.2, activeUsers: 2260, totalUsage: 6780 },
-      { feature: 'Without Driver', adoptionRate: 62.8, activeUsers: 3140, totalUsage: 9420 },
-      { feature: 'Hourly Bookings', adoptionRate: 34.6, activeUsers: 1730, totalUsage: 5190 }
-    ];
-
-    setChartData(mockChartData);
-    setGrowthData(mockGrowthData);
-    setGeographicData(mockGeographicData);
-    setFeatureData(mockFeatureData);
-  };
-
   useEffect(() => {
     fetchChartData();
-  }, [timeRange]);
+  }, [timeRange, filters]);
+
+  // Add a separate effect to handle filter changes more reliably
+  useEffect(() => {
+    if (filters) {
+      console.log('Chart filters changed, refreshing data:', filters);
+      fetchChartData();
+    }
+  }, [
+    filters?.timeRange?.startDate,
+    filters?.timeRange?.endDate,
+    filters?.regions?.length,
+    filters?.companyTypes?.length,
+    filters?.userSegments?.length,
+    filters?.features?.length,
+    filters?.searchQuery
+  ]);
 
   // Custom tooltip for charts
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -225,16 +217,15 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
               <TrendingUp className="h-5 w-5 mr-2" />
               Platform Trends
             </CardTitle>
-            <Select value={selectedMetric} onValueChange={(value: any) => setSelectedMetric(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="users">Users</SelectItem>
-                <SelectItem value="bookings">Bookings</SelectItem>
-                <SelectItem value="revenue">Revenue</SelectItem>
-              </SelectContent>
-            </Select>
+            <select 
+              value={selectedMetric} 
+              onChange={(e) => setSelectedMetric(e.target.value as 'users' | 'bookings' | 'revenue')}
+              className="w-32 px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="users">Users</option>
+              <option value="bookings">Bookings</option>
+              <option value="revenue">Revenue</option>
+            </select>
           </div>
         </CardHeader>
         <CardContent>
@@ -275,7 +266,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                 <XAxis dataKey="period" />
                 <YAxis tickFormatter={(value) => `${value}%`} />
                 <Tooltip 
-                  formatter={(value: number) => [`${value.toFixed(1)}%`, '']}
+                  formatter={(value: number | undefined) => [`${(value || 0).toFixed(1)}%`, '']}
                   content={<CustomTooltip />}
                 />
                 <Legend />
@@ -303,17 +294,18 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ region, percentage }) => `${region} (${percentage}%)`}
+                  label={({ name, value }: any) => `${name} (${((value / geographicData.reduce((sum, item) => sum + item.userCount, 0)) * 100).toFixed(0)}%)`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="userCount"
+                  nameKey="region"
                 >
                   {geographicData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => [value.toLocaleString(), 'Users']}
+                  formatter={(value: number | undefined) => [(value || 0).toLocaleString(), 'Users']}
                 />
               </PieChart>
             </ResponsiveContainer>

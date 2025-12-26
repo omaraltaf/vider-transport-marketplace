@@ -126,81 +126,11 @@ const BlacklistManager: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to load blacklist data');
       console.error('Error fetching blacklist data:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set empty data instead of mock data
+      setBlacklistEntries([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    const mockEntries: BlacklistEntry[] = [
-      {
-        id: 'blacklist-1',
-        type: 'EMAIL',
-        value: 'spam@example.com',
-        reason: 'Known spam account',
-        description: 'Email address associated with multiple spam reports',
-        severity: 'HIGH',
-        status: 'ACTIVE',
-        source: 'MANUAL',
-        addedBy: 'admin-1',
-        addedAt: new Date('2024-12-01'),
-        hitCount: 15
-      },
-      {
-        id: 'blacklist-2',
-        type: 'IP_ADDRESS',
-        value: '203.0.113.100',
-        reason: 'Fraud attempts',
-        description: 'IP address used for multiple fraudulent transactions',
-        severity: 'CRITICAL',
-        status: 'ACTIVE',
-        source: 'FRAUD_DETECTION',
-        addedBy: 'SYSTEM',
-        addedAt: new Date('2024-12-05'),
-        hitCount: 8
-      },
-      {
-        id: 'blacklist-3',
-        type: 'PHONE',
-        value: '+1234567890',
-        reason: 'Harassment reports',
-        description: 'Phone number reported for harassment by multiple users',
-        severity: 'MEDIUM',
-        status: 'ACTIVE',
-        source: 'CONTENT_MODERATION',
-        addedBy: 'admin-2',
-        addedAt: new Date('2024-12-08'),
-        hitCount: 3
-      }
-    ];
-
-    const mockStats: BlacklistStats = {
-      totalEntries: 2341,
-      activeEntries: 2156,
-      entriesByType: {
-        'EMAIL': 856,
-        'IP_ADDRESS': 634,
-        'PHONE': 423,
-        'USER': 312,
-        'DEVICE': 116
-      },
-      entriesBySeverity: {
-        'LOW': 523,
-        'MEDIUM': 1245,
-        'HIGH': 456,
-        'CRITICAL': 117
-      },
-      violationsToday: 12,
-      violationsThisWeek: 89,
-      blockedAttempts: 67,
-      hitRate: 0.15,
-      recentViolations: []
-    };
-
-    setEntries(mockEntries);
-    setStats(mockStats);
   };
 
   const handleAddEntry = async () => {

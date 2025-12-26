@@ -128,14 +128,14 @@ router.post(
         });
       }
 
-      const block = await availabilityService.createBlock({
+      const block = await availabilityService.createBlock(
         listingId,
         listingType,
-        startDate: start,
-        endDate: end,
+        start,
+        end,
         reason,
-        createdBy: req.user!.userId,
-      });
+        req.user!.userId
+      );
 
       res.status(201).json(block);
     } catch (error) {
@@ -236,7 +236,7 @@ router.delete(
     try {
       const { blockId } = req.params;
 
-      await availabilityService.deleteBlock(blockId, req.user!.userId);
+      await availabilityService.deleteBlock(blockId);
 
       res.status(204).send();
     } catch (error) {

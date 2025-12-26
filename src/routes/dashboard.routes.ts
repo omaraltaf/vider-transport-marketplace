@@ -49,6 +49,63 @@ function setCachedData(companyId: string, data: any): void {
 }
 
 /**
+ * Debug endpoint to check revenue calculation
+ * GET /api/dashboard/debug
+ */
+router.get(
+  '/debug',
+  authenticate,
+  requireCompanyAdmin,
+  async (req: Request, res: Response) => {
+    try {
+      // Get user's company ID
+      if (!req || !req.user) {
+        logger.error('Request or user is undefined', { 
+          hasReq: !!req, 
+          hasUser: req ? !!req.user : false 
+        });
+        return res.status(500).json({
+          error: {
+            code: 'INTERNAL_ERROR',
+            message: 'Authentication state error',
+          },
+        });
+      }
+      
+      const userId = req.user.userId;
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { companyId: true },
+      });
+
+      if (!user || !user.companyId) {
+        return res.status(401).json({
+          error: {
+            code: 'UNAUTHORIZED',
+            message: 'User not found or not associated with a company',
+          },
+        });
+      }
+
+      const companyId = user.companyId;
+
+      // Get debug information
+      const debugInfo = await dashboardService.getRevenueDebugInfo(companyId);
+
+      res.json({
+        debug: debugInfo
+      });
+    } catch (error) {
+      logError({ error: error as Error, request: req });
+      res.status(500).json({ 
+        error: 'Debug failed', 
+        message: (error as Error).message 
+      });
+    }
+  }
+);
+
+/**
  * Get complete dashboard data for authenticated company admin
  * GET /api/dashboard
  */

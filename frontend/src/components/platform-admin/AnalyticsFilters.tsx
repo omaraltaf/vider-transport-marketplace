@@ -139,22 +139,22 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
         const options = await response.json();
         setFilterOptions(options);
       } else {
-        // Set mock data for development
+        // Set empty data instead of mock data
         setFilterOptions({
-          regions: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Tromsø', 'Kristiansand'],
-          companyTypes: ['Logistics', 'Transport', 'Delivery', 'Moving', 'Freight'],
-          userSegments: ['Enterprise', 'SMB', 'Individual', 'Government'],
-          featureFlags: ['instant-booking', 'recurring-bookings', 'without-driver', 'hourly-bookings']
+          regions: [],
+          companyTypes: [],
+          userSegments: [],
+          featureFlags: []
         });
       }
     } catch (error) {
       console.error('Error fetching filter options:', error);
-      // Set mock data on error
+      // Set empty data on error
       setFilterOptions({
-        regions: ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Tromsø', 'Kristiansand'],
-        companyTypes: ['Logistics', 'Transport', 'Delivery', 'Moving', 'Freight'],
-        userSegments: ['Enterprise', 'SMB', 'Individual', 'Government'],
-        featureFlags: ['instant-booking', 'recurring-bookings', 'without-driver', 'hourly-bookings']
+        regions: [],
+        companyTypes: [],
+        userSegments: [],
+        featureFlags: []
       });
     } finally {
       setLoading(false);
@@ -287,9 +287,13 @@ const AnalyticsFilters: React.FC<AnalyticsFiltersProps> = ({
     fetchFilterOptions();
   }, []);
 
+  // Only call onFiltersChange after initial load, not on mount
   useEffect(() => {
-    onFiltersChange(activeFilters);
-  }, []);
+    if (filterOptions.regions.length > 0) {
+      console.log('Calling onFiltersChange with:', activeFilters);
+      onFiltersChange(activeFilters);
+    }
+  }, [activeFilters, filterOptions.regions.length, onFiltersChange]);
 
   return (
     <div className={`space-y-4 ${className}`}>

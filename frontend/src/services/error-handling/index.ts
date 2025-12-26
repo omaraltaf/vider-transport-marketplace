@@ -13,6 +13,8 @@ export * from './FallbackManager';
 export * from './ApiClient';
 export * from './ErrorMonitor';
 export * from './LoggingService';
+export * from './AuthErrorLogger';
+export * from './RecoverySuggestionService';
 
 // Utilities
 export * from './utils/errorClassification';

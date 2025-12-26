@@ -8,7 +8,7 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../contexts/AuthContext';
+import { EnhancedAuthProvider as AuthProvider } from '../contexts/EnhancedAuthContext';
 import ListingDetailPage from '../pages/ListingDetailPage';
 import EditVehicleListingPage from '../pages/EditVehicleListingPage';
 import EditDriverListingPage from '../pages/EditDriverListingPage';
@@ -25,7 +25,7 @@ vi.mock('../services/api', () => ({
 }));
 
 // Mock auth context
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: { id: '1', email: 'test@example.com', companyId: 'company1', role: 'PROVIDER' },
     token: 'test-token',

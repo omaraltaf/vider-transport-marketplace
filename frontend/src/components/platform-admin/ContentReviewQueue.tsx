@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { getApiUrl } from '../../config/app.config';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
@@ -91,61 +91,10 @@ const ContentReviewQueue: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load content flags');
       console.error('Error fetching flags:', err);
-      
-      // Set mock data for development
-      setMockData();
+      setFlags([]); // Set empty array instead of mock data
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    const mockFlags: ContentFlag[] = [
-      {
-        id: 'flag-1',
-        contentId: 'content-1',
-        contentType: 'REVIEW',
-        flagType: 'INAPPROPRIATE_CONTENT',
-        severity: 'HIGH',
-        status: 'PENDING',
-        flaggedBy: 'SYSTEM',
-        flaggedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        reason: 'Automated scan detected inappropriate language',
-        description: 'Content contains potentially offensive language and negative sentiment',
-        evidence: {
-          automatedScores: { toxicity: 0.85, spam: 0.2, harassment: 0.3 }
-        }
-      },
-      {
-        id: 'flag-2',
-        contentId: 'content-2',
-        contentType: 'USER_PROFILE',
-        flagType: 'SPAM',
-        severity: 'MEDIUM',
-        status: 'PENDING',
-        flaggedBy: 'admin-1',
-        flaggedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        reason: 'Profile contains promotional content',
-        description: 'User profile description contains multiple promotional links and spam keywords'
-      },
-      {
-        id: 'flag-3',
-        contentId: 'content-3',
-        contentType: 'MESSAGE',
-        flagType: 'HARASSMENT',
-        severity: 'CRITICAL',
-        status: 'PENDING',
-        flaggedBy: 'user-456',
-        flaggedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        reason: 'Threatening message received',
-        description: 'Message contains threats and harassment directed at another user',
-        evidence: {
-          screenshots: ['screenshot1.png', 'screenshot2.png']
-        }
-      }
-    ];
-
-    setFlags(mockFlags);
   };
 
   const handleReview = async (flagId: string, decision: 'APPROVE' | 'REJECT' | 'ESCALATE', notes?: string) => {

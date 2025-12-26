@@ -7,6 +7,7 @@ import SystemHealthDashboard from './SystemHealthDashboard';
 import BackupManager from './BackupManager';
 import SystemAuditViewer from './SystemAuditViewer';
 import PlatformConfigurationPanel from './PlatformConfigurationPanel';
+import { AuthHealthDashboard } from '../admin/AuthHealthDashboard';
 
 interface SystemAdministrationPanelProps {
   className?: string;
@@ -31,10 +32,12 @@ const SystemAdministrationPanel: React.FC<SystemAdministrationPanelProps> = ({
     // Map external sub-section names to internal tab names
     const sectionMapping: { [key: string]: string } = {
       'system-health': 'health',
+      'auth-health': 'auth',
       'backups': 'backup',
       'audit-logs': 'audit',
       'configuration': 'config',
       'health': 'health',
+      'auth': 'auth',
       'backup': 'backup',
       'audit': 'audit',
       'config': 'config'
@@ -198,8 +201,9 @@ const SystemAdministrationPanel: React.FC<SystemAdministrationPanelProps> = ({
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="health">System Health</TabsTrigger>
+          <TabsTrigger value="auth">Auth Health</TabsTrigger>
           <TabsTrigger value="backup">Backup & Recovery</TabsTrigger>
           <TabsTrigger value="audit">Audit & Access Control</TabsTrigger>
           <TabsTrigger value="config">Configuration</TabsTrigger>
@@ -211,6 +215,10 @@ const SystemAdministrationPanel: React.FC<SystemAdministrationPanelProps> = ({
             autoRefresh={true}
             refreshInterval={30000}
           />
+        </TabsContent>
+
+        <TabsContent value="auth" className="space-y-6">
+          <AuthHealthDashboard />
         </TabsContent>
 
         <TabsContent value="backup" className="space-y-6">

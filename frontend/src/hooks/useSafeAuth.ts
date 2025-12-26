@@ -3,7 +3,7 @@
  * Provides safe token access using TokenManager as fallback
  */
 
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { tokenManager } from '../services/error-handling/TokenManager';
 import { useState, useEffect } from 'react';
 

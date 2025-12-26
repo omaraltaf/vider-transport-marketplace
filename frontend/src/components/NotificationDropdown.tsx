@@ -7,7 +7,7 @@ import { Fragment, useState } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from '@headlessui/react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { apiClient } from '../services/api';
 import type { Notification } from '../types';
 import { Card } from '../design-system/components';

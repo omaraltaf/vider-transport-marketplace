@@ -30,9 +30,9 @@ const mockAuthState = {
   isLoading: false,
 };
 
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => mockAuthState,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  EnhancedAuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock ToastContext

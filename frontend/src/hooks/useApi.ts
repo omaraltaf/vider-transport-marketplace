@@ -3,7 +3,7 @@
  * Custom hook for making API requests with authentication
  */
 
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { apiClient } from '../services/api';
 
 export function useApi() {

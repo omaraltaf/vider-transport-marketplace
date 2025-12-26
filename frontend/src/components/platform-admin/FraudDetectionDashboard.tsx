@@ -104,78 +104,21 @@ const FraudDetectionDashboard: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Failed to load fraud data');
       console.error('Error fetching fraud data:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set empty data instead of mock data
+      setFraudAlerts([]);
+      setFraudStatistics({
+        totalAlerts: 0,
+        highRiskAlerts: 0,
+        resolvedAlerts: 0,
+        falsePositiveRate: 0,
+        averageResolutionTime: 0,
+        alertsByType: {},
+        alertsByRisk: {},
+        alertsByStatus: {}
+      });
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    const mockAlerts: FraudAlert[] = [
-      {
-        id: 'alert-1',
-        type: 'PAYMENT_FRAUD',
-        severity: 'HIGH',
-        status: 'OPEN',
-        userId: 'user-123',
-        transactionId: 'txn-456',
-        description: 'Multiple payment cards used in rapid succession',
-        riskScore: 85,
-        detectedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        assignedTo: 'fraud-analyst-1'
-      },
-      {
-        id: 'alert-2',
-        type: 'ACCOUNT_TAKEOVER',
-        severity: 'CRITICAL',
-        status: 'INVESTIGATING',
-        userId: 'user-789',
-        description: 'Login from new country with immediate high-value transactions',
-        riskScore: 95,
-        detectedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        assignedTo: 'fraud-team-lead',
-        investigatedBy: 'fraud-team-lead'
-      },
-      {
-        id: 'alert-3',
-        type: 'BOOKING_FRAUD',
-        severity: 'MEDIUM',
-        status: 'OPEN',
-        userId: 'user-456',
-        bookingId: 'booking-789',
-        description: 'Unusual booking pattern detected',
-        riskScore: 65,
-        detectedAt: new Date(Date.now() - 6 * 60 * 60 * 1000)
-      }
-    ];
-
-    const mockStats: FraudStats = {
-      totalAlerts: 456,
-      openAlerts: 23,
-      resolvedToday: 12,
-      confirmedFraudRate: 0.15,
-      falsePositiveRate: 0.25,
-      avgInvestigationTime: 180,
-      preventedLosses: 125000,
-      alertsByType: {
-        'PAYMENT_FRAUD': 156,
-        'IDENTITY_FRAUD': 89,
-        'BOOKING_FRAUD': 78,
-        'ACCOUNT_TAKEOVER': 67,
-        'SYNTHETIC_IDENTITY': 45,
-        'CHARGEBACK_FRAUD': 21
-      },
-      alertsBySeverity: {
-        'LOW': 189,
-        'MEDIUM': 145,
-        'HIGH': 89,
-        'CRITICAL': 33
-      }
-    };
-
-    setAlerts(mockAlerts);
-    setStats(mockStats);
   };
 
   const handleInvestigate = async (alertId: string) => {

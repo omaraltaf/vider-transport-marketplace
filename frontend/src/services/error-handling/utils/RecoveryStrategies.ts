@@ -4,11 +4,12 @@
  */
 
 import type { IRecoveryStrategy } from '../interfaces';
-import type { ApiError, ErrorContext, ErrorResponse, RecoveryType } from '../../../types/error.types';
-import { ApiErrorType } from '../../../types/error.types';
+import type { ApiError, ErrorContext, ErrorResponse } from '../../../types/error.types';
+import { ApiErrorType, RecoveryType, FallbackType } from '../../../types/error.types';
 import { tokenManager } from '../TokenManager';
 import { fallbackManager } from '../FallbackManager';
 import { retryController } from '../RetryController';
+import { corruptedStateRecovery } from './CorruptedStateRecovery';
 
 export class NetworkRecoveryStrategy implements IRecoveryStrategy {
   canRecover(error: ApiError): boolean {
@@ -44,10 +45,10 @@ export class NetworkRecoveryStrategy implements IRecoveryStrategy {
   async getFallback(error: ApiError): Promise<unknown> {
     const endpoint = error.context?.endpoint || '';
     const key = this.endpointToKey(endpoint);
-    return fallbackManager.getFallbackData(key, 'cached');
+    return fallbackManager.getFallbackData(key, FallbackType.CACHED);
   }
 
-  getRecoveryType(): string {
+  getRecoveryType(error: ApiError): string {
     return 'network_retry_with_fallback';
   }
 
@@ -92,7 +93,7 @@ export class AuthRecoveryStrategy implements IRecoveryStrategy {
     return null;
   }
 
-  getRecoveryType(): string {
+  getRecoveryType(error: ApiError): string {
     return 'auth_refresh_or_redirect';
   }
 }
@@ -124,12 +125,12 @@ export class ParsingRecoveryStrategy implements IRecoveryStrategy {
     const key = this.endpointToKey(endpoint);
     
     // Try cached first, then mock, then empty state
-    return fallbackManager.getFallbackData(key, 'cached') ||
-           fallbackManager.getFallbackData(key, 'mock') ||
-           fallbackManager.getFallbackData(key, 'empty_state');
+    return fallbackManager.getFallbackData(key, FallbackType.CACHED) ||
+           fallbackManager.getFallbackData(key, FallbackType.MOCK) ||
+           fallbackManager.getFallbackData(key, FallbackType.EMPTY_STATE);
   }
 
-  getRecoveryType(): string {
+  getRecoveryType(error: ApiError): string {
     return 'parsing_fallback';
   }
 
@@ -188,10 +189,10 @@ export class ServerRecoveryStrategy implements IRecoveryStrategy {
   async getFallback(error: ApiError): Promise<unknown> {
     const endpoint = error.context?.endpoint || '';
     const key = this.endpointToKey(endpoint);
-    return fallbackManager.getFallbackData(key, 'default');
+    return fallbackManager.getFallbackData(key, FallbackType.DEFAULT);
   }
 
-  getRecoveryType(): string {
+  getRecoveryType(error: ApiError): string {
     return 'server_retry_with_fallback';
   }
 
@@ -238,10 +239,10 @@ export class TimeoutRecoveryStrategy implements IRecoveryStrategy {
   async getFallback(error: ApiError): Promise<unknown> {
     const endpoint = error.context?.endpoint || '';
     const key = this.endpointToKey(endpoint);
-    return fallbackManager.getFallbackData(key, 'cached');
+    return fallbackManager.getFallbackData(key, FallbackType.CACHED);
   }
 
-  getRecoveryType(): string {
+  getRecoveryType(error: ApiError): string {
     return 'timeout_retry_with_fallback';
   }
 
@@ -250,6 +251,76 @@ export class TimeoutRecoveryStrategy implements IRecoveryStrategy {
     if (endpoint.includes('users')) return 'userStats';
     if (endpoint.includes('health')) return 'systemHealth';
     return 'generic';
+  }
+}
+
+export class CorruptedStateRecoveryStrategy implements IRecoveryStrategy {
+  canRecover(error: ApiError): boolean {
+    // This strategy handles state corruption errors
+    return error.type === ApiErrorType.UNKNOWN && 
+           (error.message.includes('corrupted') || 
+            error.message.includes('invalid state') ||
+            error.message.includes('parse') ||
+            error.context?.component === 'auth');
+  }
+
+  async recover(error: ApiError, context: ErrorContext): Promise<ErrorResponse> {
+    try {
+      // Attempt to detect and recover from corrupted state
+      // Note: In a real scenario, we'd need access to current auth state
+      // For now, we'll trigger a recovery check
+      const recoveryStats = corruptedStateRecovery.getRecoveryStats();
+      
+      if (recoveryStats.isSessionOnly) {
+        return {
+          handled: true,
+          userMessage: 'Running in session-only mode due to storage issues. Some features may be limited.',
+          shouldRetry: false,
+          requiresUserAction: false,
+          recoveryType: RecoveryType.SHOW_FALLBACK
+        };
+      }
+
+      // If we've had too many recovery attempts, suggest full reset
+      if (recoveryStats.recoveryAttempts >= 3) {
+        return {
+          handled: true,
+          userMessage: 'Authentication state corruption detected. Please log out and log back in.',
+          shouldRetry: false,
+          requiresUserAction: true,
+          recoveryType: RecoveryType.REDIRECT
+        };
+      }
+
+      // Suggest a retry for minor corruption
+      return {
+        handled: true,
+        userMessage: 'Authentication state issue detected. Attempting recovery...',
+        shouldRetry: true,
+        requiresUserAction: false,
+        recoveryType: RecoveryType.RETRY
+      };
+    } catch (recoveryError) {
+      console.error('Corrupted state recovery failed:', recoveryError);
+      
+      return {
+        handled: true,
+        userMessage: 'Authentication system error. Please refresh the page or log in again.',
+        shouldRetry: false,
+        requiresUserAction: true,
+        recoveryType: RecoveryType.REDIRECT
+      };
+    }
+  }
+
+  async getFallback(error: ApiError): Promise<unknown> {
+    // For corrupted state, we don't have meaningful fallback data
+    // The recovery is handled through the authentication system
+    return null;
+  }
+
+  getRecoveryType(error: ApiError): string {
+    return 'corrupted_state_recovery';
   }
 }
 
@@ -280,7 +351,7 @@ export class RecoveryStrategyManager {
         try {
           return await strategy.recover(error, context);
         } catch (recoveryError) {
-          console.warn(`Recovery strategy ${strategy.getRecoveryType()} failed:`, recoveryError);
+          console.warn(`Recovery strategy ${strategy.getRecoveryType(error)} failed:`, recoveryError);
           continue;
         }
       }
@@ -293,7 +364,23 @@ export class RecoveryStrategyManager {
    * Gets all available recovery strategies
    */
   getAvailableStrategies(): string[] {
-    return this.strategies.map(strategy => strategy.getRecoveryType());
+    // Create a dummy error for getting strategy types
+    const dummyError: ApiError = {
+      type: ApiErrorType.UNKNOWN,
+      message: 'dummy',
+      originalError: new Error('dummy'),
+      context: {
+        endpoint: '',
+        method: 'GET',
+        component: 'test',
+        timestamp: new Date(),
+        retryCount: 0
+      },
+      severity: 'LOW' as any,
+      isRecoverable: false,
+      userMessage: 'dummy'
+    };
+    return this.strategies.map(strategy => strategy.getRecoveryType(dummyError));
   }
 
   /**
@@ -305,6 +392,7 @@ export class RecoveryStrategyManager {
     this.registerStrategy(new ServerRecoveryStrategy());
     this.registerStrategy(new TimeoutRecoveryStrategy());
     this.registerStrategy(new ParsingRecoveryStrategy());
+    this.registerStrategy(new CorruptedStateRecoveryStrategy());
   }
 }
 

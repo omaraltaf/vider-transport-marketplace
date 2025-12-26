@@ -7,7 +7,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ConflictResolutionModal from './ConflictResolutionModal';
-import { AuthProvider } from '../../contexts/AuthContext';
+import { EnhancedAuthProvider as AuthProvider } from '../../contexts/EnhancedAuthContext';
 import * as apiClient from '../../services/api';
 
 // Mock API client
@@ -19,8 +19,8 @@ vi.mock('../../services/api', () => ({
 }));
 
 // Mock AuthContext
-vi.mock('../../contexts/AuthContext', () => ({
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+vi.mock('../../contexts/EnhancedAuthContext', () => ({
+  EnhancedAuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   useAuth: () => ({
     token: 'mock-token',
     user: { id: '1', email: 'test@example.com', role: 'COMPANY_ADMIN' },

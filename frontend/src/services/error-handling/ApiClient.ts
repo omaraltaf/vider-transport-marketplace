@@ -39,6 +39,18 @@ export interface ApiResponse<T = unknown> {
 
 export class ApiClient {
   private config: Required<ApiClientConfig>;
+  
+  // Circuit breaker state for repeated failures
+  private circuitBreaker: Map<string, {
+    failureCount: number;
+    lastFailureTime: Date | null;
+    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+    nextAttemptTime: Date | null;
+  }> = new Map();
+  
+  private readonly CIRCUIT_BREAKER_THRESHOLD = 5; // Failures before opening circuit
+  private readonly CIRCUIT_BREAKER_TIMEOUT = 60000; // 1 minute before trying again
+  private readonly CIRCUIT_BREAKER_HALF_OPEN_TIMEOUT = 30000; // 30 seconds in half-open state
 
   constructor(config: ApiClientConfig = {}) {
     this.config = {
@@ -122,9 +134,26 @@ export class ApiClient {
       retryCount: 0
     };
 
+    // Check circuit breaker
+    const circuitKey = this.getCircuitBreakerKey(fullUrl, context.method);
+    if (!this.canMakeRequest(circuitKey)) {
+      const circuitError = new Error(`Circuit breaker is open for ${circuitKey}. Too many recent failures.`);
+      const apiError = classifyError(circuitError, context, 503);
+      throw apiError;
+    }
+
     // Create the request operation
     const requestOperation = async (): Promise<ApiResponse<T>> => {
-      return this.executeRequest<T>(fullUrl, options, context);
+      try {
+        const response = await this.executeRequest<T>(fullUrl, options, context);
+        // Record success for circuit breaker
+        this.recordSuccess(circuitKey);
+        return response;
+      } catch (error) {
+        // Record failure for circuit breaker
+        this.recordFailure(circuitKey);
+        throw error;
+      }
     };
 
     // Execute with retry logic if not disabled
@@ -152,13 +181,27 @@ export class ApiClient {
   }
 
   /**
-   * Executes the actual HTTP request
+   * Executes the actual HTTP request with authentication retry logic
    */
   private async executeRequest<T>(
     url: string, 
     options: ApiRequestOptions, 
     context: ErrorContext
   ): Promise<ApiResponse<T>> {
+    return this.executeRequestWithAuthRetry<T>(url, options, context, 0);
+  }
+
+  /**
+   * Executes HTTP request with automatic authentication retry logic
+   */
+  private async executeRequestWithAuthRetry<T>(
+    url: string, 
+    options: ApiRequestOptions, 
+    context: ErrorContext,
+    authRetryCount: number = 0
+  ): Promise<ApiResponse<T>> {
+    const maxAuthRetries = 2; // Maximum number of authentication retries
+    
     // Get valid token
     let token: string | null = null;
     try {
@@ -191,6 +234,30 @@ export class ApiClient {
       });
 
       clearTimeout(timeoutId);
+
+      // Check for authentication errors and retry with fresh token
+      if ((response.status === 401 || response.status === 403) && authRetryCount < maxAuthRetries) {
+        console.log(`Authentication error (${response.status}), attempting retry ${authRetryCount + 1}/${maxAuthRetries}`);
+        
+        try {
+          // Handle token error to refresh token
+          const authError = classifyError(
+            new Error(`Authentication failed: ${response.status}`), 
+            context, 
+            response.status
+          );
+          await tokenManager.handleTokenError(authError);
+          
+          // Retry with fresh token after exponential backoff
+          const backoffDelay = Math.min(1000 * Math.pow(2, authRetryCount), 5000); // Max 5 seconds
+          await this.sleep(backoffDelay);
+          
+          return this.executeRequestWithAuthRetry<T>(url, options, context, authRetryCount + 1);
+        } catch (tokenRefreshError) {
+          console.error('Token refresh failed during auth retry:', tokenRefreshError);
+          // If token refresh fails, proceed with original error handling
+        }
+      }
 
       // Validate response
       const validationResult = await responseValidator.validateResponse(response);
@@ -230,10 +297,138 @@ export class ApiClient {
     } catch (error) {
       clearTimeout(timeoutId);
       
+      // For network errors, check if we should retry with fresh token
+      if (error instanceof Error && error.name !== 'AbortError' && authRetryCount < maxAuthRetries) {
+        // Check if this might be a token-related network error
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          console.log(`Network error during request, attempting auth retry ${authRetryCount + 1}/${maxAuthRetries}`);
+          
+          try {
+            // Try to refresh token proactively
+            await tokenManager.refreshToken();
+            
+            // Retry with fresh token after exponential backoff
+            const backoffDelay = Math.min(1000 * Math.pow(2, authRetryCount), 5000);
+            await this.sleep(backoffDelay);
+            
+            return this.executeRequestWithAuthRetry<T>(url, options, context, authRetryCount + 1);
+          } catch (tokenRefreshError) {
+            console.error('Proactive token refresh failed:', tokenRefreshError);
+            // Continue with original error handling
+          }
+        }
+      }
+      
       // Classify and throw the error for retry controller to handle
       const apiError = classifyError(error as Error, context);
       throw apiError;
     }
+  }
+
+  /**
+   * Sleep utility for retry delays
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Gets circuit breaker key for an endpoint
+   */
+  private getCircuitBreakerKey(url: string, method: string): string {
+    // Extract base path without query parameters for circuit breaker grouping
+    const urlObj = new URL(url);
+    return `${method}:${urlObj.pathname}`;
+  }
+
+  /**
+   * Checks if circuit breaker allows the request
+   */
+  private canMakeRequest(key: string): boolean {
+    const circuit = this.circuitBreaker.get(key);
+    if (!circuit) return true;
+
+    const now = new Date();
+
+    switch (circuit.state) {
+      case 'CLOSED':
+        return true;
+      
+      case 'OPEN':
+        if (circuit.nextAttemptTime && now >= circuit.nextAttemptTime) {
+          // Transition to half-open
+          circuit.state = 'HALF_OPEN';
+          circuit.nextAttemptTime = new Date(now.getTime() + this.CIRCUIT_BREAKER_HALF_OPEN_TIMEOUT);
+          return true;
+        }
+        return false;
+      
+      case 'HALF_OPEN':
+        return true;
+      
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Records a successful request for circuit breaker
+   */
+  private recordSuccess(key: string): void {
+    const circuit = this.circuitBreaker.get(key);
+    if (circuit) {
+      if (circuit.state === 'HALF_OPEN') {
+        // Success in half-open state, close the circuit
+        circuit.state = 'CLOSED';
+        circuit.failureCount = 0;
+        circuit.lastFailureTime = null;
+        circuit.nextAttemptTime = null;
+      } else if (circuit.state === 'CLOSED') {
+        // Reset failure count on success
+        circuit.failureCount = Math.max(0, circuit.failureCount - 1);
+      }
+    }
+  }
+
+  /**
+   * Records a failed request for circuit breaker
+   */
+  private recordFailure(key: string): void {
+    const now = new Date();
+    let circuit = this.circuitBreaker.get(key);
+    
+    if (!circuit) {
+      circuit = {
+        failureCount: 0,
+        lastFailureTime: null,
+        state: 'CLOSED',
+        nextAttemptTime: null
+      };
+      this.circuitBreaker.set(key, circuit);
+    }
+
+    circuit.failureCount++;
+    circuit.lastFailureTime = now;
+
+    if (circuit.failureCount >= this.CIRCUIT_BREAKER_THRESHOLD) {
+      // Open the circuit
+      circuit.state = 'OPEN';
+      circuit.nextAttemptTime = new Date(now.getTime() + this.CIRCUIT_BREAKER_TIMEOUT);
+      console.warn(`Circuit breaker opened for ${key} after ${circuit.failureCount} failures`);
+    }
+  }
+
+  /**
+   * Gets circuit breaker state for monitoring
+   */
+  getCircuitBreakerState(endpoint: string): {
+    state: 'CLOSED' | 'OPEN' | 'HALF_OPEN';
+    failureCount: number;
+    lastFailureTime: Date | null;
+    nextAttemptTime: Date | null;
+  } | null {
+    const circuit = this.circuitBreaker.get(endpoint);
+    return circuit ? { ...circuit } : null;
   }
 
   /**

@@ -30,18 +30,52 @@ export function classifyError(
     context,
     severity,
     isRecoverable,
+    userMessage: generateUserMessage(errorType, severity),
     metadata: extractErrorMetadata(error)
   };
+}
+
+/**
+ * Generates user-friendly error messages
+ */
+function generateUserMessage(type: ApiErrorType, severity: ErrorSeverity): string {
+  switch (type) {
+    case ApiErrorType.NETWORK:
+      return 'Network connection issue. Please check your internet connection and try again.';
+    case ApiErrorType.AUTH:
+      return 'Authentication failed. Please log in again.';
+    case ApiErrorType.PARSING:
+      return 'Data format error. Please try again or contact support.';
+    case ApiErrorType.TIMEOUT:
+      return 'Request timed out. Please try again.';
+    case ApiErrorType.SERVER:
+      return severity === ErrorSeverity.CRITICAL 
+        ? 'Service temporarily unavailable. Please try again later.'
+        : 'Server error occurred. Please try again.';
+    case ApiErrorType.VALIDATION:
+      return 'Invalid data provided. Please check your input.';
+    default:
+      return 'An unexpected error occurred. Please try again.';
+  }
 }
 
 /**
  * Determines the error type based on error characteristics
  */
 function determineErrorType(error: Error, statusCode?: number): ApiErrorType {
-  // Network errors
+  // Network errors - check for various network error patterns
   if (
     error.name === 'TypeError' && 
-    (error.message.includes('fetch') || error.message.includes('network'))
+    (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch'))
+  ) {
+    return ApiErrorType.NETWORK;
+  }
+
+  if (
+    error.message.includes('ECONNREFUSED') ||
+    error.message.includes('ETIMEDOUT') ||
+    error.message.includes('ENOTFOUND') ||
+    error.message.includes('Network request failed')
   ) {
     return ApiErrorType.NETWORK;
   }
@@ -55,11 +89,24 @@ function determineErrorType(error: Error, statusCode?: number): ApiErrorType {
     return ApiErrorType.AUTH;
   }
 
-  // Parsing errors
+  if (
+    error.message.includes('Token expired') ||
+    error.message.includes('Invalid token') ||
+    error.message.includes('Unauthorized') ||
+    error.message.includes('Forbidden')
+  ) {
+    return ApiErrorType.AUTH;
+  }
+
+  // Parsing errors - check for various parsing error patterns
   if (
     error.name === 'SyntaxError' || 
     error.message.includes('JSON') ||
-    error.message.includes('parse')
+    error.message.includes('parse') ||
+    error.message.includes('Unexpected token') ||
+    error.message.includes('Unexpected end of JSON') ||
+    error.message.includes('Invalid JSON format') ||
+    error.message.includes('Malformed response')
   ) {
     return ApiErrorType.PARSING;
   }

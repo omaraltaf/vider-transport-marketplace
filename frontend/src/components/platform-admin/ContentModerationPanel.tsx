@@ -12,7 +12,6 @@ import ContentReviewQueue from './ContentReviewQueue';
 import FraudDetectionDashboard from './FraudDetectionDashboard';
 import BlacklistManager from './BlacklistManager';
 import { getApiUrl } from '../../config/app.config';
-import { useAuth } from '../../contexts/AuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { safeJsonParse } from '../../services/error-handling/utils/safeJsonParser';
 import { 
@@ -117,47 +116,47 @@ const ContentModerationPanel: React.FC<ContentModerationPanelProps> = ({ classNa
 
       setStats({
         content: {
-          totalFlags: contentStats.data?.totalFlags || contentStats.totalReports || 0,
-          pendingReview: contentStats.data?.pendingReview || contentStats.pendingReview || 0,
-          resolvedToday: contentStats.data?.resolvedToday || contentStats.resolvedToday || 0,
-          approvalRate: contentStats.data?.approvalRate || 85
+          totalFlags: (contentStats as any)?.data?.totalFlags || (contentStats as any)?.totalReports || 0,
+          pendingReview: (contentStats as any)?.data?.pendingReview || (contentStats as any)?.pendingReview || 0,
+          resolvedToday: (contentStats as any)?.data?.resolvedToday || (contentStats as any)?.resolvedToday || 0,
+          approvalRate: (contentStats as any)?.data?.approvalRate || 85
         },
         fraud: {
-          totalAlerts: fraudStats.data?.totalAlerts || fraudStats.totalFraudCases || 0,
-          openAlerts: fraudStats.data?.openAlerts || fraudStats.activeCases || 0,
-          confirmedFraudRate: fraudStats.data?.confirmedFraudRate || 25,
-          preventedLosses: fraudStats.data?.preventedLosses || 50000
+          totalAlerts: (fraudStats as any)?.data?.totalAlerts || (fraudStats as any)?.totalFraudCases || 0,
+          openAlerts: (fraudStats as any)?.data?.openAlerts || (fraudStats as any)?.activeCases || 0,
+          confirmedFraudRate: (fraudStats as any)?.data?.confirmedFraudRate || 25,
+          preventedLosses: (fraudStats as any)?.data?.preventedLosses || 50000
         },
         blacklist: {
-          totalEntries: blacklistStats.data?.totalEntries || blacklistStats.totalBlacklisted || 0,
-          activeEntries: blacklistStats.data?.activeEntries || blacklistStats.totalBlacklisted || 0,
-          violationsToday: blacklistStats.data?.violationsToday || blacklistStats.recentAdditions || 0,
-          hitRate: blacklistStats.data?.hitRate || 75
+          totalEntries: (blacklistStats as any)?.data?.totalEntries || (blacklistStats as any)?.totalBlacklisted || 0,
+          activeEntries: (blacklistStats as any)?.data?.activeEntries || (blacklistStats as any)?.totalBlacklisted || 0,
+          violationsToday: (blacklistStats as any)?.data?.violationsToday || (blacklistStats as any)?.recentAdditions || 0,
+          hitRate: (blacklistStats as any)?.data?.hitRate || 75
         }
       });
     } catch (err) {
       setError('Failed to load moderation statistics');
       console.error('Error fetching moderation stats:', err);
       
-      // Set mock data for development
+      // Set empty data instead of mock data
       setStats({
         content: {
-          totalFlags: 1247,
-          pendingReview: 23,
-          resolvedToday: 45,
-          approvalRate: 0.65
+          totalFlags: 0,
+          pendingReview: 0,
+          resolvedToday: 0,
+          approvalRate: 0
         },
         fraud: {
-          totalAlerts: 456,
-          openAlerts: 23,
-          confirmedFraudRate: 0.15,
-          preventedLosses: 125000
+          totalAlerts: 0,
+          openAlerts: 0,
+          confirmedFraudRate: 0,
+          preventedLosses: 0
         },
         blacklist: {
-          totalEntries: 2341,
-          activeEntries: 2156,
-          violationsToday: 12,
-          hitRate: 0.15
+          totalEntries: 0,
+          activeEntries: 0,
+          violationsToday: 0,
+          hitRate: 0
         }
       });
     } finally {

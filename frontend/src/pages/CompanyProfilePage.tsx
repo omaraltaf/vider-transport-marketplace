@@ -6,7 +6,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { companyService } from '../services/companyService';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { apiClient } from '../services/api';
 import Layout from '../components/Layout';
 import { ReviewsList } from '../components/ReviewsList';

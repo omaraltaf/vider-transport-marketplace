@@ -51,6 +51,9 @@ describe('Error Classification Properties', () => {
         errorContextArb,
         fc.option(httpStatusCodeArb),
         (error, context, statusCode) => {
+          // Clear logs before each test run
+          mockLoggingService.clear();
+          
           // Classify the error
           const classified = classifyError(error, context, statusCode);
           

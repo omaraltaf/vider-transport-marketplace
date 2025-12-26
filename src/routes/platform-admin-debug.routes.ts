@@ -29,15 +29,85 @@ router.get('/debug/auth', (req, res) => {
   });
 });
 
-// Fallback endpoints for missing routes
-router.get('/overview/metrics', (req, res) => {
-  console.log('DEBUG: Overview metrics endpoint hit');
-  res.json({
-    users: { total: 1240, active: 890, new: 45, growth: 12.5 },
-    companies: { total: 156, active: 142, new: 8, growth: 8.2 },
-    revenue: { total: 2500000, monthly: 450000, growth: 15.3, commission: 125000 },
-    system: { uptime: 99.8, responseTime: 145, errorRate: 0.02, activeConnections: 1250 }
-  });
+// Fallback endpoints for missing routes - USING REAL DATA
+router.get('/overview/metrics', async (req, res) => {
+  console.log('DEBUG: Overview metrics endpoint hit with query:', req.query);
+  try {
+    // Parse date range from query parameters
+    let dateRange;
+    if (req.query.range) {
+      const range = req.query.range as string;
+      const now = new Date();
+      
+      switch (range) {
+        case '7d':
+          dateRange = {
+            startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+            endDate: now
+          };
+          break;
+        case '30d':
+          dateRange = {
+            startDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+            endDate: now
+          };
+          break;
+        case '90d':
+          dateRange = {
+            startDate: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
+            endDate: now
+          };
+          break;
+        default:
+          dateRange = {
+            startDate: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+            endDate: now
+          };
+      }
+    }
+
+    // Try to get real data from analytics service
+    const { analyticsService } = require('../services/analytics.service');
+    const realMetrics = await analyticsService.getPlatformOverview(dateRange);
+    
+    console.log('Real metrics retrieved:', {
+      totalRevenue: realMetrics.financial.totalRevenue,
+      totalUsers: realMetrics.users.total,
+      dateRange: dateRange ? `${dateRange.startDate.toISOString()} to ${dateRange.endDate.toISOString()}` : 'default'
+    });
+    
+    // Transform the data to match the expected format
+    res.json({
+      users: {
+        total: realMetrics.users.total,
+        active: realMetrics.users.active,
+        new: realMetrics.users.newThisMonth,
+        growth: realMetrics.users.growthRate
+      },
+      companies: {
+        total: realMetrics.companies.total,
+        active: realMetrics.companies.active,
+        new: realMetrics.users.newThisMonth, // Using user new count as proxy
+        growth: realMetrics.companies.growthRate
+      },
+      revenue: {
+        total: realMetrics.financial.totalRevenue,
+        monthly: realMetrics.financial.totalRevenue, // Using total as monthly for the selected range
+        growth: 0, // Would need to calculate growth
+        commission: realMetrics.financial.commissions
+      },
+      system: { uptime: 99.8, responseTime: 145, errorRate: 0.02, activeConnections: 1250 }
+    });
+  } catch (error) {
+    console.error('Error fetching real metrics:', error);
+    // Only return empty data if real data fails
+    res.json({
+      users: { total: 0, active: 0, new: 0, growth: 0 },
+      companies: { total: 0, active: 0, new: 0, growth: 0 },
+      revenue: { total: 0, monthly: 0, growth: 0, commission: 0 },
+      system: { uptime: 99.8, responseTime: 145, errorRate: 0.02, activeConnections: 1250 }
+    });
+  }
 });
 
 router.get('/notifications/global', (req, res) => {
@@ -61,9 +131,9 @@ router.get('/cross-panel/data', (req, res) => {
   console.log('DEBUG: Cross-panel data endpoint hit');
   res.json({
     quickStats: {
-      activeUsers: 1240,
-      pendingTickets: 8,
-      systemAlerts: 2,
+      activeUsers: 0,
+      pendingTickets: 0,
+      systemAlerts: 0,
       revenueToday: 45000
     },
     systemStatus: {
@@ -95,62 +165,78 @@ router.get('/system/alerts', (req, res) => {
   });
 });
 
-router.get('/overview/activity', (req, res) => {
+router.get('/overview/activity', async (req, res) => {
   console.log('DEBUG: Overview activity endpoint hit');
-  res.json({
-    activities: [
-      {
-        id: '1',
-        type: 'user_registration',
-        description: 'New user registered from Oslo',
-        timestamp: new Date(Date.now() - 1000 * 60 * 5),
-        user: 'System'
-      },
-      {
-        id: '2',
-        type: 'company_signup',
-        description: 'Bergen Logistics completed verification',
-        timestamp: new Date(Date.now() - 1000 * 60 * 15),
-        user: 'Platform Admin'
+  try {
+    // Try to get real activity from audit logs
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const recentLogs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: {
+        id: true,
+        action: true,
+        reason: true,
+        createdAt: true,
+        adminUserId: true
       }
-    ]
-  });
+    });
+
+    const activities = recentLogs.map(log => ({
+      id: log.id,
+      type: log.action.toLowerCase().includes('user') ? 'user_registration' : 
+            log.action.toLowerCase().includes('company') ? 'company_signup' : 
+            log.action.toLowerCase().includes('payment') ? 'payment' : 'system_event',
+      description: log.reason || `${log.action} performed`,
+      timestamp: log.createdAt,
+      user: log.adminUserId ? 'Platform Admin' : 'System'
+    }));
+
+    res.json({ activities });
+  } catch (error) {
+    console.error('Error fetching real activity:', error);
+    // Return empty activities if real data fails
+    res.json({ activities: [] });
+  }
 });
 
 // User management endpoints
-router.get('/users', (req, res) => {
-  console.log('DEBUG: Users endpoint hit with query:', req.query);
-  res.json({
-    users: [
-      {
-        id: '1',
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john@example.com',
-        status: 'ACTIVE',
-        role: 'USER',
-        createdAt: new Date(),
-        lastLoginDate: new Date()
-      },
-      {
-        id: '2',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: 'jane@example.com',
-        status: 'ACTIVE',
-        role: 'COMPANY_ADMIN',
-        createdAt: new Date(),
-        lastLoginDate: new Date()
-      }
-    ],
-    total: 2,
-    pagination: {
-      limit: 50,
-      offset: 0,
-      total: 2
-    }
-  });
-});
+// COMMENTED OUT - This debug endpoint was interfering with real user management
+// router.get('/users', (req, res) => {
+//   console.log('DEBUG: Users endpoint hit with query:', req.query);
+//   res.json({
+//     users: [
+//       {
+//         id: '1',
+//         firstName: 'John',
+//         lastName: 'Doe',
+//         email: 'john@example.com',
+//         status: 'ACTIVE',
+//         role: 'USER',
+//         createdAt: new Date(),
+//         lastLoginDate: new Date()
+//       },
+//       {
+//         id: '2',
+//         firstName: 'Jane',
+//         lastName: 'Smith',
+//         email: 'jane@example.com',
+//         status: 'ACTIVE',
+//         role: 'COMPANY_ADMIN',
+//         createdAt: new Date(),
+//         lastLoginDate: new Date()
+//       }
+//     ],
+//     total: 2,
+//     pagination: {
+//       limit: 50,
+//       offset: 0,
+//       total: 2
+//     }
+//   });
+// });
 
 router.get('/users/companies/options', (req, res) => {
   console.log('DEBUG: User companies options endpoint hit');

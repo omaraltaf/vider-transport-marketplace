@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import AdminPanelPage from '../AdminPanelPage';
-import { useAuth } from '../../contexts/AuthContext';
+import { useEnhancedAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
@@ -79,7 +79,7 @@ type SortField = 'name' | 'createdAt' | 'totalBookings' | 'totalRevenue' | 'aggr
 type SortOrder = 'asc' | 'desc';
 
 const AdminCompaniesPage = () => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const queryClient = useQueryClient();
   
   // Search and filtering state

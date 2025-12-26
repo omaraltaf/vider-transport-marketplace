@@ -6,12 +6,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { VehicleListing } from '../types';
 import Navbar from '../components/Navbar';
 import { Container, Card, Button, FormField, Input } from '../design-system/components';
+import { UserStateGuard } from '../components/auth/UserStateGuard';
 
 interface VehicleListingFormData {
   title: string;
@@ -154,7 +155,12 @@ export default function CreateVehicleListingPage() {
     <div className="min-h-screen ds-bg-page">
       <Navbar />
       
-      <Container>
+      <UserStateGuard 
+        requireAuth={true}
+        requiredRole="COMPANY_ADMIN"
+        loadingMessage="Loading user data for listing creation..."
+      >
+        <Container>
         <div className="mb-6">
           <Button
             variant="ghost"
@@ -539,7 +545,8 @@ export default function CreateVehicleListingPage() {
               </div>
             </form>
         </Card>
-      </Container>
+        </Container>
+      </UserStateGuard>
     </div>
   );
 }

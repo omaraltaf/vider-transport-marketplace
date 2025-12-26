@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { PlatformAdminUserService } from '../services/platform-admin-user.service';
-import { AnalyticsService } from '../services/analytics.service';
+import { analyticsService } from '../services/analytics.service';
 import { SupportTicketService } from '../services/support-ticket.service';
 import { AnnouncementService } from '../services/announcement.service';
 
@@ -153,9 +153,9 @@ router.get('/cross-panel/data', async (req, res) => {
     // Return mock cross-panel data for now until services are fully implemented
     const crossPanelData = {
       quickStats: {
-        activeUsers: 1240,
-        pendingTickets: 8,
-        systemAlerts: 2,
+        activeUsers: 0,
+        pendingTickets: 0,
+        systemAlerts: 0,
         revenueToday: 45000
       },
       systemStatus: {

@@ -14,7 +14,7 @@ import AdminCreationForm from './AdminCreationForm';
 import UserCreationModal from './UserCreationModal';
 import BulkOperationsPanel from './BulkOperationsPanel';
 import { getApiUrl } from '../../config/app.config';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import UserActivityTimeline from './UserActivityTimeline';
@@ -142,11 +142,8 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       }
     } catch (error) {
       console.error('Error fetching companies:', error);
-      // Set mock data for development
-      setCompanies([
-        { id: 'company-1', name: 'Oslo Logistics AS' },
-        { id: 'company-2', name: 'Bergen Transport' }
-      ]);
+      // Set empty data instead of mock data
+      setCompanies([]);
     }
   };
 
@@ -213,94 +210,11 @@ const UserManagementPanel: React.FC<UserManagementPanelProps> = ({
       setError(err instanceof Error ? err.message : 'Failed to load users');
       console.error('Error fetching users:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set empty data instead of mock data
+      setUsers([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Set mock data for development
-  const setMockData = () => {
-    const mockUsers: PlatformUser[] = [
-      {
-        id: 'user-1',
-        email: 'john.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+47 123 45 678',
-        role: 'CUSTOMER',
-        status: 'ACTIVE',
-        verificationStatus: 'VERIFIED',
-        kycStatus: 'COMPLETED',
-        registrationDate: new Date('2024-01-15'),
-        lastLoginDate: new Date('2024-12-13'),
-        loginCount: 45,
-        profileCompleteness: 95,
-        riskScore: 15,
-        flags: [],
-        permissions: [],
-        metadata: {},
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-12-13')
-      },
-      {
-        id: 'user-2',
-        email: 'jane.smith@logistics.no',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        phone: '+47 987 65 432',
-        role: 'COMPANY_ADMIN',
-        status: 'ACTIVE',
-        verificationStatus: 'VERIFIED',
-        kycStatus: 'COMPLETED',
-        companyId: 'company-1',
-        companyName: 'Oslo Logistics AS',
-        registrationDate: new Date('2024-02-20'),
-        lastLoginDate: new Date('2024-12-12'),
-        loginCount: 128,
-        profileCompleteness: 100,
-        riskScore: 8,
-        flags: [],
-        permissions: ['MANAGE_DRIVERS', 'VIEW_BOOKINGS'],
-        metadata: { companyRole: 'CEO' },
-        createdAt: new Date('2024-02-20'),
-        updatedAt: new Date('2024-12-12')
-      },
-      {
-        id: 'user-3',
-        email: 'suspicious.user@temp.com',
-        firstName: 'Suspicious',
-        lastName: 'User',
-        role: 'CUSTOMER',
-        status: 'SUSPENDED',
-        verificationStatus: 'PENDING',
-        kycStatus: 'IN_PROGRESS',
-        registrationDate: new Date('2024-12-10'),
-        lastLoginDate: new Date('2024-12-11'),
-        loginCount: 25,
-        profileCompleteness: 60,
-        riskScore: 85,
-        flags: [
-          {
-            id: 'flag-1',
-            type: 'SUSPICIOUS_ACTIVITY',
-            severity: 'HIGH',
-            reason: 'Multiple failed payment attempts',
-            description: 'User attempted 10 payments with different cards in 5 minutes',
-            flaggedBy: 'SYSTEM',
-            flaggedAt: new Date('2024-12-11'),
-            resolved: false
-          }
-        ],
-        permissions: [],
-        metadata: { suspiciousPatterns: ['rapid_payments', 'multiple_cards'] },
-        createdAt: new Date('2024-12-10'),
-        updatedAt: new Date('2024-12-11')
-      }
-    ];
-
-    setUsers(mockUsers);
   };
 
   // Get status color

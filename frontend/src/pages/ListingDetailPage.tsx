@@ -7,7 +7,8 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { useEnhancedAuth } from '../contexts/EnhancedAuthContext';
+import { UserStateGuard } from '../components/auth/UserStateGuard';
 import Navbar from '../components/Navbar';
 import { Button } from '../design-system/components/Button';
 import { Card } from '../design-system/components/Card';
@@ -49,7 +50,7 @@ interface CostBreakdown {
 export default function ListingDetailPage() {
   const { type, id } = useParams<{ type: string; id: string }>();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token } = useEnhancedAuth();
 
   const [selectedPhoto, setSelectedPhoto] = useState(0);
   const [showBookingForm, setShowBookingForm] = useState(false);
@@ -703,24 +704,31 @@ export default function ListingDetailPage() {
                 )}
               </div>
 
-              {!showBookingForm ? (
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={() => {
-                    if (!user) {
-                      alert('Please log in to make a booking');
-                      navigate('/login');
-                      return;
-                    }
-                    setShowBookingForm(true);
-                  }}
-                >
-                  Request Booking
-                </Button>
-              ) : (
-                <form onSubmit={handleBookingSubmit} className="space-y-4">
+              <UserStateGuard
+                requireAuth={true}
+                loadingMessage="Loading user data for booking..."
+                fallback={
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    onClick={() => navigate('/login')}
+                  >
+                    Log in to Book
+                  </Button>
+                }
+              >
+                {!showBookingForm ? (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    onClick={() => setShowBookingForm(true)}
+                  >
+                    Request Booking
+                  </Button>
+                ) : (
+                  <form onSubmit={handleBookingSubmit} className="space-y-4">
                   {/* Duration Type Selection - Show First */}
                   <div>
                     <label className="block text-sm font-medium ds-text-gray-700 mb-1">
@@ -962,8 +970,9 @@ export default function ListingDetailPage() {
                       {checkingAvailability ? 'Checking Availability...' : 'Submit Request'}
                     </Button>
                   </div>
-                </form>
-              )}
+                  </form>
+                )}
+              </UserStateGuard>
             </Card>
           </div>
         </div>

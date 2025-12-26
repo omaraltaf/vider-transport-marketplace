@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import AdminPanelPage from '../AdminPanelPage';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { Container, Table, Badge, Button, SearchBar, Spinner } from '../../design-system/components';

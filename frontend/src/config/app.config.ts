@@ -13,14 +13,6 @@ export interface AppConfig {
     notificationTimeout: number;
     autoRefresh: boolean;
   };
-  mock: {
-    enabled: boolean;
-    financial: {
-      totalRevenue: number;
-      commissionRate: number;
-      currency: string;
-    };
-  };
   deployment: {
     environment: 'development' | 'staging' | 'production';
     frontendUrl: string;
@@ -39,14 +31,6 @@ const defaultConfig: AppConfig = {
     notificationTimeout: parseInt(import.meta.env.VITE_NOTIFICATION_TIMEOUT || '5000'), // 5 seconds
     autoRefresh: import.meta.env.VITE_AUTO_REFRESH !== 'false', // Default true
   },
-  mock: {
-    enabled: import.meta.env.VITE_MOCK_DATA === 'true' || import.meta.env.NODE_ENV === 'development',
-    financial: {
-      totalRevenue: parseInt(import.meta.env.VITE_MOCK_REVENUE || '2500000'),
-      commissionRate: parseFloat(import.meta.env.VITE_MOCK_COMMISSION_RATE || '0.05'), // 5%
-      currency: import.meta.env.VITE_CURRENCY || 'NOK',
-    },
-  },
   deployment: {
     environment: (import.meta.env.VITE_ENVIRONMENT || 'development') as 'development' | 'staging' | 'production',
     frontendUrl: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173',
@@ -57,13 +41,8 @@ const defaultConfig: AppConfig = {
 // Export the configuration
 export const appConfig: AppConfig = defaultConfig;
 
-// Helper functions
 export const getApiUrl = (endpoint: string): string => {
   return `${appConfig.api.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-};
-
-export const isMockEnabled = (): boolean => {
-  return appConfig.mock.enabled;
 };
 
 export const getRefreshInterval = (): number => {
@@ -71,7 +50,7 @@ export const getRefreshInterval = (): number => {
 };
 
 export const getCurrency = (): string => {
-  return appConfig.mock.financial.currency;
+  return import.meta.env.VITE_CURRENCY || 'NOK';
 };
 
 export const formatCurrency = (amount: number): string => {

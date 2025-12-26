@@ -14,7 +14,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { getApiUrl } from '../../config/app.config';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   Search, 
@@ -108,6 +108,7 @@ export const PlatformAdminDashboard: React.FC = () => {
       'feature-config': '/platform-admin/features',
       'system': '/platform-admin/system',
       'system-health': '/platform-admin/system',
+      'auth-health': '/platform-admin/system',
       'backups': '/platform-admin/system',
       'audit-logs': '/platform-admin/system',
       'configuration': '/platform-admin/system',
@@ -133,7 +134,7 @@ export const PlatformAdminDashboard: React.FC = () => {
     const isAnalyticsSubSection = ['analytics', 'dashboard', 'growth', 'geographic'].includes(currentSection);
     const isFinancialSubSection = ['financial', 'revenue', 'commissions', 'disputes'].includes(currentSection);
     const isFeaturesSubSection = ['features', 'feature-toggles', 'feature-config'].includes(currentSection);
-    const isSystemSubSection = ['system', 'system-health', 'backups', 'audit-logs', 'configuration'].includes(currentSection);
+    const isSystemSubSection = ['system', 'system-health', 'auth-health', 'backups', 'audit-logs', 'configuration'].includes(currentSection);
     const isCommunicationSubSection = ['communication', 'announcements', 'support-tickets', 'help-center'].includes(currentSection);
     
     if (path.includes('/companies') && !isCompanySubSection) {
@@ -382,6 +383,8 @@ export const PlatformAdminDashboard: React.FC = () => {
         return <SystemAdministrationPanel initialSubSection="health" />;
       case 'system-health':
         return <SystemAdministrationPanel initialSubSection="system-health" />;
+      case 'auth-health':
+        return <SystemAdministrationPanel initialSubSection="auth-health" />;
       case 'backups':
         return <SystemAdministrationPanel initialSubSection="backups" />;
       case 'audit-logs':

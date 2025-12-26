@@ -10,7 +10,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../contexts/AuthContext';
+import { EnhancedAuthProvider as AuthProvider } from '../contexts/EnhancedAuthContext';
 
 // Import components to test
 import { CalendarView } from '../components/availability/CalendarView';
@@ -37,7 +37,7 @@ const mockAuthUser = {
   role: 'PROVIDER',
 };
 
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: mockAuthUser,
     token: 'test-token',

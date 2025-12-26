@@ -37,9 +37,9 @@ vi.mock('../services/api', () => ({
   },
 }));
 
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => mockAuthState,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  EnhancedAuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Import API client to access mocked functions

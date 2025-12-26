@@ -7,7 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { FeatureToggleList } from './FeatureToggleList';
 import { FeatureConfigurationForm } from './FeatureConfigurationForm';
 import { FeatureImpactAnalysis } from './FeatureImpactAnalysis';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { apiClient } from '../../services/api';
 

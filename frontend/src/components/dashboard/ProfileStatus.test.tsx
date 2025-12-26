@@ -6,7 +6,7 @@ import { ProfileStatus } from './ProfileStatus';
 import type { ProfileStatus as ProfileStatusType } from '../../hooks/useDashboardData';
 
 // Mock AuthContext
-vi.mock('../../contexts/AuthContext', () => ({
+vi.mock('../../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: {
       id: 'test-user-id',

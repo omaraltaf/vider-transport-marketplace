@@ -6,8 +6,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { getApiUrl } from '../../config/app.config';
 import { tokenManager } from '../../services/error-handling/TokenManager';
@@ -16,16 +14,14 @@ import {
   Clock,
   MapPin,
   Monitor,
-  AlertTriangle,
-  Eye,
-  Filter,
-  Calendar,
   RefreshCw,
   Flag,
   Shield,
   CreditCard,
   User,
-  LogIn
+  LogIn,
+  Calendar,
+  Settings
 } from 'lucide-react';
 
 interface UserActivity {
@@ -57,7 +53,6 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
 }) => {
   const [activities, setActivities] = useState<UserActivity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     category: 'all',
     dateRange: 'week',
@@ -71,7 +66,6 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
   const fetchUserActivity = async () => {
     try {
       setLoading(true);
-      setError(null);
 
       const queryParams = new URLSearchParams({
         limit: '50',
@@ -114,86 +108,13 @@ const UserActivityTimeline: React.FC<UserActivityTimelineProps> = ({
         throw new Error('Failed to fetch user activity');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load activity');
       console.error('Error fetching user activity:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set empty data instead of mock data
+      setActivities([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const setMockData = () => {
-    const mockActivities: UserActivity[] = [
-      {
-        id: 'activity-1',
-        userId,
-        action: 'LOGIN',
-        category: 'LOGIN',
-        details: { method: 'email_password', success: true },
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        location: { country: 'Norway', city: 'Oslo' },
-        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        riskScore: 5,
-        flagged: false
-      },
-      {
-        id: 'activity-2',
-        userId,
-        action: 'BOOKING_CREATED',
-        category: 'BOOKING',
-        details: { bookingId: 'booking-123', amount: 2500, destination: 'Oslo Airport' },
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        location: { country: 'Norway', city: 'Oslo' },
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        riskScore: 2,
-        flagged: false
-      },
-      {
-        id: 'activity-3',
-        userId,
-        action: 'PAYMENT_PROCESSED',
-        category: 'PAYMENT',
-        details: { amount: 2500, method: 'credit_card', last4: '1234' },
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        location: { country: 'Norway', city: 'Oslo' },
-        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-        riskScore: 3,
-        flagged: false
-      },
-      {
-        id: 'activity-4',
-        userId,
-        action: 'MULTIPLE_FAILED_LOGINS',
-        category: 'SECURITY',
-        details: { attempts: 5, timeWindow: '10 minutes', blocked: true },
-        ipAddress: '203.0.113.1',
-        userAgent: 'Suspicious Bot',
-        location: { country: 'Unknown', city: 'Unknown' },
-        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
-        riskScore: 75,
-        flagged: true
-      },
-      {
-        id: 'activity-5',
-        userId,
-        action: 'PROFILE_UPDATED',
-        category: 'PROFILE',
-        details: { fields: ['phone', 'address'], source: 'user_portal' },
-        ipAddress: '192.168.1.100',
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)',
-        location: { country: 'Norway', city: 'Bergen' },
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-        riskScore: 1,
-        flagged: false
-      }
-    ];
-
-    setActivities(mockActivities);
   };
 
   const getCategoryIcon = (category: string) => {

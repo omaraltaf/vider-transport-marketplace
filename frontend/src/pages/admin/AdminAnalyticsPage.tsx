@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../services/api';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import AdminPanelPage from '../AdminPanelPage';
 import { Container, Card, Grid, Button, Input, Spinner } from '../../design-system/components';

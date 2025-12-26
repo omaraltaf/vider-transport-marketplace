@@ -24,7 +24,7 @@ vi.mock('../components/Navbar', () => ({
 }));
 
 // Mock useAuth hook
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: {
       id: 'user-1',

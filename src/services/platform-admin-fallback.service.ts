@@ -44,10 +44,10 @@ export class PlatformAdminFallbackService {
     return {
       // Basic user statistics
       getUserStats: () => ({
-        totalUsers: 22,
-        activeUsers: 18,
-        verifiedUsers: 15,
-        suspendedUsers: 1,
+        totalUsers: 0,
+        activeUsers: 0,
+        verifiedUsers: 0,
+        suspendedUsers: 0,
         newUsersThisMonth: 3,
         userGrowthRate: 2.5,
         isFallback: true,
@@ -193,14 +193,14 @@ export class PlatformAdminFallbackService {
     return {
       // Platform KPIs
       getPlatformKPIs: () => ({
-        totalUsers: 22,
-        activeUsers: 18,
-        totalCompanies: 8,
-        verifiedCompanies: 6,
-        totalBookings: 45,
-        completedBookings: 42,
-        totalRevenue: 125000,
-        monthlyActiveUsers: 15,
+        totalUsers: 0,
+        activeUsers: 0,
+        totalCompanies: 0,
+        verifiedCompanies: 0,
+        totalBookings: 0,
+        completedBookings: 0,
+        totalRevenue: 0,
+        monthlyActiveUsers: 0,
         averageBookingValue: 2976,
         platformGrowthRate: 8.5,
         isFallback: true,

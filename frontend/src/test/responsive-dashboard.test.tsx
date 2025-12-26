@@ -21,7 +21,7 @@ vi.mock('../components/Navbar', () => ({
 }));
 
 // Mock AuthContext
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: { id: '1', email: 'test@example.com', role: 'COMPANY_ADMIN', companyId: 'company-1' },
     isAuthenticated: true,

@@ -58,9 +58,14 @@ const PlatformAnalyticsPage: React.FC = () => {
 
   // Handle filter changes
   const handleFiltersChange = (filters: ActiveFilters) => {
+    console.log('Filters changed in main page:', filters);
     setActiveFilters(filters);
-    // Trigger data refresh when filters change
-    handleRefresh();
+    // Force immediate data refresh when filters change
+    setLoading(true);
+    // Use a small delay to ensure state is updated
+    setTimeout(() => {
+      setLoading(false);
+    }, 500);
   };
 
   // Handle data refresh
@@ -248,7 +253,10 @@ const PlatformAnalyticsPage: React.FC = () => {
 
               {/* Overview Tab */}
               <TabsContent value="overview" className="space-y-6">
-                <PlatformAnalyticsDashboard />
+                <PlatformAnalyticsDashboard 
+                  key={`overview-${JSON.stringify(activeFilters)}`}
+                  filters={activeFilters} 
+                />
               </TabsContent>
 
               {/* Trends Tab */}
@@ -259,7 +267,11 @@ const PlatformAnalyticsPage: React.FC = () => {
                       <CardTitle>Growth Trends & Forecasting</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <AnalyticsCharts timeRange={activeFilters.timeRange} />
+                      <AnalyticsCharts 
+                        key={`trends-${JSON.stringify(activeFilters)}`}
+                        timeRange={activeFilters.timeRange} 
+                        filters={activeFilters}
+                      />
                     </CardContent>
                   </Card>
                 </div>

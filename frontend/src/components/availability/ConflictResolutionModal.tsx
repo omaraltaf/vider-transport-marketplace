@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { apiClient } from '../../services/api';
 import { Modal, Button, Stack } from '../../design-system/components';
 

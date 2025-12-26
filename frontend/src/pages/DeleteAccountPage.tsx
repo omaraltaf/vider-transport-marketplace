@@ -7,7 +7,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';
 import { Container, Card, Button, Modal, Input } from '../design-system/components';

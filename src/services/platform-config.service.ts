@@ -1,158 +1,317 @@
-/**
- * Platform Configuration Service
- * Manages platform-wide configuration settings with validation, caching, and versioning
- */
+import { PrismaClient } from '@prisma/client';
+import { cacheService } from './cache.service';
+import { logger } from '../utils/logger';
 
-import { PrismaClient, PlatformConfig } from '@prisma/client';
-import { 
-  UpdatePlatformConfigRequest,
-  ChangeType
-} from '../types/platform-config.types.js';
-import { prisma } from '../config/database';
+const prisma = new PrismaClient();
 
-export class PlatformConfigService {
-  private configCache: PlatformConfig | null = null;
-  private cacheExpiry: number = 0;
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+export interface PlatformConfigValue {
+  id: string;
+  category: string;
+  key: string;
+  value: any;
+  dataType: 'string' | 'number' | 'boolean' | 'select' | 'json';
+  displayName: string;
+  description?: string;
+  options?: string[];
+  validation?: {
+    min?: number;
+    max?: number;
+    required?: boolean;
+    pattern?: string;
+  };
+  isEditable: boolean;
+  requiresRestart: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  updatedBy?: string;
+}
 
-  constructor() {
-    // No need for prisma parameter since we import it directly
-  }
+export interface PlatformConfigUpdate {
+  value: any;
+  updatedBy?: string;
+}
 
-  /**
-   * Get the current active platform configuration
-   */
-  async getConfiguration(): Promise<PlatformConfig | null> {
-    // Check cache first
-    if (this.isConfigCached()) {
-      return this.configCache;
-    }
+class PlatformConfigService {
+  private readonly CACHE_PREFIX = 'platform_config:';
+  private readonly CACHE_TTL = 3600; // 1 hour
 
-    const config = await prisma.platformConfig.findFirst({
-      where: { isActive: true }
-    });
-
-    if (config) {
-      this.cacheConfig(config);
-    }
-
-    return config;
-  }
-
-  /**
-   * Get configuration by ID
-   */
-  async getConfigurationById(id: string): Promise<PlatformConfig | null> {
-    const config = await prisma.platformConfig.findUnique({
-      where: { id }
-    });
-
-    return config;
-  }
-
-  /**
-   * Create or get default platform configuration
-   */
-  async getOrCreateDefaultConfiguration(): Promise<PlatformConfig> {
-    let config = await this.getConfiguration();
+  async getConfiguration(): Promise<any> {
+    const configs = await this.getAllConfigs();
     
-    if (!config) {
-      // Create default configuration
-      config = await prisma.platformConfig.create({
+    // Convert array of configs to a single object with properties
+    const configObject: any = {};
+    
+    configs.forEach(config => {
+      // Convert key to camelCase property name
+      const propertyName = this.keyToCamelCase(config.key);
+      configObject[propertyName] = config.value;
+      
+      // Also add metadata
+      configObject.id = config.id;
+      configObject.version = 1; // Default version
+      configObject.updatedAt = config.updatedAt;
+      configObject.activatedBy = config.updatedBy;
+    });
+
+    // Set default values for expected properties
+    configObject.withoutDriverListings = configObject.withoutDriverListings ?? true;
+    configObject.hourlyBookings = configObject.hourlyBookings ?? true;
+    configObject.recurringBookings = configObject.recurringBookings ?? true;
+    configObject.instantBooking = configObject.instantBooking ?? false;
+    configObject.autoApprovalEnabled = configObject.autoApprovalEnabled ?? false;
+    configObject.maintenanceMode = configObject.maintenanceMode ?? false;
+
+    return configObject;
+  }
+
+  private keyToCamelCase(key: string): string {
+    return key.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+  }
+
+  async getConfigurationById(id: string): Promise<PlatformConfigValue | null> {
+    const cacheKey = `${this.CACHE_PREFIX}id:${id}`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const config = await prisma.platformConfigs.findUnique({
+          where: { id }
+        });
+
+        return config ? this.transformConfig(config) : null;
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async updateConfiguration(
+    updates: Array<{ key: string; value: any }> | { [key: string]: any },
+    updatedBy?: string
+  ): Promise<any> {
+    // Handle both array and object formats
+    let updateArray: Array<{ key: string; value: any }>;
+    
+    if (Array.isArray(updates)) {
+      updateArray = updates;
+    } else {
+      updateArray = Object.entries(updates).map(([key, value]) => ({ key, value }));
+    }
+
+    await this.updateMultipleConfigs(updateArray, updatedBy);
+    
+    // Return the updated configuration object
+    return this.getConfiguration();
+  }
+
+  async getAllConfigs(): Promise<PlatformConfigValue[]> {
+    const cacheKey = `${this.CACHE_PREFIX}all`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const configs = await prisma.platformConfigs.findMany({
+          orderBy: [
+            { category: 'asc' },
+            { displayName: 'asc' }
+          ]
+        });
+
+        return configs.map(this.transformConfig);
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getConfigsByCategory(category: string): Promise<PlatformConfigValue[]> {
+    const cacheKey = `${this.CACHE_PREFIX}category:${category}`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const configs = await prisma.platformConfigs.findMany({
+          where: { category },
+          orderBy: { displayName: 'asc' }
+        });
+
+        return configs.map(this.transformConfig);
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getConfig(key: string): Promise<PlatformConfigValue | null> {
+    const cacheKey = `${this.CACHE_PREFIX}key:${key}`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const config = await prisma.platformConfigs.findUnique({
+          where: { key }
+        });
+
+        return config ? this.transformConfig(config) : null;
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getConfigValue<T = any>(key: string): Promise<T | null> {
+    const config = await this.getConfig(key);
+    return config ? config.value : null;
+  }
+
+  async updateConfig(key: string, update: PlatformConfigUpdate): Promise<PlatformConfigValue> {
+    try {
+      // Validate the update
+      const existingConfig = await prisma.platformConfigs.findUnique({
+        where: { key }
+      });
+
+      if (!existingConfig) {
+        throw new Error(`Configuration key '${key}' not found`);
+      }
+
+      if (!existingConfig.isEditable) {
+        throw new Error(`Configuration key '${key}' is not editable`);
+      }
+
+      // Validate the value based on the config's validation rules
+      this.validateConfigValue(existingConfig, update.value);
+
+      // Update the configuration
+      const updatedConfig = await prisma.platformConfigs.update({
+        where: { key },
         data: {
-          commissionRate: 0.15,
-          taxRate: 0.25,
-          bookingTimeoutHours: 24,
-          defaultCurrency: 'NOK',
-          withoutDriverListings: true,
-          hourlyBookings: true,
-          recurringBookings: true,
-          instantBooking: false,
-          maxBookingDuration: 30,
-          minBookingAdvance: 2,
-          autoApprovalEnabled: false,
-          maintenanceMode: false,
-          version: 1,
-          isActive: true,
-          activatedAt: new Date()
+          value: update.value,
+          updatedAt: new Date(),
+          updatedBy: update.updatedBy,
         }
       });
-      
-      this.cacheConfig(config);
+
+      // Invalidate cache
+      await this.invalidateConfigCache(key, existingConfig.category);
+
+      logger.info(`Platform configuration updated: ${key}`, {
+        key,
+        oldValue: existingConfig.value,
+        newValue: update.value,
+        updatedBy: update.updatedBy,
+      });
+
+      return this.transformConfig(updatedConfig);
+    } catch (error) {
+      logger.error(`Failed to update platform configuration: ${key}`, error);
+      throw error;
     }
-    
-    return config;
   }
 
-  /**
-   * Update platform configuration
-   */
-  async updateConfiguration(
-    updates: UpdatePlatformConfigRequest, 
-    adminUserId: string
-  ): Promise<PlatformConfig> {
-    const currentConfig = await this.getOrCreateDefaultConfiguration();
+  async updateMultipleConfigs(
+    updates: Array<{ key: string; value: any }>,
+    updatedBy?: string
+  ): Promise<PlatformConfigValue[]> {
+    const results: PlatformConfigValue[] = [];
 
-    // Validate updates
-    this.validateConfigurationUpdates(updates);
-
-    // Prepare update data (exclude reason from database update)
-    const { reason, ...updateData } = updates;
-
-    // Update configuration
-    const updatedConfig = await prisma.platformConfig.update({
-      where: { id: currentConfig.id },
-      data: {
-        ...updateData,
-        version: currentConfig.version + 1,
-        updatedAt: new Date()
+    for (const update of updates) {
+      try {
+        const result = await this.updateConfig(update.key, {
+          value: update.value,
+          updatedBy,
+        });
+        results.push(result);
+      } catch (error) {
+        logger.error(`Failed to update config ${update.key}:`, error);
+        throw error;
       }
-    });
-
-    // Clear cache
-    this.clearCache();
-
-    return updatedConfig;
-  }
-
-
-
-
-
-  /**
-   * Validate configuration updates
-   */
-  private validateConfigurationUpdates(updates: UpdatePlatformConfigRequest): void {
-    if (updates.commissionRate !== undefined && (updates.commissionRate < 0 || updates.commissionRate > 1)) {
-      throw new Error('Commission rate must be between 0 and 1');
     }
-    
-    if (updates.taxRate !== undefined && (updates.taxRate < 0 || updates.taxRate > 1)) {
-      throw new Error('Tax rate must be between 0 and 1');
+
+    return results;
+  }
+
+  async getConfigHistory(key: string, limit = 10): Promise<any[]> {
+    // This would require a separate configuration history table
+    // For now, return empty array
+    return [];
+  }
+
+  async resetConfigToDefault(key: string, updatedBy?: string): Promise<PlatformConfigValue> {
+    // This would require storing default values
+    // For now, throw an error
+    throw new Error('Reset to default not implemented yet');
+  }
+
+  private transformConfig(config: any): PlatformConfigValue {
+    return {
+      id: config.id,
+      category: config.category,
+      key: config.key,
+      value: config.value,
+      dataType: config.dataType,
+      displayName: config.displayName,
+      description: config.description,
+      options: config.options,
+      validation: config.validation,
+      isEditable: config.isEditable,
+      requiresRestart: config.requiresRestart,
+      createdAt: config.createdAt,
+      updatedAt: config.updatedAt,
+      updatedBy: config.updatedBy,
+    };
+  }
+
+  private validateConfigValue(config: any, value: any): void {
+    const validation = config.validation;
+    if (!validation) return;
+
+    if (validation.required && (value === null || value === undefined || value === '')) {
+      throw new Error(`Configuration '${config.key}' is required`);
     }
-    
-    if (updates.bookingTimeoutHours !== undefined && (updates.bookingTimeoutHours < 1 || updates.bookingTimeoutHours > 168)) {
-      throw new Error('Booking timeout must be between 1 and 168 hours');
+
+    switch (config.dataType) {
+      case 'number':
+        if (typeof value !== 'number') {
+          throw new Error(`Configuration '${config.key}' must be a number`);
+        }
+        if (validation.min !== undefined && value < validation.min) {
+          throw new Error(`Configuration '${config.key}' must be at least ${validation.min}`);
+        }
+        if (validation.max !== undefined && value > validation.max) {
+          throw new Error(`Configuration '${config.key}' must be at most ${validation.max}`);
+        }
+        break;
+
+      case 'string':
+        if (typeof value !== 'string') {
+          throw new Error(`Configuration '${config.key}' must be a string`);
+        }
+        if (validation.pattern) {
+          const regex = new RegExp(validation.pattern);
+          if (!regex.test(value)) {
+            throw new Error(`Configuration '${config.key}' does not match required pattern`);
+          }
+        }
+        break;
+
+      case 'boolean':
+        if (typeof value !== 'boolean') {
+          throw new Error(`Configuration '${config.key}' must be a boolean`);
+        }
+        break;
+
+      case 'select':
+        if (config.options && !config.options.includes(value)) {
+          throw new Error(`Configuration '${config.key}' must be one of: ${config.options.join(', ')}`);
+        }
+        break;
     }
   }
 
-  /**
-   * Cache management methods
-   */
-  private isConfigCached(): boolean {
-    return this.configCache !== null && Date.now() < this.cacheExpiry;
-  }
-
-  private cacheConfig(config: PlatformConfig): void {
-    this.configCache = config;
-    this.cacheExpiry = Date.now() + this.CACHE_TTL;
-  }
-
-  private clearCache(): void {
-    this.configCache = null;
-    this.cacheExpiry = 0;
+  private async invalidateConfigCache(key: string, category: string): Promise<void> {
+    await Promise.all([
+      cacheService.del(`${this.CACHE_PREFIX}key:${key}`),
+      cacheService.del(`${this.CACHE_PREFIX}category:${category}`),
+      cacheService.del(`${this.CACHE_PREFIX}all`),
+    ]);
   }
 }
 
-// Create and export service instance
 export const platformConfigService = new PlatformConfigService();

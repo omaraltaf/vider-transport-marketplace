@@ -6,7 +6,7 @@
 
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { apiClient } from '../services/api';
 import Navbar from '../components/Navbar';
 import { Container, Card, Button } from '../design-system/components';

@@ -751,6 +751,7 @@ export class ListingService {
    * Implements filter conjunction (AND logic) for all filters
    */
   async searchListings(filters: SearchFilters): Promise<SearchResult> {
+    const searchStartTime = Date.now();
     const page = filters.page || 1;
     const pageSize = filters.pageSize || 20;
     const skip = (page - 1) * pageSize;
@@ -764,8 +765,17 @@ export class ListingService {
     const searchVehicles = !filters.listingType || filters.listingType === 'vehicle' || filters.listingType === 'vehicle_driver';
     const searchDrivers = !filters.listingType || filters.listingType === 'driver' || filters.listingType === 'vehicle_driver';
 
+    // Log search execution details
+    logger.info('Search execution started', {
+      filters,
+      searchVehicles,
+      searchDrivers,
+      pagination: { page, pageSize, skip },
+    });
+
     // Build vehicle listing query
     if (searchVehicles) {
+      const vehicleQueryStartTime = Date.now();
       const vehicleWhere: any = {
         status: ListingStatus.ACTIVE, // Only return active listings
       };
@@ -848,6 +858,13 @@ export class ListingService {
         vehicleWhere.tags = { hasEvery: filters.tags };
       }
 
+      logger.info('Vehicle query conditions built', {
+        vehicleWhere,
+        hasLocationFilter: !!filters.location,
+        hasRadiusFilter: !!(filters.location?.radius && filters.location?.coordinates),
+        hasDateFilter: !!filters.dateRange,
+      });
+
       // Fetch vehicle listings
       let allVehicleListings = await prisma.vehicleListing.findMany({
         where: vehicleWhere,
@@ -863,8 +880,15 @@ export class ListingService {
         },
       });
 
+      const vehicleQueryDuration = Date.now() - vehicleQueryStartTime;
+      logger.info('Vehicle database query completed', {
+        duration: `${vehicleQueryDuration}ms`,
+        rawResultCount: allVehicleListings.length,
+      });
+
       // Apply radius filter if specified
       if (filters.location?.radius && filters.location?.coordinates) {
+        const beforeRadiusFilter = allVehicleListings.length;
         allVehicleListings = allVehicleListings.filter((listing) => {
           if (!listing.latitude || !listing.longitude) return false;
           const distance = this.calculateDistance(
@@ -875,11 +899,21 @@ export class ListingService {
           );
           return distance <= filters.location!.radius!;
         });
+        logger.info('Radius filter applied', {
+          beforeFilter: beforeRadiusFilter,
+          afterFilter: allVehicleListings.length,
+          radiusKm: filters.location.radius,
+          coordinates: filters.location.coordinates,
+        });
       }
 
       // Apply date range filter (check for booking conflicts and availability blocks)
       if (filters.dateRange) {
+        const beforeDateFilter = allVehicleListings.length;
         const availableListings: typeof allVehicleListings = [];
+        let bookingConflicts = 0;
+        let blockConflicts = 0;
+        
         for (const listing of allVehicleListings) {
           const hasBookingConflict = await this.hasBookingConflict(
             listing.id,
@@ -891,11 +925,26 @@ export class ListingService {
             filters.dateRange.start,
             filters.dateRange.end
           );
+          
+          if (hasBookingConflict) bookingConflicts++;
+          if (hasBlockConflict) blockConflicts++;
+          
           if (!hasBookingConflict && !hasBlockConflict) {
             availableListings.push(listing);
           }
         }
         allVehicleListings = availableListings;
+        
+        logger.info('Date availability filter applied', {
+          beforeFilter: beforeDateFilter,
+          afterFilter: allVehicleListings.length,
+          bookingConflicts,
+          blockConflicts,
+          dateRange: {
+            start: filters.dateRange.start.toISOString(),
+            end: filters.dateRange.end.toISOString(),
+          },
+        });
       }
 
       // Sort results
@@ -906,14 +955,20 @@ export class ListingService {
           filters.sortOrder || 'asc',
           filters.location?.coordinates
         );
+        logger.info('Vehicle results sorted', {
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder || 'asc',
+          hasCoordinatesForDistance: !!(filters.sortBy === 'distance' && filters.location?.coordinates),
+        });
       }
 
       totalVehicles = allVehicleListings.length;
-      vehicleListings = allVehicleListings.slice(skip, skip + pageSize);
+      vehicleListings = allVehicleListings;
     }
 
     // Build driver listing query
     if (searchDrivers) {
+      const driverQueryStartTime = Date.now();
       const driverWhere: any = {
         status: ListingStatus.ACTIVE, // Only return active listings
         verified: true, // Only return verified drivers
@@ -943,6 +998,12 @@ export class ListingService {
         }
       }
 
+      logger.info('Driver query conditions built', {
+        driverWhere,
+        hasLocationFilter: !!filters.location,
+        hasDateFilter: !!filters.dateRange,
+      });
+
       // Fetch driver listings
       let allDriverListings = await prisma.driverListing.findMany({
         where: driverWhere,
@@ -960,8 +1021,15 @@ export class ListingService {
         },
       });
 
+      const driverQueryDuration = Date.now() - driverQueryStartTime;
+      logger.info('Driver database query completed', {
+        duration: `${driverQueryDuration}ms`,
+        rawResultCount: allDriverListings.length,
+      });
+
       // Apply location filters (based on company location)
       if (filters.location) {
+        const beforeLocationFilter = allDriverListings.length;
         if (filters.location.fylke) {
           allDriverListings = allDriverListings.filter(
             (listing: any) => listing.company.fylke === filters.location!.fylke
@@ -972,11 +1040,21 @@ export class ListingService {
             (listing: any) => listing.company.kommune === filters.location!.kommune
           );
         }
+        logger.info('Driver location filter applied', {
+          beforeFilter: beforeLocationFilter,
+          afterFilter: allDriverListings.length,
+          fylke: filters.location.fylke,
+          kommune: filters.location.kommune,
+        });
       }
 
       // Apply date range filter (check for booking conflicts and availability blocks)
       if (filters.dateRange) {
+        const beforeDateFilter = allDriverListings.length;
         const availableListings: typeof allDriverListings = [];
+        let bookingConflicts = 0;
+        let blockConflicts = 0;
+        
         for (const listing of allDriverListings) {
           const hasBookingConflict = await this.hasDriverBookingConflict(
             listing.id,
@@ -988,11 +1066,26 @@ export class ListingService {
             filters.dateRange.start,
             filters.dateRange.end
           );
+          
+          if (hasBookingConflict) bookingConflicts++;
+          if (hasBlockConflict) blockConflicts++;
+          
           if (!hasBookingConflict && !hasBlockConflict) {
             availableListings.push(listing);
           }
         }
         allDriverListings = availableListings;
+        
+        logger.info('Driver date availability filter applied', {
+          beforeFilter: beforeDateFilter,
+          afterFilter: allDriverListings.length,
+          bookingConflicts,
+          blockConflicts,
+          dateRange: {
+            start: filters.dateRange.start.toISOString(),
+            end: filters.dateRange.end.toISOString(),
+          },
+        });
       }
 
       // Sort results
@@ -1002,23 +1095,82 @@ export class ListingService {
           filters.sortBy,
           filters.sortOrder || 'asc'
         );
+        logger.info('Driver results sorted', {
+          sortBy: filters.sortBy,
+          sortOrder: filters.sortOrder || 'asc',
+        });
       }
 
       totalDrivers = allDriverListings.length;
-      driverListings = allDriverListings.slice(skip, skip + pageSize);
+      driverListings = allDriverListings;
     }
+
+    // Apply pagination to combined results
+    const allResults: Array<{ type: 'vehicle' | 'driver'; listing: any }> = [
+      ...vehicleListings.map(listing => ({ type: 'vehicle' as const, listing })),
+      ...driverListings.map(listing => ({ type: 'driver' as const, listing })),
+    ];
 
     const total = totalVehicles + totalDrivers;
     const totalPages = Math.ceil(total / pageSize);
+    
+    // Apply pagination to combined results
+    const paginatedResults = allResults.slice(skip, skip + pageSize);
+    
+    // Separate back into vehicle and driver listings
+    const paginatedVehicleListings = paginatedResults
+      .filter(item => item.type === 'vehicle')
+      .map(item => item.listing);
+    const paginatedDriverListings = paginatedResults
+      .filter(item => item.type === 'driver')
+      .map(item => item.listing);
+    
+    // Update the final results to be paginated
+    vehicleListings = paginatedVehicleListings;
+    driverListings = paginatedDriverListings;
+    const searchDuration = Date.now() - searchStartTime;
 
+    // Enhanced search completion logging
     logger.info('Search completed', {
+      searchDuration: `${searchDuration}ms`,
       filters,
-      totalVehicles,
-      totalDrivers,
-      total,
-      page,
-      pageSize,
+      results: {
+        totalVehicles,
+        totalDrivers,
+        total,
+        page,
+        pageSize,
+        totalPages,
+        isEmpty: total === 0,
+      },
+      performance: {
+        fast: searchDuration < 100,
+        acceptable: searchDuration < 500,
+        slow: searchDuration >= 500,
+      },
+      searchTypes: {
+        searchedVehicles: searchVehicles,
+        searchedDrivers: searchDrivers,
+      },
     });
+
+    // Log detailed empty result analysis
+    if (total === 0) {
+      logger.warn('Search returned no results', {
+        filters,
+        searchDuration: `${searchDuration}ms`,
+        debugSuggestions: {
+          checkActiveListings: 'Verify database has active listings with status=ACTIVE',
+          checkVerifiedDrivers: searchDrivers ? 'Verify drivers have verified=true' : false,
+          locationTooSpecific: filters.location ? 'Location filters may be too restrictive' : false,
+          priceTooNarrow: filters.priceRange ? 'Price range may not match any listings' : false,
+          dateConflicts: filters.dateRange ? 'Date range may have booking/availability conflicts' : false,
+          vehicleTypesMismatch: filters.vehicleType ? 'Vehicle types may not exist in database' : false,
+          capacityMismatch: filters.capacity ? 'Capacity range may not match any vehicles' : false,
+          tagsMismatch: filters.tags ? 'Tags may not match any listings' : false,
+        },
+      });
+    }
 
     return {
       vehicleListings,

@@ -75,6 +75,7 @@ export const apiErrorArb: fc.Arbitrary<ApiError> = fc.record({
   context: errorContextArb,
   severity: errorSeverityArb,
   isRecoverable: fc.boolean(),
+  userMessage: fc.string({ minLength: 10, maxLength: 100 }),
   metadata: fc.option(fc.dictionary(fc.string(), fc.anything()))
 });
 
@@ -87,12 +88,14 @@ export const malformedJsonArb = fc.oneof(
   fc.constant('{"trailing": "comma",}'),
   fc.constant('{invalid: "quotes"}'),
   fc.constant('{"unclosed": "string}'),
-  fc.constant('{"duplicate": "key", "duplicate": "value"}'),
   fc.constant('[{"array": "incomplete"'),
   fc.constant('null,'),
   fc.constant('undefined'),
   fc.constant('{"number": 123.45.67}'),
-  fc.string().filter(s => {
+  fc.constant('{"invalid": value}'),
+  fc.constant('{"missing": quote}'),
+  fc.constant('{broken json'),
+  fc.string({ minLength: 1, maxLength: 20 }).filter(s => {
     try {
       JSON.parse(s);
       return false; // Filter out valid JSON
@@ -135,7 +138,7 @@ export const retryConfigArb: fc.Arbitrary<RetryConfig> = fc.record({
   maxAttempts: fc.integer({ min: 1, max: 10 }),
   baseDelay: fc.integer({ min: 100, max: 5000 }),
   maxDelay: fc.integer({ min: 5000, max: 60000 }),
-  backoffMultiplier: fc.float({ min: Math.fround(1.1), max: Math.fround(3.0) }),
+  backoffMultiplier: fc.float({ min: Math.fround(1.1), max: Math.fround(3.0), noNaN: true }),
   retryableErrors: fc.array(apiErrorTypeArb, { minLength: 1, maxLength: 5 }),
   timeoutMs: fc.integer({ min: 1000, max: 30000 })
 });
@@ -239,6 +242,5 @@ export const createPropertyTestConfig = (numRuns: number = 100) => ({
   numRuns,
   verbose: true,
   seed: Date.now(),
-  path: [],
   endOnFailure: true
 });

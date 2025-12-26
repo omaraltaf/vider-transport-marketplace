@@ -384,20 +384,20 @@ export class PlatformAdminUserService {
       await redis.setex(cacheKey, this.CACHE_TTL, JSON.stringify(stats));
       return stats;
     } catch (error) {
-      console.error('Error fetching real user statistics, falling back to mock data:', error);
+      console.error('Error fetching real user statistics, falling back to empty data:', error);
       
-      // Fallback to mock statistics if database query fails
+      // Fallback to empty statistics if database query fails
       const stats: UserStatistics = {
-        totalUsers: 22, // Match actual seeded data
-        activeUsers: 18,
+        totalUsers: 0,
+        activeUsers: 0,
         suspendedUsers: 0,
         bannedUsers: 0,
-        pendingVerification: 4,
-        verifiedUsers: 18,
+        pendingVerification: 0,
+        verifiedUsers: 0,
         flaggedUsers: 0,
-        newUsersToday: 1,
-        newUsersThisWeek: 3,
-        newUsersThisMonth: 4,
+        newUsersToday: 0,
+        newUsersThisWeek: 0,
+        newUsersThisMonth: 0,
         averageRiskScore: 15.2,
         byRole: {
           'COMPANY_ADMIN': 5,

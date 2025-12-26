@@ -14,7 +14,7 @@ import Navbar from '../components/Navbar';
 import { Card, Container, Grid, Stack } from '../design-system/components';
 
 // Mock AuthContext
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: { email: 'test@example.com', role: 'company_admin' },
     isAuthenticated: true,

@@ -78,6 +78,7 @@ export const PlatformAdminOverview: React.FC = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('30d');
 
   useEffect(() => {
@@ -110,7 +111,8 @@ export const PlatformAdminOverview: React.FC = () => {
         setMetrics(metricsData);
       } else {
         console.error('Failed to fetch metrics:', metricsResponse.status);
-        setMockData();
+        setError('Failed to load platform metrics. Please try again.');
+        setMetrics(null);
       }
 
       // Fetch alerts
@@ -133,92 +135,13 @@ export const PlatformAdminOverview: React.FC = () => {
 
     } catch (error) {
       console.error('Error fetching overview data:', error);
-      setMockData();
+      setError('Failed to load platform overview. Please try again.');
+      setMetrics(null);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
-
-  const setMockData = () => {
-    // Mock data with realistic values matching actual seeded data
-    // Adjust values slightly based on date range for visual feedback
-    const baseMultiplier = dateRange === '7d' ? 0.3 : dateRange === '30d' ? 1.0 : 2.8;
-    
-    setMetrics({
-      users: { 
-        total: 22, 
-        active: 18, 
-        new: Math.round(4 * baseMultiplier), 
-        growth: 12.5 
-      },
-      companies: { 
-        total: 6, 
-        active: 4, 
-        new: Math.round(2 * baseMultiplier), 
-        growth: 8.2 
-      },
-      revenue: { 
-        total: 315789,    // ~316K NOK (matches actual seeded transaction data)
-        monthly: Math.round(27507 * baseMultiplier),   // Adjust monthly based on range
-        growth: 15.3, 
-        commission: Math.round(15789 * baseMultiplier)  // Adjust commission based on range
-      },
-      system: { uptime: 99.8, responseTime: 145, errorRate: 0.02, activeConnections: 1240 }
-    });
-    
-    setAlerts([
-      {
-        id: '1',
-        type: 'info',
-        title: 'Using Mock Data',
-        message: `Platform is displaying fallback data for ${dateRange === '7d' ? 'last 7 days' : dateRange === '30d' ? 'last 30 days' : 'last 90 days'}`,
-        timestamp: new Date(),
-        resolved: false
-      }
-    ]);
-    
-    const activityCount = dateRange === '7d' ? 1 : dateRange === '30d' ? 3 : 5;
-    const activities = [
-      {
-        id: '1',
-        type: 'user_registration' as const,
-        description: 'New user registered from Oslo',
-        timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-        user: 'System'
-      },
-      {
-        id: '2',
-        type: 'company_signup' as const,
-        description: 'Bergen Logistics completed verification',
-        timestamp: new Date(Date.now() - 600000), // 10 minutes ago
-        user: 'Platform Admin'
-      },
-      {
-        id: '3',
-        type: 'payment' as const,
-        description: 'Payment processed: 2,450 kr',
-        timestamp: new Date(Date.now() - 900000), // 15 minutes ago
-      },
-      {
-        id: '4',
-        type: 'user_registration' as const,
-        description: 'New driver registered from Bergen',
-        timestamp: new Date(Date.now() - 1200000), // 20 minutes ago
-        user: 'System'
-      },
-      {
-        id: '5',
-        type: 'payment' as const,
-        description: 'Payment processed: 1,850 kr',
-        timestamp: new Date(Date.now() - 1500000), // 25 minutes ago
-      }
-    ];
-    
-    setRecentActivity(activities.slice(0, activityCount));
-  };
-
-
 
   const getAlertIcon = (type: string) => {
     switch (type) {

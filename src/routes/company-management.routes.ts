@@ -366,8 +366,10 @@ async function getCompanyStats() {
     prisma.company.count({ where: { status: 'PENDING_VERIFICATION' } }),
     prisma.company.count({ where: { status: 'SUSPENDED' } }),
     prisma.company.count({ where: { verified: true } }),
-    prisma.company.aggregate({
-      _sum: { totalRevenue: true }
+    // Use actual booking revenue instead of company.totalRevenue field
+    prisma.booking.aggregate({
+      where: { status: 'COMPLETED' },
+      _sum: { total: true }
     }),
     prisma.company.aggregate({
       _avg: { aggregatedRating: true },
@@ -383,7 +385,7 @@ async function getCompanyStats() {
     activeCompanies,
     pendingVerification,
     suspendedCompanies,
-    totalRevenue: totalRevenue._sum.totalRevenue || 0,
+    totalRevenue: totalRevenue._sum.total || 0, // Use booking total instead of totalRevenue
     averageRating: avgRating._avg.aggregatedRating || 0,
     monthlyGrowth,
     verificationRate: totalCompanies > 0 ? (verifiedCompanies / totalCompanies) * 100 : 0

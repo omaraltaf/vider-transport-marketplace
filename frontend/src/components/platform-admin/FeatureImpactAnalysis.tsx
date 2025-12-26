@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import type { PlatformFeature } from './FeatureTogglePanel';
 
 export interface FeatureImpactAnalysisProps {
@@ -112,20 +113,44 @@ export const FeatureImpactAnalysis: React.FC<FeatureImpactAnalysisProps> = ({
       setLoading(true);
       setError(null);
 
-      // Mock data for demonstration - in real implementation, this would come from analytics API
-      const mockStats: FeatureUsageStats[] = features.map(feature => ({
-        featureId: feature.id,
-        totalUsage: Math.floor(Math.random() * 10000) + 1000,
-        activeUsers: Math.floor(Math.random() * 500) + 50,
-        companiesUsing: Math.floor(Math.random() * 50) + 5,
-        usageGrowth: (Math.random() - 0.5) * 100, // -50% to +50%
-        lastUsed: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000) // Within last 7 days
-      }));
+      // Fetch real usage statistics from API
+      const validToken = await tokenManager.getValidToken();
+      const response = await fetch('/api/platform-admin/features/usage-stats', {
+        headers: {
+          'Authorization': `Bearer ${validToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      setUsageStats(mockStats);
+      if (response.ok) {
+        const data = await response.json();
+        setUsageStats(data.stats || []);
+      } else {
+        // Set empty stats instead of mock data
+        const emptyStats: FeatureUsageStats[] = features.map(feature => ({
+          featureId: feature.id,
+          totalUsage: 0,
+          activeUsers: 0,
+          companiesUsing: 0,
+          usageGrowth: 0,
+          lastUsed: new Date()
+        }));
+        setUsageStats(emptyStats);
+      }
     } catch (err) {
       console.error('Error loading usage stats:', err);
       setError(err instanceof Error ? err.message : 'Failed to load usage statistics');
+      
+      // Set empty stats on error
+      const emptyStats: FeatureUsageStats[] = features.map(feature => ({
+        featureId: feature.id,
+        totalUsage: 0,
+        activeUsers: 0,
+        companiesUsing: 0,
+        usageGrowth: 0,
+        lastUsed: new Date()
+      }));
+      setUsageStats(emptyStats);
     } finally {
       setLoading(false);
     }
@@ -133,31 +158,64 @@ export const FeatureImpactAnalysis: React.FC<FeatureImpactAnalysisProps> = ({
 
   const loadImpactMetrics = async (feature: PlatformFeature) => {
     try {
-      // Mock impact analysis - in real implementation, this would be calculated based on actual usage data
-      const mockImpact: ImpactMetrics = {
-        userImpact: {
-          affectedUsers: Math.floor(Math.random() * 1000) + 100,
-          activeBookings: Math.floor(Math.random() * 200) + 20,
-          potentialDisruption: feature.impactLevel as any
-        },
-        businessImpact: {
-          revenueAtRisk: Math.floor(Math.random() * 100000) + 10000,
-          companiesAffected: Math.floor(Math.random() * 30) + 5,
-          operationalImpact: feature.impactLevel === 'critical' ? 'severe' : 
-                           feature.impactLevel === 'high' ? 'significant' :
-                           feature.impactLevel === 'medium' ? 'moderate' : 'minimal'
-        },
-        technicalImpact: {
-          dependentFeatures: feature.dependencies || [],
-          systemLoad: Math.random() * 100,
-          performanceImpact: Math.random() > 0.7 ? 'negative' : Math.random() > 0.3 ? 'neutral' : 'positive'
+      // Fetch real impact analysis from API
+      const validToken = await tokenManager.getValidToken();
+      const response = await fetch(`/api/platform-admin/features/${feature.id}/impact`, {
+        headers: {
+          'Authorization': `Bearer ${validToken}`,
+          'Content-Type': 'application/json'
         }
-      };
+      });
 
-      setImpactMetrics(mockImpact);
+      if (response.ok) {
+        const data = await response.json();
+        setImpactMetrics(data.impact);
+      } else {
+        // Set empty impact metrics instead of mock data
+        const emptyImpact: ImpactMetrics = {
+          userImpact: {
+            affectedUsers: 0,
+            activeBookings: 0,
+            potentialDisruption: feature.impactLevel as any
+          },
+          businessImpact: {
+            revenueAtRisk: 0,
+            companiesAffected: 0,
+            operationalImpact: 'minimal'
+          },
+          technicalImpact: {
+            dependentFeatures: feature.dependencies || [],
+            systemLoad: 0,
+            performanceImpact: 'neutral'
+          }
+        };
+
+        setImpactMetrics(emptyImpact);
+      }
     } catch (err) {
       console.error('Error loading impact metrics:', err);
       setError(err instanceof Error ? err.message : 'Failed to load impact metrics');
+      
+      // Set empty impact on error
+      const emptyImpact: ImpactMetrics = {
+        userImpact: {
+          affectedUsers: 0,
+          activeBookings: 0,
+          potentialDisruption: feature.impactLevel as any
+        },
+        businessImpact: {
+          revenueAtRisk: 0,
+          companiesAffected: 0,
+          operationalImpact: 'minimal'
+        },
+        technicalImpact: {
+          dependentFeatures: feature.dependencies || [],
+          systemLoad: 0,
+          performanceImpact: 'neutral'
+        }
+      };
+
+      setImpactMetrics(emptyImpact);
     }
   };
 
@@ -231,30 +289,28 @@ export const FeatureImpactAnalysis: React.FC<FeatureImpactAnalysisProps> = ({
 
   const loadAnalyticsData = async (feature: PlatformFeature) => {
     try {
-      // Mock analytics data
-      const mockAnalytics: AnalyticsData = {
-        usageTrends: Array.from({ length: 30 }, (_, i) => ({
-          date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          usage: Math.floor(Math.random() * 1000) + 100,
-          users: Math.floor(Math.random() * 100) + 10,
-          errors: Math.floor(Math.random() * 10)
-        })),
-        geographicDistribution: [
-          { region: 'Oslo', usage: 45, percentage: 45 },
-          { region: 'Bergen', usage: 25, percentage: 25 },
-          { region: 'Trondheim', usage: 15, percentage: 15 },
-          { region: 'Stavanger', usage: 10, percentage: 10 },
-          { region: 'Other', usage: 5, percentage: 5 }
-        ],
-        companyAdoption: [
-          { companyId: '1', companyName: 'Oslo Transport AS', adoptionDate: new Date('2024-01-15'), usageLevel: 'high' },
-          { companyId: '2', companyName: 'Bergen Mobility', adoptionDate: new Date('2024-02-01'), usageLevel: 'medium' },
-          { companyId: '3', companyName: 'Trondheim Cars', adoptionDate: new Date('2024-02-15'), usageLevel: 'low' },
-          { companyId: '4', companyName: 'Stavanger Fleet', adoptionDate: new Date('2024-03-01'), usageLevel: 'medium' }
-        ]
-      };
+      // Fetch real analytics data from API
+      const validToken = await tokenManager.getValidToken();
+      const response = await fetch(`/api/platform-admin/features/${feature.id}/analytics`, {
+        headers: {
+          'Authorization': `Bearer ${validToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      setAnalyticsData(mockAnalytics);
+      if (response.ok) {
+        const data = await response.json();
+        setAnalyticsData(data.analytics);
+      } else {
+        // Set empty analytics data instead of mock data
+        const emptyAnalytics: AnalyticsData = {
+          usageTrends: [],
+          geographicDistribution: [],
+          companyAdoption: []
+        };
+
+        setAnalyticsData(emptyAnalytics);
+      }
     } catch (err) {
       console.error('Error loading analytics data:', err);
     }

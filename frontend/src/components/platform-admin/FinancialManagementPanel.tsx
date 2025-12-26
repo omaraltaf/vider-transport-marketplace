@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { formatCurrency, formatPercentage } from '../../utils/currency';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   DollarSign,
@@ -87,34 +87,34 @@ const FinancialManagementPanel: React.FC<FinancialManagementPanelProps> = ({
         setSummaryData({
           totalRevenue: data.totalRevenue,
           totalCommissions: data.totalCommissions,
-          activeDisputes: 12, // Would come from dispute service
-          pendingRefunds: 5, // Would come from refund service
-          commissionRates: 8, // Would come from commission rate service
+          activeDisputes: data.activeDisputes || 0,
+          pendingRefunds: data.pendingRefunds || 0,
+          commissionRates: data.commissionRates || 0,
           revenueGrowth: data.revenueGrowthRate,
           loading: false
         });
       } else {
-        // Fallback to conservative estimates
+        // Use real data from API response
         setSummaryData({
-          totalRevenue: 2500000,
-          totalCommissions: 125000, // 5% commission rate (consistent)
-          activeDisputes: 12,
-          pendingRefunds: 5,
-          commissionRates: 8,
-          revenueGrowth: 15.2,
+          totalRevenue: data.totalRevenue || 0,
+          totalCommissions: data.totalCommissions || 0,
+          activeDisputes: data.activeDisputes || 0,
+          pendingRefunds: data.pendingRefunds || 0,
+          commissionRates: data.commissionRates || 0,
+          revenueGrowth: data.revenueGrowthRate || 0,
           loading: false
         });
       }
     } catch (error) {
       console.error('Error fetching financial summary:', error);
-      // Fallback to conservative estimates with consistent commission rate
+      // Use empty/zero values instead of hardcoded mock data
       setSummaryData({
-        totalRevenue: 2500000,
-        totalCommissions: 125000, // 5% commission rate (consistent with revenue service)
-        activeDisputes: 12,
-        pendingRefunds: 5,
-        commissionRates: 8,
-        revenueGrowth: 15.2,
+        totalRevenue: 0,
+        totalCommissions: 0,
+        activeDisputes: 0,
+        pendingRefunds: 0,
+        commissionRates: 0,
+        revenueGrowth: 0,
         loading: false
       });
     }

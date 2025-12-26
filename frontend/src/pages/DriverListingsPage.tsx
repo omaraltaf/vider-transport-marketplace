@@ -5,7 +5,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { tokenManager } from '../services/error-handling/TokenManager';
 import { apiClient } from '../services/api';
 import type { DriverListing } from '../types';
@@ -22,7 +22,7 @@ export default function DriverListingsPage() {
       const validToken = await tokenManager.getValidToken();
       return apiClient.get<DriverListing[]>('/listings/drivers', validToken);
     },
-    enabled: !!user,
+    enabled: !!token,
   });
 
   const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'default' => {

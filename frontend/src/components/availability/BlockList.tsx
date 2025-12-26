@@ -5,6 +5,7 @@ import { Card } from '../../design-system/components/Card';
 import { Badge } from '../../design-system/components/Badge';
 import { Modal } from '../../design-system/components/Modal';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import type { AvailabilityBlock } from './BlockForm';
 import styles from './BlockList.module.css';
 
@@ -39,14 +40,11 @@ export const BlockList: React.FC<BlockListProps> = ({
     setError(null);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      const validToken = await tokenManager.getValidToken();
 
       const response = await apiClient.get<AvailabilityBlock[]>(
         `/availability/blocks/${listingId}?listingType=${listingType}`,
-        token
+        validToken
       );
 
       // The API returns an array directly, so response should be the blocks array
@@ -80,12 +78,9 @@ export const BlockList: React.FC<BlockListProps> = ({
     setDeletingBlockId(blockToDelete.id);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      const validToken = await tokenManager.getValidToken();
 
-      await apiClient.delete(`/availability/blocks/${blockToDelete.id}`, token);
+      await apiClient.delete(`/availability/blocks/${blockToDelete.id}`, validToken);
 
       // Remove the block from the list
       setBlocks((prevBlocks) =>

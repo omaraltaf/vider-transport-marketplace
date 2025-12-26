@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 
 export const DebugAuth: React.FC = () => {
   const { user, isAuthenticated, token } = useAuth();

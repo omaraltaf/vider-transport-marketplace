@@ -201,8 +201,9 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       
       console.error('Error fetching disputes:', err);
       
-      // Set mock data for development
-      setMockDisputeData();
+      // Set empty data instead of mock data
+      setDisputes([]);
+      setTotalDisputes(0);
     } finally {
       setLoading(false);
     }
@@ -216,7 +217,7 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       setRefunds(data.data.refunds || []);
     } catch (err) {
       console.error('Error fetching refunds:', err);
-      setMockRefundData();
+      setRefunds([]);
     }
   };
 
@@ -244,230 +245,32 @@ const DisputeManagement: React.FC<DisputeManagementProps> = ({ className = '' })
       setRefundStats(refundStatsData.data);
     } catch (err) {
       console.error('Error fetching statistics:', err);
-      setMockStatistics();
+      // Set empty statistics instead of mock data
+      setDisputeStats({
+        totalDisputes: 0,
+        openDisputes: 0,
+        resolvedDisputes: 0,
+        averageResolutionTime: 0,
+        resolutionRate: 0,
+        customerFavorRate: 0,
+        companyFavorRate: 0,
+        totalFinancialImpact: 0,
+        byType: {},
+        byPriority: {},
+        byStatus: {}
+      });
+
+      setRefundStats({
+        totalRefunds: 0,
+        totalRefundAmount: 0,
+        averageRefundAmount: 0,
+        refundRate: 0,
+        processingTime: 0,
+        successRate: 0,
+        byReason: {},
+        byType: {}
+      });
     }
-  };
-
-  // Set mock dispute data
-  const setMockDisputeData = () => {
-    const mockDisputes: Dispute[] = [
-      {
-        id: 'dispute-1',
-        bookingId: 'booking-123',
-        disputeType: 'PAYMENT',
-        status: 'INVESTIGATING',
-        priority: 'HIGH',
-        reportedBy: 'CUSTOMER',
-        reporterId: 'user-456',
-        subject: 'Payment not processed correctly',
-        description: 'Customer claims payment was charged twice for the same booking',
-        evidence: [
-          {
-            id: 'evidence-1',
-            type: 'DOCUMENT',
-            title: 'Bank Statement',
-            description: 'Shows duplicate charges',
-            fileUrl: '/uploads/evidence/bank-statement.pdf',
-            uploadedBy: 'user-456',
-            uploadedAt: new Date('2024-12-01'),
-            verified: false
-          }
-        ],
-        financialImpact: {
-          disputedAmount: 2500,
-          potentialRefund: 2500,
-          commissionImpact: 375
-        },
-        timeline: [
-          {
-            id: 'timeline-1',
-            action: 'CREATED',
-            description: 'Dispute created by customer',
-            performedBy: 'user-456',
-            performedAt: new Date('2024-12-01')
-          },
-          {
-            id: 'timeline-2',
-            action: 'ASSIGNED',
-            description: 'Assigned to support agent',
-            performedBy: 'admin-1',
-            performedAt: new Date('2024-12-01')
-          }
-        ],
-        assignedTo: 'admin-1',
-        createdAt: new Date('2024-12-01'),
-        updatedAt: new Date('2024-12-01')
-      },
-      {
-        id: 'dispute-2',
-        bookingId: 'booking-789',
-        disputeType: 'SERVICE',
-        status: 'RESOLVED',
-        priority: 'MEDIUM',
-        reportedBy: 'COMPANY',
-        reporterId: 'company-123',
-        subject: 'Vehicle damage during transport',
-        description: 'Customer vehicle was damaged during transport service',
-        evidence: [
-          {
-            id: 'evidence-2',
-            type: 'IMAGE',
-            title: 'Damage Photos',
-            description: 'Photos of vehicle damage',
-            fileUrl: '/uploads/evidence/damage-photos.jpg',
-            uploadedBy: 'company-123',
-            uploadedAt: new Date('2024-11-28'),
-            verified: true
-          }
-        ],
-        financialImpact: {
-          disputedAmount: 1800,
-          potentialRefund: 900,
-          commissionImpact: 135
-        },
-        timeline: [
-          {
-            id: 'timeline-3',
-            action: 'CREATED',
-            description: 'Dispute created by company',
-            performedBy: 'company-123',
-            performedAt: new Date('2024-11-28')
-          },
-          {
-            id: 'timeline-4',
-            action: 'RESOLVED',
-            description: 'Resolved with partial refund',
-            performedBy: 'admin-2',
-            performedAt: new Date('2024-11-30')
-          }
-        ],
-        assignedTo: 'admin-2',
-        resolution: {
-          outcome: 'PARTIAL_REFUND',
-          refundAmount: 900,
-          commissionAdjustment: 135,
-          reasoning: 'Partial responsibility determined based on evidence',
-          resolvedBy: 'admin-2',
-          resolvedAt: new Date('2024-11-30'),
-          customerNotified: true,
-          companyNotified: true
-        },
-        createdAt: new Date('2024-11-28'),
-        updatedAt: new Date('2024-11-30'),
-        resolvedAt: new Date('2024-11-30')
-      }
-    ];
-
-    setDisputes(mockDisputes);
-  };
-
-  // Set mock refund data
-  const setMockRefundData = () => {
-    const mockRefunds: Refund[] = [
-      {
-        id: 'refund-1',
-        bookingId: 'booking-123',
-        disputeId: 'dispute-1',
-        refundType: 'FULL',
-        reason: 'DISPUTE_RESOLUTION',
-        status: 'COMPLETED',
-        originalAmount: 2500,
-        refundAmount: 2500,
-        commissionRefund: 375,
-        processingFee: 25,
-        netRefund: 2475,
-        paymentMethod: 'CREDIT_CARD',
-        paymentReference: 'ref-123456',
-        requestedBy: 'admin-1',
-        approvedBy: 'admin-2',
-        processedBy: 'system',
-        customerNotified: true,
-        timeline: [
-          {
-            id: 'refund-timeline-1',
-            action: 'REQUESTED',
-            description: 'Refund requested due to dispute resolution',
-            performedBy: 'admin-1',
-            performedAt: new Date('2024-12-01')
-          },
-          {
-            id: 'refund-timeline-2',
-            action: 'APPROVED',
-            description: 'Refund approved by supervisor',
-            performedBy: 'admin-2',
-            performedAt: new Date('2024-12-01')
-          },
-          {
-            id: 'refund-timeline-3',
-            action: 'COMPLETED',
-            description: 'Refund processed successfully',
-            performedBy: 'system',
-            performedAt: new Date('2024-12-02')
-          }
-        ],
-        createdAt: new Date('2024-12-01'),
-        processedAt: new Date('2024-12-01'),
-        completedAt: new Date('2024-12-02')
-      }
-    ];
-
-    setRefunds(mockRefunds);
-  };
-
-  // Set mock statistics
-  const setMockStatistics = () => {
-    setDisputeStats({
-      totalDisputes: 45,
-      openDisputes: 12,
-      resolvedDisputes: 33,
-      averageResolutionTime: 48,
-      resolutionRate: 73.3,
-      customerFavorRate: 45.5,
-      companyFavorRate: 27.3,
-      totalFinancialImpact: 125000,
-      byType: {
-        'PAYMENT': 18,
-        'SERVICE': 15,
-        'CANCELLATION': 8,
-        'DAMAGE': 3,
-        'OTHER': 1
-      },
-      byPriority: {
-        'LOW': 15,
-        'MEDIUM': 20,
-        'HIGH': 8,
-        'URGENT': 2
-      },
-      byStatus: {
-        'OPEN': 5,
-        'INVESTIGATING': 7,
-        'ESCALATED': 0,
-        'RESOLVED': 30,
-        'CLOSED': 3
-      }
-    });
-
-    setRefundStats({
-      totalRefunds: 28,
-      totalRefundAmount: 67500,
-      averageRefundAmount: 2410,
-      refundRate: 2.8,
-      processingTime: 24,
-      successRate: 96.4,
-      byReason: {
-        'DISPUTE_RESOLUTION': { count: 15, amount: 35000 },
-        'CANCELLATION': { count: 8, amount: 18000 },
-        'SERVICE_FAILURE': { count: 3, amount: 9500 },
-        'SYSTEM_ERROR': { count: 1, amount: 2500 },
-        'GOODWILL': { count: 1, amount: 2500 }
-      },
-      byType: {
-        'FULL': { count: 12, amount: 45000 },
-        'PARTIAL': { count: 14, amount: 20000 },
-        'COMMISSION_ONLY': { count: 2, amount: 2500 },
-        'PROCESSING_FEE': { count: 0, amount: 0 }
-      }
-    });
   };
 
   // Format currency

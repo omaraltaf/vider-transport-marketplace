@@ -15,13 +15,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter, Routes, Route, MemoryRouter, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '../contexts/AuthContext';
+import { EnhancedAuthProvider as AuthProvider } from '../contexts/EnhancedAuthContext';
 import { ToastProvider } from '../contexts/ToastContext';
 import HomePage from '../pages/HomePage';
 
 // Mock the auth context
-vi.mock('../contexts/AuthContext', async () => {
-  const actual = await vi.importActual('../contexts/AuthContext');
+vi.mock('../contexts/EnhancedAuthContext', async () => {
+  const actual = await vi.importActual('../contexts/EnhancedAuthContext');
   return {
     ...actual,
     useAuth: vi.fn(),

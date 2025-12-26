@@ -6,7 +6,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { EnhancedAuthProvider, useEnhancedAuth } from './contexts/EnhancedAuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { queryClient } from './lib/queryClient';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -56,20 +56,34 @@ import { SkipLink } from './design-system/components/SkipLink/SkipLink';
 /**
  * Root Route Component
  * Redirects authenticated users to appropriate dashboards based on role
+ * Enhanced with loading states for better UX
  */
 function RootRoute() {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useEnhancedAuth();
   
   console.log('RootRoute - isAuthenticated:', isAuthenticated);
   console.log('RootRoute - user:', user);
   console.log('RootRoute - user role:', user?.role);
+  console.log('RootRoute - isLoading:', isLoading);
   
-  if (isAuthenticated) {
-    if (user?.role === 'PLATFORM_ADMIN') {
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (isAuthenticated && user) {
+    if (user.role === 'PLATFORM_ADMIN') {
       console.log('Redirecting to /platform-admin');
       return <Navigate to="/platform-admin" replace />;
     }
-    if (user?.role === 'COMPANY_ADMIN') {
+    if (user.role === 'COMPANY_ADMIN') {
       console.log('Redirecting to /dashboard');
       return <Navigate to="/dashboard" replace />;
     }
@@ -82,9 +96,9 @@ function RootRoute() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
+      <EnhancedAuthProvider>
         <ToastProvider>
-          <BrowserRouter>
+            <BrowserRouter>
 
             <SkipLink />
             <main id="main-content" role="main">
@@ -98,7 +112,10 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute 
+                  requiredRole="COMPANY_ADMIN"
+                  loadingMessage="Loading company dashboard..."
+                >
                   <DashboardPage />
                 </ProtectedRoute>
               }
@@ -115,7 +132,7 @@ function App() {
             <Route
               path="/listings/vehicles"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <VehicleListingsPage />
                 </ProtectedRoute>
               }
@@ -123,7 +140,7 @@ function App() {
             <Route
               path="/listings/vehicles/new"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <CreateVehicleListingPage />
                 </ProtectedRoute>
               }
@@ -131,7 +148,7 @@ function App() {
             <Route
               path="/listings/vehicles/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <EditVehicleListingPage />
                 </ProtectedRoute>
               }
@@ -139,7 +156,7 @@ function App() {
             <Route
               path="/listings/drivers"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <DriverListingsPage />
                 </ProtectedRoute>
               }
@@ -147,7 +164,7 @@ function App() {
             <Route
               path="/listings/drivers/new"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <CreateDriverListingPage />
                 </ProtectedRoute>
               }
@@ -155,7 +172,7 @@ function App() {
             <Route
               path="/listings/drivers/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <EditDriverListingPage />
                 </ProtectedRoute>
               }
@@ -163,7 +180,7 @@ function App() {
             <Route
               path="/listings/bulk-calendar"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="COMPANY_ADMIN">
                   <BulkCalendarManagementPage />
                 </ProtectedRoute>
               }
@@ -219,7 +236,10 @@ function App() {
             <Route
               path="/platform-admin"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute 
+                  requiredRole="PLATFORM_ADMIN"
+                  loadingMessage="Loading platform admin..."
+                >
                   <PlatformAdminPage />
                 </ProtectedRoute>
               }
@@ -227,7 +247,10 @@ function App() {
             <Route
               path="/platform-admin/*"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute 
+                  requiredRole="PLATFORM_ADMIN"
+                  loadingMessage="Loading platform admin..."
+                >
                   <PlatformAdminPage />
                 </ProtectedRoute>
               }
@@ -235,7 +258,7 @@ function App() {
             <Route
               path="/admin/users"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminUsersPage />
                 </ProtectedRoute>
               }
@@ -243,7 +266,7 @@ function App() {
             <Route
               path="/admin/companies"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminCompaniesPage />
                 </ProtectedRoute>
               }
@@ -251,7 +274,7 @@ function App() {
             <Route
               path="/admin/listings/vehicles"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminVehicleListingsPage />
                 </ProtectedRoute>
               }
@@ -259,7 +282,7 @@ function App() {
             <Route
               path="/admin/listings/drivers"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminDriverListingsPage />
                 </ProtectedRoute>
               }
@@ -267,7 +290,7 @@ function App() {
             <Route
               path="/admin/bookings"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminBookingsPage />
                 </ProtectedRoute>
               }
@@ -275,7 +298,7 @@ function App() {
             <Route
               path="/admin/transactions"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminTransactionsPage />
                 </ProtectedRoute>
               }
@@ -283,7 +306,7 @@ function App() {
             <Route
               path="/admin/disputes"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminDisputesPage />
                 </ProtectedRoute>
               }
@@ -291,7 +314,7 @@ function App() {
             <Route
               path="/admin/disputes/:id"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminDisputeDetailPage />
                 </ProtectedRoute>
               }
@@ -299,7 +322,7 @@ function App() {
             <Route
               path="/admin/analytics"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminAnalyticsPage />
                 </ProtectedRoute>
               }
@@ -307,7 +330,7 @@ function App() {
             <Route
               path="/admin/audit-log"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute requiredRole="PLATFORM_ADMIN">
                   <AdminAuditLogPage />
                 </ProtectedRoute>
               }
@@ -346,9 +369,9 @@ function App() {
             />
             </Routes>
             </main>
-          </BrowserRouter>
+            </BrowserRouter>
         </ToastProvider>
-      </AuthProvider>
+      </EnhancedAuthProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

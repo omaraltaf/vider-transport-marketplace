@@ -11,6 +11,7 @@ import { retryController } from './RetryController';
 import { fallbackManager } from './FallbackManager';
 import { responseValidator } from './ResponseValidator';
 import { classifyError, getErrorPriority, shouldTriggerAlert } from './utils/errorClassification';
+import { permissionErrorHandler } from './handlers/PermissionErrorHandler';
 
 export class ApiErrorHandler implements IApiErrorHandler {
   private errorTypeHandlers = new Map<string, IErrorTypeHandler>();
@@ -74,6 +75,7 @@ export class ApiErrorHandler implements IApiErrorHandler {
     const errorsByType: Record<ApiErrorType, number> = {
       [ApiErrorType.NETWORK]: 0,
       [ApiErrorType.AUTH]: 0,
+      [ApiErrorType.PERMISSION]: 0,
       [ApiErrorType.PARSING]: 0,
       [ApiErrorType.TIMEOUT]: 0,
       [ApiErrorType.SERVER]: 0,
@@ -340,6 +342,9 @@ export class ApiErrorHandler implements IApiErrorHandler {
       },
       getPriority: () => 200
     });
+
+    // Permission error handler
+    this.registerErrorType(ApiErrorType.PERMISSION, permissionErrorHandler);
 
     // Parsing error handler
     this.registerErrorType(ApiErrorType.PARSING, {

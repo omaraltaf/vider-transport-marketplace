@@ -28,6 +28,9 @@ model User {
   sentMessages         Message[]
   recurringBlocks      RecurringBlock[]
   company              Company             @relation(fields: [companyId], references: [id])
+  updatedPlatformConfigs PlatformConfigs[]
+  flaggedContent       ContentFlags[]      @relation("FlaggedByUser")
+  resolvedContent      ContentFlags[]      @relation("ResolvedByUser")
 
   @@index([email])
   @@index([companyId])
@@ -679,4 +682,62 @@ model ScheduledReport {
   nextRun    DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model PlatformConfigs {
+  id              String    @id @default(uuid()) @map("id")
+  category        String    @map("category") @db.VarChar(50)
+  key             String    @unique @map("key") @db.VarChar(100)
+  value           Json      @map("value")
+  dataType        String    @map("data_type") @db.VarChar(20)
+  displayName     String    @map("display_name") @db.VarChar(200)
+  description     String?   @map("description")
+  options         String[]  @map("options")
+  validation      Json?     @map("validation")
+  isEditable      Boolean   @default(true) @map("is_editable")
+  requiresRestart Boolean   @default(false) @map("requires_restart")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedBy       String?   @map("updated_by")
+  updatedByUser   User?     @relation(fields: [updatedBy], references: [id])
+
+  @@index([category])
+  @@index([updatedBy])
+  @@map("platform_configs")
+}
+
+model AnalyticsSnapshots {
+  id           String   @id @default(uuid()) @map("id")
+  snapshotDate DateTime @map("snapshot_date") @db.Date
+  metricType   String   @map("metric_type") @db.VarChar(50)
+  metricData   Json     @map("metric_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([snapshotDate])
+  @@index([metricType])
+  @@map("analytics_snapshots")
+}
+
+model ContentFlags {
+  id          String    @id @default(uuid()) @map("id")
+  contentId   String    @map("content_id")
+  contentType String    @map("content_type") @db.VarChar(50)
+  flagType    String    @map("flag_type") @db.VarChar(50)
+  severity    String    @map("severity") @db.VarChar(20)
+  status      String    @default("PENDING") @map("status") @db.VarChar(20)
+  flaggedBy   String?   @map("flagged_by")
+  reason      String    @map("reason")
+  evidence    Json?     @map("evidence")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  resolvedBy  String?   @map("resolved_by")
+  flaggedByUser User?   @relation("FlaggedByUser", fields: [flaggedBy], references: [id])
+  resolvedByUser User?  @relation("ResolvedByUser", fields: [resolvedBy], references: [id])
+
+  @@index([contentId])
+  @@index([contentType])
+  @@index([status])
+  @@index([flaggedBy])
+  @@index([createdAt])
+  @@map("content_flags")
 }

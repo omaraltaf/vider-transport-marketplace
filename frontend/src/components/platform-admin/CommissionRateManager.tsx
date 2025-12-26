@@ -97,68 +97,11 @@ const CommissionRateManager: React.FC<CommissionRateManagerProps> = ({ className
       
       console.error('Error fetching commission rates:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set empty data instead of mock data
+      setCommissionRates([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Set mock data for development
-  const setMockData = () => {
-    const mockRates: CommissionRate[] = [
-      {
-        id: 'rate-1',
-        name: 'Standard Rate',
-        description: 'Default commission rate for all bookings',
-        rateType: 'PERCENTAGE',
-        baseRate: 15.0,
-        applicableRegions: ['ALL'],
-        companyTypes: ['ALL'],
-        effectiveDate: new Date('2024-01-01'),
-        isActive: true,
-        createdBy: 'system',
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-01')
-      },
-      {
-        id: 'rate-2',
-        name: 'High Volume Discount',
-        description: 'Tiered rates for high-volume companies',
-        rateType: 'TIERED',
-        baseRate: 15.0,
-        minRate: 8.0,
-        maxRate: 15.0,
-        tiers: [
-          { minVolume: 0, maxVolume: 100000, rate: 15.0, description: 'Standard tier' },
-          { minVolume: 100000, maxVolume: 500000, rate: 12.0, description: 'Volume discount tier 1' },
-          { minVolume: 500000, rate: 8.0, description: 'Premium volume tier' }
-        ],
-        applicableRegions: ['Oslo', 'Bergen', 'Trondheim'],
-        companyTypes: ['Logistics', 'Transport'],
-        effectiveDate: new Date('2024-01-01'),
-        isActive: true,
-        createdBy: 'admin-1',
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-06-01')
-      },
-      {
-        id: 'rate-3',
-        name: 'Regional Override - Tromsø',
-        description: 'Special rate for northern region operations',
-        rateType: 'PERCENTAGE',
-        baseRate: 12.0,
-        applicableRegions: ['Tromsø'],
-        companyTypes: ['ALL'],
-        effectiveDate: new Date('2024-03-01'),
-        isActive: true,
-        createdBy: 'admin-2',
-        createdAt: new Date('2024-03-01'),
-        updatedAt: new Date('2024-03-01')
-      }
-    ];
-
-    setCommissionRates(mockRates);
   };
 
   // Handle export rates

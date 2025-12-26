@@ -6,6 +6,7 @@
 export enum ApiErrorType {
   NETWORK = 'NETWORK',
   AUTH = 'AUTH',
+  PERMISSION = 'PERMISSION',
   PARSING = 'PARSING',
   TIMEOUT = 'TIMEOUT',
   SERVER = 'SERVER',

@@ -54,23 +54,23 @@ export interface RefreshTokenResponse {
 
 class AuthService {
   async register(data: RegisterData): Promise<RegisterResponse> {
-    return apiClient.post<RegisterResponse>('/auth/register', data);
+    return await apiClient.post<RegisterResponse>('/auth/register', data);
   }
 
   async login(data: LoginData): Promise<AuthResponse> {
-    return apiClient.post<AuthResponse>('/auth/login', data);
+    return await apiClient.post<AuthResponse>('/auth/login', data);
   }
 
   async verifyEmail(token: string): Promise<VerifyEmailResponse> {
-    return apiClient.post<VerifyEmailResponse>('/auth/verify-email', { token });
+    return await apiClient.post<VerifyEmailResponse>('/auth/verify-email', { token });
   }
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    return apiClient.post<RefreshTokenResponse>('/auth/refresh', { refreshToken });
+    return await apiClient.post<RefreshTokenResponse>('/auth/refresh', { refreshToken });
   }
 
   async logout(token?: string): Promise<void> {
-    return apiClient.post<void>('/auth/logout', {}, token);
+    return await apiClient.post<void>('/auth/logout', {}, token);
   }
 }
 

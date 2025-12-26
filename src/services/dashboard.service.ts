@@ -154,37 +154,61 @@ export class DashboardService {
   }
 
   /**
-   * Calculate revenue for last 30 days
-   * For provider: sum of providerRate from bookings where company is provider
-   * For renter: sum of total from bookings where company is renter
+   * Calculate revenue for last 30 days using transaction-based calculation
+   * For provider: sum of completed transaction amounts where company is provider
+   * For renter: sum of completed transaction amounts where company is renter
    */
   public async calculateRevenue30Days(companyId: string, role: 'provider' | 'renter'): Promise<number> {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const where: any = {
-      status: { in: [BookingStatus.ACCEPTED, BookingStatus.COMPLETED] },
-      createdAt: { gte: thirtyDaysAgo },
-    };
+      const where: any = {
+        status: BookingStatus.COMPLETED,
+        completedAt: { 
+          gte: thirtyDaysAgo,
+          lte: new Date()
+        },
+      };
 
-    if (role === 'provider') {
-      where.providerCompanyId = companyId;
-    } else {
-      where.renterCompanyId = companyId;
-    }
+      if (role === 'provider') {
+        where.providerCompanyId = companyId;
+      } else {
+        where.renterCompanyId = companyId;
+      }
 
-    if (role === 'provider') {
+      // Get all completed bookings with their transactions
       const bookings = await prisma.booking.findMany({
         where,
-        select: { providerRate: true },
+        include: {
+          transactions: {
+            where: {
+              status: 'COMPLETED'
+            }
+          }
+        }
       });
-      return bookings.reduce((sum, b) => sum + b.providerRate, 0);
-    } else {
-      const bookings = await prisma.booking.findMany({
-        where,
-        select: { total: true },
+
+      // Sum up all completed transaction amounts
+      const totalRevenue = bookings.reduce((sum, booking) => {
+        const bookingRevenue = booking.transactions.reduce((tSum, transaction) => {
+          return tSum + transaction.amount;
+        }, 0);
+        return sum + bookingRevenue;
+      }, 0);
+
+      logger.info(`Revenue calculated for ${role}`, {
+        companyId,
+        role,
+        bookingsCount: bookings.length,
+        totalRevenue,
+        period: `${thirtyDaysAgo.toISOString()} to ${new Date().toISOString()}`
       });
-      return bookings.reduce((sum, b) => sum + b.total, 0);
+
+      return totalRevenue;
+    } catch (error) {
+      logger.error(`Error calculating revenue for ${role}`, { companyId, role, error });
+      return 0;
     }
   }
 
@@ -612,6 +636,82 @@ export class DashboardService {
     }
 
     return prisma.booking.count({ where });
+  }
+
+  /**
+   * Debug method to get detailed revenue calculation information
+   */
+  public async getRevenueDebugInfo(companyId: string): Promise<any> {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const now = new Date();
+
+      // Get completed bookings with transactions
+      const bookings = await prisma.booking.findMany({
+        where: {
+          providerCompanyId: companyId,
+          status: BookingStatus.COMPLETED,
+          completedAt: {
+            gte: thirtyDaysAgo,
+            lte: now
+          }
+        },
+        include: {
+          transactions: {
+            where: {
+              status: 'COMPLETED'
+            }
+          }
+        }
+      });
+
+      // Calculate revenue using both methods for comparison
+      const transactionBasedRevenue = bookings.reduce((sum, booking) => {
+        const bookingRevenue = booking.transactions.reduce((tSum, transaction) => {
+          return tSum + transaction.amount;
+        }, 0);
+        return sum + bookingRevenue;
+      }, 0);
+
+      const bookingTotalRevenue = bookings.reduce((sum, booking) => {
+        return sum + booking.total;
+      }, 0);
+
+      const bookingProviderRateRevenue = bookings.reduce((sum, booking) => {
+        return sum + booking.providerRate;
+      }, 0);
+
+      return {
+        companyId,
+        dateRange: {
+          from: thirtyDaysAgo.toISOString(),
+          to: now.toISOString()
+        },
+        completedBookingsCount: bookings.length,
+        transactionBasedRevenue,
+        bookingTotalRevenue,
+        bookingProviderRateRevenue,
+        bookings: bookings.map(b => ({
+          id: b.id,
+          status: b.status,
+          total: b.total,
+          providerRate: b.providerRate,
+          completedAt: b.completedAt,
+          transactionCount: b.transactions.length,
+          transactionTotal: b.transactions.reduce((sum, t) => sum + t.amount, 0),
+          transactions: b.transactions.map(t => ({
+            id: t.id,
+            type: t.type,
+            amount: t.amount,
+            status: t.status
+          }))
+        }))
+      };
+    } catch (error) {
+      logger.error('Error getting revenue debug info', { companyId, error });
+      throw error;
+    }
   }
 
   // Default fallback methods for error handling

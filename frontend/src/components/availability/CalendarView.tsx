@@ -148,7 +148,7 @@ const CalendarViewComponent: React.FC<CalendarViewProps> = ({
         }>;
       }>(
         `/availability/calendar/${listingId}?listingType=${listingType}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
-        token
+        validToken
       );
 
       // Transform API response to CalendarDay format

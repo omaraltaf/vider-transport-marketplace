@@ -7,6 +7,7 @@ import { Textarea } from '../../design-system/components/Textarea';
 import { Skeleton } from '../../design-system/components/Skeleton';
 import { ErrorBoundary } from './ErrorBoundary';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import useRetry from '../../hooks/useRetry';
 import styles from './BlockForm.module.css';
 
@@ -92,10 +93,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({
   };
 
   const submitBlock = async () => {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      throw new Error('Authentication required');
-    }
+    const validToken = await tokenManager.getValidToken();
 
     const response = await apiClient.post<{ block: AvailabilityBlock }>(
       '/availability/blocks',
@@ -106,7 +104,7 @@ export const BlockForm: React.FC<BlockFormProps> = ({
         endDate,
         reason: reason.trim() || undefined,
       },
-      token
+      validToken
     );
 
     return response.block;

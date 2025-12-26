@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/EnhancedAuthContext';
 import { useToast } from '../contexts/ToastContext';
 import Layout from '../components/Layout';
 import { Card, Stack, Button, Badge } from '../design-system/components';

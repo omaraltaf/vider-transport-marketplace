@@ -423,11 +423,11 @@ router.get('/revenue/summary', async (req: Request, res: Response) => {
       );
     } catch (serviceError) {
       console.warn('Revenue analytics service failed, using fallback data:', serviceError);
-      // Provide fallback data to prevent 502 errors
+      // Provide empty fallback data to prevent 502 errors
       summary = {
-        totalRevenue: 2500000,
-        commissionRevenue: 125000,
-        netRevenue: 2375000,
+        totalRevenue: 0,
+        commissionRevenue: 0,
+        netRevenue: 0,
         bookingCount: 1250,
         averageBookingValue: 2000,
         currency: 'NOK',

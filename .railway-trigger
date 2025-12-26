@@ -1,7 +1,0 @@
-# Railway deployment trigger - Force DOCKERFILE builder
-# Last updated: 2025-12-17T21:30:00Z
-# Issue: Railway still using NIXPACKS despite builder setting change
-# Solution: Force rebuild to use Dockerfile
-
-DEPLOYMENT_VERSION=2025-12-17-dockerfile-force-rebuild
-TIMESTAMP=1765998936

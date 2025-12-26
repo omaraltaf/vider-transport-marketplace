@@ -7,6 +7,7 @@ import { Textarea } from '../../design-system/components/Textarea';
 import { Skeleton } from '../../design-system/components/Skeleton';
 import { ErrorBoundary } from './ErrorBoundary';
 import { apiClient } from '../../services/api';
+import { tokenManager } from '../../services/error-handling/TokenManager';
 import useRetry from '../../hooks/useRetry';
 import styles from './RecurringBlockForm.module.css';
 
@@ -168,10 +169,7 @@ const RecurringBlockFormComponent: React.FC<RecurringBlockFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      const validToken = await tokenManager.getValidToken();
 
       const payload = {
         listingId,
@@ -186,7 +184,7 @@ const RecurringBlockFormComponent: React.FC<RecurringBlockFormProps> = ({
         const response = await apiClient.post<{ recurringBlock: RecurringBlock }>(
           '/availability/recurring',
           payload,
-          token
+          validToken
         );
 
         if (onBlockCreated) {
@@ -230,14 +228,11 @@ const RecurringBlockFormComponent: React.FC<RecurringBlockFormProps> = ({
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+      const validToken = await tokenManager.getValidToken();
 
       await apiClient.delete(
         `/availability/recurring/${existingBlock.id}?scope=${deleteScope}`,
-        token
+        validToken
       );
 
       onCancel();

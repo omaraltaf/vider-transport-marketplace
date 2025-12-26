@@ -28,6 +28,9 @@ async function getUserWithCompany(userId: string) {
  * Search listings with filters
  */
 router.get('/search', async (req: Request, res: Response): Promise<void> => {
+  const searchStartTime = Date.now();
+  const searchId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
     const filters: any = {};
 
@@ -109,10 +112,70 @@ router.get('/search', async (req: Request, res: Response): Promise<void> => {
     if (req.query.sortBy) filters.sortBy = req.query.sortBy as string;
     if (req.query.sortOrder) filters.sortOrder = req.query.sortOrder as string;
 
+    // Log search request with detailed parameters
+    console.log(`[SEARCH_REQUEST] ${searchId}`, {
+      timestamp: new Date().toISOString(),
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.connection.remoteAddress,
+      rawQuery: req.query,
+      parsedFilters: filters,
+      filterCount: Object.keys(filters).length,
+      hasLocationFilter: !!filters.location,
+      hasDateFilter: !!filters.dateRange,
+      hasPriceFilter: !!filters.priceRange,
+    });
+
     const results = await listingService.searchListings(filters);
+    const searchDuration = Date.now() - searchStartTime;
+
+    // Log search results with performance metrics
+    console.log(`[SEARCH_RESULTS] ${searchId}`, {
+      timestamp: new Date().toISOString(),
+      duration: `${searchDuration}ms`,
+      totalResults: results.total,
+      vehicleResults: results.vehicleListings.length,
+      driverResults: results.driverListings.length,
+      page: results.page,
+      pageSize: results.pageSize,
+      totalPages: results.totalPages,
+      isEmpty: results.total === 0,
+      performance: {
+        fast: searchDuration < 100,
+        acceptable: searchDuration < 500,
+        slow: searchDuration >= 500,
+      },
+    });
+
+    // Log empty result scenarios for debugging
+    if (results.total === 0) {
+      console.log(`[SEARCH_EMPTY_RESULTS] ${searchId}`, {
+        timestamp: new Date().toISOString(),
+        appliedFilters: filters,
+        debugInfo: {
+          hasActiveListings: 'Check if database has active listings',
+          filterTooRestrictive: 'Filters may be too restrictive',
+          locationMismatch: filters.location ? 'Location filter may not match any listings' : false,
+          priceMismatch: filters.priceRange ? 'Price range may not match any listings' : false,
+          dateMismatch: filters.dateRange ? 'Date range may conflict with bookings/blocks' : false,
+        },
+      });
+    }
 
     res.status(200).json(results);
   } catch (error) {
+    const searchDuration = Date.now() - searchStartTime;
+    
+    // Log search errors with context
+    console.error(`[SEARCH_ERROR] ${searchId}`, {
+      timestamp: new Date().toISOString(),
+      duration: `${searchDuration}ms`,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      filters: req.query,
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.connection.remoteAddress,
+    });
+    
     logError({ error: error instanceof Error ? error : new Error('Unknown error'), request: req });
     
     res.status(500).json({

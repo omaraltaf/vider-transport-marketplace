@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 // Using native select elements for simplicity
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../contexts/EnhancedAuthContext';
 import { tokenManager } from '../../services/error-handling/TokenManager';
 import { 
   TrendingUp, 
@@ -219,69 +219,62 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
       
       console.error('Error fetching revenue data:', err);
       
-      // Set mock data for development
-      setMockData();
+      // Set real data from database instead of mock data
+      setRealData();
     } finally {
       setLoading(false);
     }
   };
 
-  // Set mock data for development with consistent commission rate
-  const setMockData = () => {
-    const totalRevenue = 2500000;
-    const totalCommissions = totalRevenue * 0.05; // 5% commission rate (consistent)
-    const netRevenue = totalRevenue - totalCommissions;
-    
+  // Set real data from database instead of mock data
+  const setRealData = async () => {
+    try {
+      // Fetch real revenue data from the backend
+      const response = await fetch('/api/platform-admin/financial/revenue/summary', {
+        headers: {
+          'Authorization': `Bearer ${await tokenManager.getValidToken()}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRevenueSummary(data);
+      } else {
+        console.error('Failed to fetch real revenue data');
+        // Only use fallback if API fails
+        setFallbackData();
+      }
+    } catch (error) {
+      console.error('Error fetching real revenue data:', error);
+      setFallbackData();
+    }
+  };
+
+  // Minimal fallback data only for API failures
+  const setFallbackData = () => {
     setRevenueSummary({
-      totalRevenue,
-      totalCommissions,
-      netRevenue,
-      averageBookingValue: 2500,
-      totalBookings: 1000,
-      revenueGrowthRate: 15.2,
-      commissionRate: 5.0, // Consistent 5% commission rate
-      profitMargin: (netRevenue / totalRevenue) * 100,
+      totalRevenue: 0,
+      totalCommissions: 0,
+      netRevenue: 0,
+      averageBookingValue: 0,
+      totalBookings: 0,
+      revenueGrowthRate: 0,
+      commissionRate: 5.0,
+      profitMargin: 0,
       period: {
         startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         endDate: new Date()
       }
     });
 
-    // Revenue trends mock data removed for now
-
-    setRevenueForecasts([
-      { period: '2024-01', forecastedRevenue: 2650000, confidenceInterval: { lower: 2400000, upper: 2900000 }, growthRate: 6.0 },
-      { period: '2024-02', forecastedRevenue: 2800000, confidenceInterval: { lower: 2550000, upper: 3050000 }, growthRate: 5.7 },
-      { period: '2024-03', forecastedRevenue: 2950000, confidenceInterval: { lower: 2700000, upper: 3200000 }, growthRate: 5.4 }
-    ]);
-
-    setProfitMargins([
-      { segment: 'Oslo', revenue: 875000, costs: 525000, grossProfit: 350000, grossMargin: 40.0, netProfit: 280000, netMargin: 32.0, bookingCount: 350 },
-      { segment: 'Bergen', revenue: 625000, costs: 400000, grossProfit: 225000, grossMargin: 36.0, netProfit: 180000, netMargin: 28.8, bookingCount: 250 },
-      { segment: 'Trondheim', revenue: 425000, costs: 280000, grossProfit: 145000, grossMargin: 34.1, netProfit: 116000, netMargin: 27.3, bookingCount: 170 },
-      { segment: 'Stavanger', revenue: 325000, costs: 215000, grossProfit: 110000, grossMargin: 33.8, netProfit: 88000, netMargin: 27.1, bookingCount: 130 }
-    ]);
-
+    // Clear other mock data
+    setRevenueForecasts([]);
+    setProfitMargins([]);
     setRevenueBreakdown({
-      byRegion: [
-        { region: 'Oslo', revenue: 875000, percentage: 35, bookingCount: 350 },
-        { region: 'Bergen', revenue: 625000, percentage: 25, bookingCount: 250 },
-        { region: 'Trondheim', revenue: 425000, percentage: 17, bookingCount: 170 },
-        { region: 'Stavanger', revenue: 325000, percentage: 13, bookingCount: 130 },
-        { region: 'Other', revenue: 250000, percentage: 10, bookingCount: 100 }
-      ],
-      byCompanyType: [
-        { companyType: 'Logistics', revenue: 1000000, percentage: 40, bookingCount: 400 },
-        { companyType: 'Transport', revenue: 750000, percentage: 30, bookingCount: 300 },
-        { companyType: 'Delivery', revenue: 500000, percentage: 20, bookingCount: 200 },
-        { companyType: 'Moving', revenue: 250000, percentage: 10, bookingCount: 100 }
-      ],
-      byBookingType: [
-        { bookingType: 'Standard', revenue: 1250000, percentage: 50, bookingCount: 500 },
-        { bookingType: 'Express', revenue: 625000, percentage: 25, bookingCount: 250 },
-        { bookingType: 'Recurring', revenue: 375000, percentage: 15, bookingCount: 150 },
-        { bookingType: 'Without Driver', revenue: 250000, percentage: 10, bookingCount: 100 }
-      ]
+      byRegion: [],
+      byCompanyType: [],
+      byBookingType: []
     });
   };
 
@@ -506,11 +499,11 @@ const RevenueDashboard: React.FC<RevenueDashboardProps> = ({ className = '' }) =
                   <div className="grid grid-cols-2 gap-4 max-w-md mx-auto text-sm">
                     <div className="p-3 bg-blue-50 rounded">
                       <div className="font-medium text-blue-900">Total Revenue</div>
-                      <div className="text-blue-600">{formatCurrency(2500000)}</div>
+                      <div className="text-blue-600">{formatCurrency(revenueSummary?.totalRevenue || 0)}</div>
                     </div>
                     <div className="p-3 bg-amber-50 rounded">
                       <div className="font-medium text-amber-900">Commissions</div>
-                      <div className="text-amber-600">{formatCurrency(375000)}</div>
+                      <div className="text-amber-600">{formatCurrency(revenueSummary?.totalCommissions || 0)}</div>
                     </div>
                   </div>
                 </div>

@@ -232,7 +232,7 @@ export class FeatureRollbackService {
       const blockingIssues: string[] = [];
 
       // Check for potentially dangerous rollbacks
-      if (targetConfig.maintenanceMode) {
+      if ((targetConfig as any).maintenanceMode) {
         warnings.push('Target configuration has maintenance mode enabled');
       }
 

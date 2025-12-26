@@ -1,531 +1,700 @@
-/**
- * Analytics Service
- * Handles platform metrics calculation, aggregation, and caching
- */
-
 import { PrismaClient } from '@prisma/client';
-import { redis } from '../config/redis';
+import { cacheService } from './cache.service';
+import { logger } from '../utils/logger';
 
 const prisma = new PrismaClient();
 
-export interface PlatformKPIs {
-  totalUsers: number;
-  activeUsers: number;
-  totalCompanies: number;
-  activeCompanies: number;
-  totalBookings: number;
-  completedBookings: number;
-  totalRevenue: number;
-  averageBookingValue: number;
-  userGrowthRate: number;
-  bookingGrowthRate: number;
-  revenueGrowthRate: number;
-  platformUtilization: number;
-  lastUpdated: Date;
-}
-
-export interface MetricTimeRange {
-  start: Date;
-  end: Date;
-  granularity: 'hour' | 'day' | 'week' | 'month';
-}
-
-export interface TimeSeriesData {
-  timestamp: Date;
-  value: number;
-  metadata?: Record<string, any>;
-}
-
-export interface GeographicMetrics {
-  region: string;
-  regionType: 'COUNTRY' | 'FYLKE' | 'KOMMUNE';
-  userCount: number;
-  bookingCount: number;
-  revenue: number;
-  averageBookingValue: number;
-  growthRate: number;
-  marketShare: number;
-}
-
-export class AnalyticsService {
-  private readonly CACHE_TTL = {
-    REAL_TIME: 60, // 1 minute
-    HOURLY: 3600, // 1 hour
-    DAILY: 86400, // 24 hours
-    WEEKLY: 604800, // 7 days
+export interface PlatformMetrics {
+  users: {
+    total: number;
+    active: number;
+    newThisMonth: number;
+    growthRate: number;
   };
+  companies: {
+    total: number;
+    verified: number;
+    active: number;
+    growthRate: number;
+  };
+  bookings: {
+    total: number;
+    thisMonth: number;
+    completed: number;
+    cancelled: number;
+    revenue: number;
+  };
+  financial: {
+    totalRevenue: number;
+    commissions: number;
+    refunds: number;
+    disputes: number;
+  };
+}
 
-  /**
-   * Get platform KPIs with caching
-   */
-  async getPlatformKPIs(useCache = true): Promise<PlatformKPIs> {
-    const cacheKey = 'platform:kpis';
-    
-    if (useCache) {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    }
+export interface BookingMetrics {
+  pendingBookings: number;
+  acceptedBookings: number;
+  activeBookings: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  disputedBookings: number;
+  averageBookingValue: number;
+  bookingConversionRate: number;
+}
 
-    const kpis = await this.calculatePlatformKPIs();
-    
-    // Cache for 5 minutes
-    await redis.setex(cacheKey, 300, JSON.stringify(kpis));
-    
-    return kpis;
-  }
+export interface FinancialMetrics {
+  dailyRevenue: number;
+  monthlyRevenue: number;
+  commissionEarned: number;
+  refundsProcessed: number;
+  disputeRefunds: number;
+  averageTransactionValue: number;
+  paymentFailureRate: number;
+}
 
-  /**
-   * Calculate platform KPIs from database - REAL DATA VERSION
-   */
-  private async calculatePlatformKPIs(): Promise<PlatformKPIs> {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+export interface AnalyticsSnapshot {
+  id: string;
+  snapshotDate: Date;
+  metricType: string;
+  metricData: any;
+  createdAt: Date;
+}
+
+class AnalyticsService {
+  private readonly CACHE_PREFIX = 'analytics:';
+  private readonly CACHE_TTL = 300; // 5 minutes
+
+  async getPlatformOverview(dateRange?: { startDate: Date; endDate: Date }): Promise<PlatformMetrics> {
+    const cacheKey = `${this.CACHE_PREFIX}platform_overview:${dateRange ? `${dateRange.startDate.toISOString()}_${dateRange.endDate.toISOString()}` : 'default'}`;
     
-    try {
-      // Get real data from database
-      const [
-        totalUsers,
-        verifiedUsers,
-        totalCompanies,
-        activeCompanies,
-        totalBookings,
-        completedBookings,
-        revenueData,
-        previousMonthUsers,
-        previousMonthBookings,
-        previousMonthRevenue
-      ] = await Promise.all([
-        prisma.user.count(),
-        prisma.user.count({ where: { emailVerified: true } }),
-        prisma.company.count(),
-        prisma.company.count({ where: { status: 'ACTIVE' } }),
-        prisma.booking.count(),
-        prisma.booking.count({ where: { status: 'COMPLETED' } }),
-        prisma.transaction.aggregate({
-          where: { status: 'COMPLETED' },
-          _sum: { amount: true }
-        }),
-        // Previous month data for growth calculations
-        prisma.user.count({
-          where: { createdAt: { lt: thirtyDaysAgo } }
-        }),
-        prisma.booking.count({
-          where: { createdAt: { lt: thirtyDaysAgo } }
-        }),
-        prisma.transaction.aggregate({
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const now = new Date();
+        const startDate = dateRange?.startDate || new Date(now.getFullYear(), now.getMonth(), 1);
+        const endDate = dateRange?.endDate || now;
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        // User metrics
+        const totalUsers = await prisma.user.count({
+          where: {
+            createdAt: { lte: endDate }
+          }
+        });
+        const activeUsers = await prisma.user.count({
+          where: {
+            updatedAt: {
+              gte: new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              lte: endDate
+            }
+          }
+        });
+        const newUsersInRange = await prisma.user.count({
+          where: {
+            createdAt: { gte: startDate, lte: endDate }
+          }
+        });
+        const newUsersLastMonth = await prisma.user.count({
+          where: {
+            createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
+          }
+        });
+        const userGrowthRate = newUsersLastMonth > 0 
+          ? ((newUsersInRange - newUsersLastMonth) / newUsersLastMonth) * 100 
+          : 0;
+
+        // Company metrics
+        const totalCompanies = await prisma.company.count({
+          where: {
+            createdAt: { lte: endDate }
+          }
+        });
+        const verifiedCompanies = await prisma.company.count({
+          where: { 
+            verified: true,
+            createdAt: { lte: endDate }
+          }
+        });
+        const activeCompanies = await prisma.company.count({
+          where: {
+            status: 'ACTIVE',
+            updatedAt: {
+              gte: new Date(endDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              lte: endDate
+            }
+          }
+        });
+        const newCompaniesInRange = await prisma.company.count({
+          where: {
+            createdAt: { gte: startDate, lte: endDate }
+          }
+        });
+        const newCompaniesLastMonth = await prisma.company.count({
+          where: {
+            createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
+          }
+        });
+        const companyGrowthRate = newCompaniesLastMonth > 0 
+          ? ((newCompaniesInRange - newCompaniesLastMonth) / newCompaniesLastMonth) * 100 
+          : 0;
+
+        // Booking metrics
+        const totalBookings = await prisma.booking.count({
+          where: {
+            createdAt: { lte: endDate }
+          }
+        });
+        const bookingsInRange = await prisma.booking.count({
+          where: {
+            createdAt: { gte: startDate, lte: endDate }
+          }
+        });
+        const completedBookings = await prisma.booking.count({
           where: { 
             status: 'COMPLETED',
-            createdAt: { lt: thirtyDaysAgo }
-          },
-          _sum: { amount: true }
-        })
-      ]);
-
-      const totalRevenue = revenueData._sum.amount || 0;
-      const averageBookingValue = completedBookings > 0 ? totalRevenue / completedBookings : 0;
-
-      // Calculate growth rates
-      const userGrowthRate = previousMonthUsers > 0 
-        ? ((totalUsers - previousMonthUsers) / previousMonthUsers) * 100 
-        : 0;
-      
-      const bookingGrowthRate = previousMonthBookings > 0 
-        ? ((totalBookings - previousMonthBookings) / previousMonthBookings) * 100 
-        : 0;
-      
-      const previousRevenue = previousMonthRevenue._sum.amount || 0;
-      const revenueGrowthRate = previousRevenue > 0 
-        ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 
-        : 0;
-
-      // Calculate platform utilization (verified users / total users)
-      const platformUtilization = totalUsers > 0 ? (verifiedUsers / totalUsers) * 100 : 0;
-
-      return {
-        totalUsers,
-        activeUsers: verifiedUsers, // Use verified users as active users
-        totalCompanies,
-        activeCompanies,
-        totalBookings,
-        completedBookings,
-        totalRevenue,
-        averageBookingValue,
-        userGrowthRate,
-        bookingGrowthRate,
-        revenueGrowthRate,
-        platformUtilization,
-        lastUpdated: now
-      };
-
-    } catch (error) {
-      console.error('Error calculating platform KPIs, falling back to realistic mock data:', error);
-      
-      // Return realistic fallback data matching seeded database
-      return {
-        totalUsers: 22, // Match actual seeded data
-        activeUsers: 19, // Verified users
-        totalCompanies: 5, // Match seeded companies
-        activeCompanies: 4, // Active companies
-        totalBookings: 0, // No bookings in seed data yet
-        completedBookings: 0,
-        totalRevenue: 0,
-        averageBookingValue: 0,
-        userGrowthRate: 0,
-        bookingGrowthRate: 0,
-        revenueGrowthRate: 0,
-        platformUtilization: 86.4, // 19/22 * 100
-        lastUpdated: now
-      };
-    }
-  }
-
-  /**
-   * Get time series data for a specific metric
-   */
-  async getTimeSeriesData(
-    metric: string, 
-    timeRange: MetricTimeRange,
-    useCache = true
-  ): Promise<TimeSeriesData[]> {
-    const cacheKey = `timeseries:${metric}:${timeRange.start.getTime()}:${timeRange.end.getTime()}:${timeRange.granularity}`;
-    
-    if (useCache) {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    }
-
-    const data = await this.calculateTimeSeriesData(metric, timeRange);
-    
-    // Cache based on granularity
-    const ttl = this.getCacheTTL(timeRange.granularity);
-    await redis.setex(cacheKey, ttl, JSON.stringify(data));
-    
-    return data;
-  }
-
-  /**
-   * Calculate time series data for a metric
-   */
-  private async calculateTimeSeriesData(
-    metric: string, 
-    timeRange: MetricTimeRange
-  ): Promise<TimeSeriesData[]> {
-    const { start, end, granularity } = timeRange;
-    
-    switch (metric) {
-      case 'users':
-        return this.getUserTimeSeriesData(start, end, granularity);
-      case 'bookings':
-        return this.getBookingTimeSeriesData(start, end, granularity);
-      case 'revenue':
-        return this.getRevenueTimeSeriesData(start, end, granularity);
-      default:
-        throw new Error(`Unknown metric: ${metric}`);
-    }
-  }
-
-  /**
-   * Get user registration time series data
-   */
-  private async getUserTimeSeriesData(
-    start: Date, 
-    end: Date, 
-    granularity: string
-  ): Promise<TimeSeriesData[]> {
-    const dateFormat = this.getDateTruncFormat(granularity);
-    
-    const result = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC(${dateFormat}, "createdAt") as timestamp,
-        COUNT(*)::int as value
-      FROM "User"
-      WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
-      GROUP BY DATE_TRUNC(${dateFormat}, "createdAt")
-      ORDER BY timestamp ASC
-    ` as Array<{ timestamp: Date; value: number }>;
-
-    return result.map(row => ({
-      timestamp: row.timestamp,
-      value: row.value
-    }));
-  }
-
-  /**
-   * Get booking creation time series data
-   */
-  private async getBookingTimeSeriesData(
-    start: Date, 
-    end: Date, 
-    granularity: string
-  ): Promise<TimeSeriesData[]> {
-    const dateFormat = this.getDateTruncFormat(granularity);
-    
-    const result = await prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC(${dateFormat}, "createdAt") as timestamp,
-        COUNT(*)::int as value,
-        COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END)::int as completed_count
-      FROM "Booking"
-      WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
-      GROUP BY DATE_TRUNC(${dateFormat}, "createdAt")
-      ORDER BY timestamp ASC
-    ` as Array<{ timestamp: Date; value: number; completed_count: number }>;
-
-    return result.map(row => ({
-      timestamp: row.timestamp,
-      value: row.value,
-      metadata: {
-        completedCount: row.completed_count,
-        completionRate: row.value > 0 ? (row.completed_count / row.value) * 100 : 0
-      }
-    }));
-  }
-
-  /**
-   * Get revenue time series data - REAL DATA VERSION
-   */
-  private async getRevenueTimeSeriesData(
-    start: Date, 
-    end: Date, 
-    granularity: string
-  ): Promise<TimeSeriesData[]> {
-    try {
-      const dateFormat = this.getDateTruncFormat(granularity);
-      
-      // Use Transaction table for revenue data since it has the actual amounts
-      const result = await prisma.$queryRaw`
-        SELECT 
-          DATE_TRUNC(${dateFormat}, t."createdAt") as timestamp,
-          COALESCE(SUM(t."amount"), 0)::float as value,
-          COUNT(*)::int as transaction_count,
-          COALESCE(AVG(t."amount"), 0)::float as avg_value
-        FROM "Transaction" t
-        WHERE t."createdAt" >= ${start} AND t."createdAt" <= ${end}
-          AND t.status = 'COMPLETED'
-        GROUP BY DATE_TRUNC(${dateFormat}, t."createdAt")
-        ORDER BY timestamp ASC
-      ` as Array<{ timestamp: Date; value: number; transaction_count: number; avg_value: number }>;
-
-      return result.map(row => ({
-        timestamp: row.timestamp,
-        value: row.value,
-        metadata: {
-          transactionCount: row.transaction_count,
-          averageValue: row.avg_value
-        }
-      }));
-
-    } catch (error) {
-      console.error('Error fetching revenue time series, falling back to mock data:', error);
-      
-      // Generate realistic fallback data
-      const data: TimeSeriesData[] = [];
-      const current = new Date(start);
-      
-      while (current <= end) {
-        // Conservative Norwegian market estimates
-        const baseRevenue = granularity === 'day' ? 2500 : 
-                           granularity === 'week' ? 17500 : 75000;
-        const revenue = baseRevenue * (0.7 + Math.random() * 0.6);
-        
-        data.push({
-          timestamp: new Date(current),
-          value: Math.floor(revenue),
-          metadata: {
-            transactionCount: Math.max(1, Math.floor(revenue / 2500)),
-            averageValue: 2500
+            createdAt: { lte: endDate }
+          }
+        });
+        const cancelledBookings = await prisma.booking.count({
+          where: { 
+            status: 'CANCELLED',
+            createdAt: { lte: endDate }
           }
         });
 
-        // Increment based on granularity
-        if (granularity === 'day') {
-          current.setDate(current.getDate() + 1);
-        } else if (granularity === 'week') {
-          current.setDate(current.getDate() + 7);
-        } else {
-          current.setMonth(current.getMonth() + 1);
+        // Financial metrics - filtered by date range
+        const revenueResult = await prisma.booking.aggregate({
+          where: { 
+            status: 'COMPLETED',
+            createdAt: { gte: startDate, lte: endDate }
+          },
+          _sum: { total: true }
+        });
+        const totalRevenue = revenueResult._sum.total || 0;
+
+        const commissionResult = await prisma.booking.aggregate({
+          where: { 
+            status: 'COMPLETED',
+            createdAt: { gte: startDate, lte: endDate }
+          },
+          _sum: { platformCommission: true }
+        });
+        const commissions = commissionResult._sum.platformCommission || 0;
+
+        const refundResult = await prisma.transaction.aggregate({
+          where: { 
+            type: 'REFUND', 
+            status: 'COMPLETED',
+            createdAt: { gte: startDate, lte: endDate }
+          },
+          _sum: { amount: true }
+        });
+        const refunds = refundResult._sum.amount || 0;
+
+        const disputes = await prisma.dispute.count({
+          where: { 
+            status: { in: ['OPEN', 'IN_PROGRESS'] },
+            createdAt: { lte: endDate }
+          }
+        });
+
+        return {
+          users: {
+            total: totalUsers,
+            active: activeUsers,
+            newThisMonth: newUsersInRange,
+            growthRate: Math.round(userGrowthRate * 100) / 100,
+          },
+          companies: {
+            total: totalCompanies,
+            verified: verifiedCompanies,
+            active: activeCompanies,
+            growthRate: Math.round(companyGrowthRate * 100) / 100,
+          },
+          bookings: {
+            total: totalBookings,
+            thisMonth: bookingsInRange,
+            completed: completedBookings,
+            cancelled: cancelledBookings,
+            revenue: totalRevenue,
+          },
+          financial: {
+            totalRevenue,
+            commissions,
+            refunds,
+            disputes,
+          },
+        };
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getBookingMetrics(): Promise<BookingMetrics> {
+    const cacheKey = `${this.CACHE_PREFIX}booking_metrics`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const pendingBookings = await prisma.booking.count({
+          where: { status: 'PENDING' }
+        });
+        const acceptedBookings = await prisma.booking.count({
+          where: { status: 'ACCEPTED' }
+        });
+        const activeBookings = await prisma.booking.count({
+          where: { status: 'ACTIVE' }
+        });
+        const completedBookings = await prisma.booking.count({
+          where: { status: 'COMPLETED' }
+        });
+        const cancelledBookings = await prisma.booking.count({
+          where: { status: 'CANCELLED' }
+        });
+        const disputedBookings = await prisma.booking.count({
+          where: { status: 'DISPUTED' }
+        });
+
+        const avgBookingResult = await prisma.booking.aggregate({
+          _avg: { total: true }
+        });
+        const averageBookingValue = avgBookingResult._avg.total || 0;
+
+        const totalRequests = await prisma.booking.count();
+        const bookingConversionRate = totalRequests > 0 
+          ? (completedBookings / totalRequests) * 100 
+          : 0;
+
+        return {
+          pendingBookings,
+          acceptedBookings,
+          activeBookings,
+          completedBookings,
+          cancelledBookings,
+          disputedBookings,
+          averageBookingValue: Math.round(averageBookingValue * 100) / 100,
+          bookingConversionRate: Math.round(bookingConversionRate * 100) / 100,
+        };
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getFinancialMetrics(): Promise<FinancialMetrics> {
+    const cacheKey = `${this.CACHE_PREFIX}financial_metrics`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+        // Daily revenue
+        const dailyRevenueResult = await prisma.booking.aggregate({
+          where: {
+            status: 'COMPLETED',
+            completedAt: { gte: startOfDay }
+          },
+          _sum: { total: true }
+        });
+        const dailyRevenue = dailyRevenueResult._sum.total || 0;
+
+        // Monthly revenue
+        const monthlyRevenueResult = await prisma.booking.aggregate({
+          where: {
+            status: 'COMPLETED',
+            completedAt: { gte: startOfMonth }
+          },
+          _sum: { total: true }
+        });
+        const monthlyRevenue = monthlyRevenueResult._sum.total || 0;
+
+        // Commission earned
+        const commissionResult = await prisma.booking.aggregate({
+          where: { status: 'COMPLETED' },
+          _sum: { platformCommission: true }
+        });
+        const commissionEarned = commissionResult._sum.platformCommission || 0;
+
+        // Refunds processed
+        const refundResult = await prisma.transaction.aggregate({
+          where: { type: 'REFUND', status: 'COMPLETED' },
+          _sum: { amount: true }
+        });
+        const refundsProcessed = refundResult._sum.amount || 0;
+
+        // Dispute refunds
+        const disputeRefundResult = await prisma.dispute.aggregate({
+          where: { status: 'RESOLVED', refundAmount: { not: null } },
+          _sum: { refundAmount: true }
+        });
+        const disputeRefunds = disputeRefundResult._sum.refundAmount || 0;
+
+        // Average transaction value
+        const avgTransactionResult = await prisma.transaction.aggregate({
+          where: { status: 'COMPLETED' },
+          _avg: { amount: true }
+        });
+        const averageTransactionValue = avgTransactionResult._avg.amount || 0;
+
+        // Payment failure rate
+        const totalTransactions = await prisma.transaction.count();
+        const failedTransactions = await prisma.transaction.count({
+          where: { status: 'FAILED' }
+        });
+        const paymentFailureRate = totalTransactions > 0 
+          ? (failedTransactions / totalTransactions) * 100 
+          : 0;
+
+        return {
+          dailyRevenue: Math.round(dailyRevenue * 100) / 100,
+          monthlyRevenue: Math.round(monthlyRevenue * 100) / 100,
+          commissionEarned: Math.round(commissionEarned * 100) / 100,
+          refundsProcessed: Math.round(refundsProcessed * 100) / 100,
+          disputeRefunds: Math.round(disputeRefunds * 100) / 100,
+          averageTransactionValue: Math.round(averageTransactionValue * 100) / 100,
+          paymentFailureRate: Math.round(paymentFailureRate * 100) / 100,
+        };
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async getHistoricalData(metricType: string, days = 30): Promise<AnalyticsSnapshot[]> {
+    const cacheKey = `${this.CACHE_PREFIX}historical:${metricType}:${days}`;
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+
+        const snapshots = await prisma.analyticsSnapshots.findMany({
+          where: {
+            metricType,
+            snapshotDate: { gte: startDate }
+          },
+          orderBy: { snapshotDate: 'asc' }
+        });
+
+        return snapshots.map(snapshot => ({
+          id: snapshot.id,
+          snapshotDate: snapshot.snapshotDate,
+          metricType: snapshot.metricType,
+          metricData: snapshot.metricData,
+          createdAt: snapshot.createdAt,
+        }));
+      },
+      this.CACHE_TTL * 2 // Cache historical data longer
+    );
+  }
+
+  async createSnapshot(metricType: string, metricData: any): Promise<AnalyticsSnapshot> {
+    const snapshot = await prisma.analyticsSnapshots.create({
+      data: {
+        snapshotDate: new Date(),
+        metricType,
+        metricData,
+      }
+    });
+
+    // Invalidate related cache
+    await cacheService.invalidatePattern(`${this.CACHE_PREFIX}historical:${metricType}:*`);
+
+    return {
+      id: snapshot.id,
+      snapshotDate: snapshot.snapshotDate,
+      metricType: snapshot.metricType,
+      metricData: snapshot.metricData,
+      createdAt: snapshot.createdAt,
+    };
+  }
+
+  async getPlatformKPIs(useCache: boolean = true): Promise<any> {
+    const cacheKey = `${this.CACHE_PREFIX}platform_kpis`;
+    
+    if (!useCache) {
+      await cacheService.del(cacheKey);
+    }
+    
+    return cacheService.getOrSet(
+      cacheKey,
+      async () => {
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+        // User metrics
+        const totalUsers = await prisma.user.count();
+        const activeUsers = await prisma.user.count({
+          where: {
+            updatedAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            }
+          }
+        });
+        const newUsersThisMonth = await prisma.user.count({
+          where: {
+            createdAt: { gte: startOfMonth }
+          }
+        });
+        const newUsersLastMonth = await prisma.user.count({
+          where: {
+            createdAt: { gte: startOfLastMonth, lte: endOfLastMonth }
+          }
+        });
+        const userGrowthRate = newUsersLastMonth > 0 
+          ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth) * 100 
+          : 0;
+
+        // Company metrics
+        const totalCompanies = await prisma.company.count();
+        const verifiedCompanies = await prisma.company.count({
+          where: { verified: true }
+        });
+        const activeCompanies = await prisma.company.count({
+          where: {
+            status: 'ACTIVE',
+            updatedAt: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+            }
+          }
+        });
+
+        // Booking metrics
+        const totalBookings = await prisma.booking.count();
+        const completedBookings = await prisma.booking.count({
+          where: { status: 'COMPLETED' }
+        });
+        const bookingsThisMonth = await prisma.booking.count({
+          where: {
+            createdAt: { gte: startOfMonth }
+          }
+        });
+
+        // Financial metrics
+        const revenueResult = await prisma.booking.aggregate({
+          where: { status: 'COMPLETED' },
+          _sum: { total: true }
+        });
+        const totalRevenue = revenueResult._sum.total || 0;
+
+        const avgBookingResult = await prisma.booking.aggregate({
+          where: { status: 'COMPLETED' },
+          _avg: { total: true }
+        });
+        const averageBookingValue = avgBookingResult._avg.total || 0;
+
+        const monthlyRevenueResult = await prisma.booking.aggregate({
+          where: {
+            status: 'COMPLETED',
+            completedAt: { gte: startOfMonth }
+          },
+          _sum: { total: true }
+        });
+        const monthlyRevenue = monthlyRevenueResult._sum.total || 0;
+
+        const lastMonthRevenueResult = await prisma.booking.aggregate({
+          where: {
+            status: 'COMPLETED',
+            completedAt: { gte: startOfLastMonth, lte: endOfLastMonth }
+          },
+          _sum: { total: true }
+        });
+        const lastMonthRevenue = lastMonthRevenueResult._sum.total || 0;
+
+        const revenueGrowthRate = lastMonthRevenue > 0 
+          ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+          : 0;
+
+        // Platform utilization
+        const platformUtilization = totalUsers > 0 
+          ? (activeUsers / totalUsers) * 100 
+          : 0;
+
+        return {
+          totalUsers,
+          activeUsers,
+          userGrowthRate: Math.round(userGrowthRate * 100) / 100,
+          platformUtilization: Math.round(platformUtilization * 100) / 100,
+          totalCompanies,
+          verifiedCompanies,
+          activeCompanies,
+          totalBookings,
+          completedBookings,
+          bookingsThisMonth,
+          totalRevenue: Math.round(totalRevenue * 100) / 100,
+          monthlyRevenue: Math.round(monthlyRevenue * 100) / 100,
+          averageBookingValue: Math.round(averageBookingValue * 100) / 100,
+          revenueGrowthRate: Math.round(revenueGrowthRate * 100) / 100,
+        };
+      },
+      this.CACHE_TTL
+    );
+  }
+
+  async invalidateCache(pattern?: string): Promise<void> {
+    const cachePattern = pattern ? `${this.CACHE_PREFIX}${pattern}` : `${this.CACHE_PREFIX}*`;
+    await cacheService.invalidatePattern(cachePattern);
+    logger.info('Analytics cache invalidated', { pattern: cachePattern });
+  }
+
+  async getTimeSeriesData(
+    metric: string,
+    timeRange: { startDate: Date; endDate: Date } | { start: Date; end: Date; granularity?: string },
+    useCache: boolean = true
+  ): Promise<any[]> {
+    // Normalize the timeRange parameter
+    let normalizedRange: { startDate: Date; endDate: Date };
+    
+    if ('startDate' in timeRange) {
+      normalizedRange = timeRange;
+    } else {
+      normalizedRange = {
+        startDate: timeRange.start,
+        endDate: timeRange.end
+      };
+    }
+
+    const cacheKey = `${this.CACHE_PREFIX}timeseries:${metric}:${normalizedRange.startDate.toISOString()}_${normalizedRange.endDate.toISOString()}`;
+    
+    if (!useCache) {
+      return this.fetchTimeSeriesData(metric, normalizedRange);
+    }
+
+    return cacheService.getOrSet(
+      cacheKey,
+      () => this.fetchTimeSeriesData(metric, normalizedRange),
+      this.CACHE_TTL
+    );
+  }
+
+  private async fetchTimeSeriesData(
+    metric: string,
+    timeRange: { startDate: Date; endDate: Date }
+  ): Promise<any[]> {
+    // Generate daily data points between start and end date
+    const data: any[] = [];
+    const currentDate = new Date(timeRange.startDate);
+    
+    while (currentDate <= timeRange.endDate) {
+      const nextDate = new Date(currentDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+
+      let value = 0;
+      
+      switch (metric) {
+        case 'bookings':
+          value = await prisma.booking.count({
+            where: {
+              createdAt: {
+                gte: currentDate,
+                lt: nextDate
+              }
+            }
+          });
+          break;
+        case 'revenue':
+          const revenueResult = await prisma.booking.aggregate({
+            where: {
+              status: 'COMPLETED',
+              completedAt: {
+                gte: currentDate,
+                lt: nextDate
+              }
+            },
+            _sum: { total: true }
+          });
+          value = revenueResult._sum.total || 0;
+          break;
+        case 'users':
+          value = await prisma.user.count({
+            where: {
+              createdAt: {
+                gte: currentDate,
+                lt: nextDate
+              }
+            }
+          });
+          break;
+        default:
+          value = 0;
+      }
+
+      data.push({
+        date: currentDate.toISOString().split('T')[0],
+        value
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return data;
+  }
+
+  async getGeographicMetrics(useCache: boolean = true): Promise<any[]> {
+    const cacheKey = `${this.CACHE_PREFIX}geographic_metrics`;
+    
+    if (!useCache) {
+      return this.fetchGeographicMetrics();
+    }
+
+    return cacheService.getOrSet(
+      cacheKey,
+      () => this.fetchGeographicMetrics(),
+      this.CACHE_TTL
+    );
+  }
+
+  private async fetchGeographicMetrics(): Promise<any[]> {
+    const metrics = await prisma.company.groupBy({
+      by: ['fylke'],
+      _count: {
+        id: true
+      },
+      orderBy: {
+        _count: {
+          id: 'desc'
         }
       }
-      
-      return data;
-    }
+    });
+
+    return metrics.map(metric => ({
+      region: metric.fylke,
+      count: metric._count.id
+    }));
   }
 
-  /**
-   * Get geographic metrics
-   */
-  async getGeographicMetrics(useCache = true): Promise<GeographicMetrics[]> {
-    const cacheKey = 'geographic:metrics';
-    
-    if (useCache) {
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    }
-
-    const metrics = await this.calculateGeographicMetrics();
-    
-    // Cache for 1 hour
-    await redis.setex(cacheKey, this.CACHE_TTL.HOURLY, JSON.stringify(metrics));
-    
-    return metrics;
-  }
-
-  /**
-   * Calculate geographic metrics - REAL DATA VERSION
-   */
-  private async calculateGeographicMetrics(): Promise<GeographicMetrics[]> {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    
-    try {
-      // Get metrics by company location (fylke/region)
-      const result = await prisma.$queryRaw`
-        SELECT 
-          COALESCE(c.fylke, 'Unknown') as region,
-          'FYLKE' as region_type,
-          COUNT(DISTINCT u.id)::int as user_count,
-          COUNT(DISTINCT b.id)::int as booking_count,
-          COALESCE(SUM(t.amount), 0)::float as revenue,
-          CASE 
-            WHEN COUNT(DISTINCT b.id) > 0 
-            THEN COALESCE(AVG(t.amount), 0)::float 
-            ELSE 0 
-          END as avg_booking_value
-        FROM "Company" c
-        LEFT JOIN "User" u ON u."companyId" = c.id
-        LEFT JOIN "Booking" b ON (b."renterCompanyId" = c.id OR b."providerCompanyId" = c.id)
-          AND b.status = 'COMPLETED' 
-          AND b."createdAt" >= ${thirtyDaysAgo}
-        LEFT JOIN "Transaction" t ON t."bookingId" = b.id 
-          AND t.status = 'COMPLETED'
-        WHERE c.fylke IS NOT NULL
-        GROUP BY c.fylke
-        HAVING COUNT(DISTINCT u.id) > 0
-        ORDER BY user_count DESC
-      ` as Array<{
-        region: string;
-        region_type: string;
-        user_count: number;
-        booking_count: number;
-        revenue: number;
-        avg_booking_value: number;
-      }>;
-
-      const totalUsers = result.reduce((sum, row) => sum + row.user_count, 0);
-      
-      return result.map(row => ({
-        region: row.region,
-        regionType: row.region_type as 'FYLKE',
-        userCount: row.user_count,
-        bookingCount: row.booking_count,
-        revenue: row.revenue,
-        averageBookingValue: row.avg_booking_value,
-        growthRate: 0, // Would need historical data to calculate
-        marketShare: totalUsers > 0 ? (row.user_count / totalUsers) * 100 : 0
-      }));
-
-    } catch (error) {
-      console.error('Error calculating geographic metrics, falling back to mock data:', error);
-      
-      // Return realistic Norwegian fylke data
-      return [
-        {
-          region: 'Oslo',
-          regionType: 'FYLKE',
-          userCount: 8,
-          bookingCount: 0,
-          revenue: 0,
-          averageBookingValue: 0,
-          growthRate: 0,
-          marketShare: 36.4
-        },
-        {
-          region: 'Vestland',
-          regionType: 'FYLKE',
-          userCount: 6,
-          bookingCount: 0,
-          revenue: 0,
-          averageBookingValue: 0,
-          growthRate: 0,
-          marketShare: 27.3
-        },
-        {
-          region: 'Trøndelag',
-          regionType: 'FYLKE',
-          userCount: 4,
-          bookingCount: 0,
-          revenue: 0,
-          averageBookingValue: 0,
-          growthRate: 0,
-          marketShare: 18.2
-        },
-        {
-          region: 'Rogaland',
-          regionType: 'FYLKE',
-          userCount: 4,
-          bookingCount: 0,
-          revenue: 0,
-          averageBookingValue: 0,
-          growthRate: 0,
-          marketShare: 18.2
-        }
-      ];
-    }
-  }
-
-  /**
-   * Invalidate cache for a specific key pattern
-   */
-  async invalidateCache(pattern: string): Promise<void> {
-    const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
-  }
-
-  /**
-   * Refresh all cached metrics
-   */
   async refreshAllMetrics(): Promise<void> {
-    // Invalidate all analytics caches
-    await this.invalidateCache('platform:*');
-    await this.invalidateCache('timeseries:*');
-    await this.invalidateCache('geographic:*');
+    logger.info('Refreshing all analytics metrics');
     
-    // Pre-warm important caches
-    await this.getPlatformKPIs(false);
+    // Invalidate all caches
+    await this.invalidateCache();
+    
+    // Pre-warm key metrics
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const timeRange = { startDate: startOfMonth, endDate: now };
+    
+    // Pre-warm platform overview
+    await this.getPlatformOverview(timeRange);
+    
+    // Pre-warm geographic metrics
     await this.getGeographicMetrics(false);
-  }
-
-  /**
-   * Get appropriate date truncation format for PostgreSQL
-   */
-  private getDateTruncFormat(granularity: string): string {
-    switch (granularity) {
-      case 'hour': return 'hour';
-      case 'day': return 'day';
-      case 'week': return 'week';
-      case 'month': return 'month';
-      default: return 'day';
-    }
-  }
-
-  /**
-   * Get cache TTL based on granularity
-   */
-  private getCacheTTL(granularity: string): number {
-    switch (granularity) {
-      case 'hour': return this.CACHE_TTL.HOURLY;
-      case 'day': return this.CACHE_TTL.DAILY;
-      case 'week': return this.CACHE_TTL.WEEKLY;
-      case 'month': return this.CACHE_TTL.WEEKLY;
-      default: return this.CACHE_TTL.DAILY;
-    }
+    
+    // Pre-warm time series data for key metrics
+    await Promise.all([
+      this.getTimeSeriesData('bookings', timeRange, false),
+      this.getTimeSeriesData('revenue', timeRange, false),
+      this.getTimeSeriesData('users', timeRange, false)
+    ]);
+    
+    logger.info('All analytics metrics refreshed');
   }
 }
 

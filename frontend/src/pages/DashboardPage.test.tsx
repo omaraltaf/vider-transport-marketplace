@@ -6,7 +6,7 @@ import { ToastProvider } from '../contexts/ToastContext';
 import DashboardPage from './DashboardPage';
 
 // Mock AuthContext
-vi.mock('../contexts/AuthContext', () => ({
+vi.mock('../contexts/EnhancedAuthContext', () => ({
   useAuth: () => ({
     user: {
       id: '1',
