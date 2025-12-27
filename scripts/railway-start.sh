@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Railway startup script with proper error handling
 set -e
