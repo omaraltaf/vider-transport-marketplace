@@ -1,92 +1,167 @@
-# Railway Environment Variables Setup
+# Railway Environment Variables Setup Guide
 
-## Required Environment Variables
+## 🚀 Step-by-Step Railway Deployment
 
-Copy these into your Railway project settings:
+### Step 1: Add PostgreSQL Database Service
 
-### 1. Database
-```
-DATABASE_URL=<automatically set by Railway PostgreSQL service>
-```
+1. In your Railway dashboard, click **"+ New"**
+2. Select **"Database"** → **"Add PostgreSQL"**
+3. Railway will automatically create a PostgreSQL database
+4. The `DATABASE_URL` will be automatically added to your environment variables
 
-### 2. Authentication
-Generate JWT secrets using this command in your terminal:
-```bash
-openssl rand -base64 64
-```
+### Step 2: Required Environment Variables
 
-Then set:
-```
-JWT_SECRET=<paste the generated secret here>
-JWT_ACCESS_EXPIRATION=15m
-JWT_REFRESH_EXPIRATION=7d
-```
+Add these environment variables in Railway dashboard (Variables tab):
 
-### 3. Frontend URL
+#### 🔐 JWT Configuration (REQUIRED)
 ```
-FRONTEND_URL=https://vider-transport-marketplace.vercel.app
+JWT_SECRET=nA0gZ6/7A270dekoIjznuKWgQ7HqMaebD9V9pdeaMpg=
+JWT_REFRESH_SECRET=f32I6jFsMwj0pW8Mgs0fqaU1FC5KLWsxlNLjP7MgBv4=
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
-### 4. Application Settings
+#### 🌐 Application Configuration (REQUIRED)
 ```
 NODE_ENV=production
-PORT=3000
+PORT=8080
+FRONTEND_URL=https://your-railway-domain.railway.app
 ```
 
-### 5. Platform Configuration
+#### 📧 Email Configuration (REQUIRED for notifications)
 ```
-PLATFORM_COMMISSION_RATE=10
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+FROM_EMAIL=noreply@vider.no
+```
+
+#### 💰 Platform Configuration (REQUIRED)
+```
+PLATFORM_COMMISSION_RATE=5
 PLATFORM_TAX_RATE=25
 BOOKING_TIMEOUT_HOURS=24
 DEFAULT_CURRENCY=NOK
+MIN_BOOKING_AMOUNT=500
+MAX_BOOKING_AMOUNT=100000
 ```
 
-### 6. File Storage
+#### 📁 File Upload Configuration (REQUIRED)
 ```
-UPLOAD_DIR=./uploads
-MAX_FILE_SIZE=5242880
-```
-
-### 7. Email (Optional - for now)
-```
-SMTP_HOST=
-SMTP_PORT=
-SMTP_USER=
-SMTP_PASSWORD=
-SMTP_FROM=
-```
-Leave these empty for now. The app will log emails instead of sending them.
-
-## How to Add These in Railway
-
-1. Go to https://railway.app
-2. Open your project
-3. Click on your backend service
-4. Go to the "Variables" tab
-5. Click "New Variable" for each one above
-6. After adding all variables, Railway will automatically redeploy
-
-## Generate JWT Secrets
-
-Run this command twice to generate two different secrets:
-
-```bash
-openssl rand -base64 64
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
+ALLOWED_FILE_TYPES=jpg,jpeg,png,pdf,doc,docx
 ```
 
-Use the first output for `JWT_SECRET`.
+#### 🔒 Security Configuration (REQUIRED)
+```
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+SESSION_TIMEOUT_MINUTES=60
+MAX_LOGIN_ATTEMPTS=5
+PASSWORD_MIN_LENGTH=8
+```
 
-## Verify Setup
+### Step 3: Optional Environment Variables
 
-After Railway redeploys:
-1. Check the deployment logs for any errors
-2. Visit your Vercel frontend
-3. The CORS errors should be gone
-4. Test the API connection
+#### 📊 Redis Configuration (Optional - for better performance)
+```
+REDIS_URL=redis://localhost:6379
+```
 
-## Troubleshooting
+#### 🔍 Logging Configuration (Optional)
+```
+LOG_LEVEL=info
+LOG_FORMAT=json
+```
 
-If you still see CORS errors:
-- Make sure `FRONTEND_URL` exactly matches your Vercel URL (no trailing slash)
-- Check Railway logs for startup errors
-- Verify all required variables are set
+## 🎯 Quick Setup Commands
+
+### Copy-Paste Environment Variables (All Required)
+```
+JWT_SECRET=nA0gZ6/7A270dekoIjznuKWgQ7HqMaebD9V9pdeaMpg=
+JWT_REFRESH_SECRET=f32I6jFsMwj0pW8Mgs0fqaU1FC5KLWsxlNLjP7MgBv4=
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+NODE_ENV=production
+PORT=8080
+FRONTEND_URL=https://your-railway-domain.railway.app
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+FROM_EMAIL=noreply@vider.no
+PLATFORM_COMMISSION_RATE=5
+PLATFORM_TAX_RATE=25
+BOOKING_TIMEOUT_HOURS=24
+DEFAULT_CURRENCY=NOK
+MIN_BOOKING_AMOUNT=500
+MAX_BOOKING_AMOUNT=100000
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
+ALLOWED_FILE_TYPES=jpg,jpeg,png,pdf,doc,docx
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+SESSION_TIMEOUT_MINUTES=60
+MAX_LOGIN_ATTEMPTS=5
+PASSWORD_MIN_LENGTH=8
+```
+
+## 📋 Deployment Checklist
+
+### Before Deployment:
+- [ ] PostgreSQL database service added to Railway project
+- [ ] All required environment variables configured
+- [ ] Email SMTP credentials configured (use Gmail App Password)
+- [ ] Frontend URL updated to match Railway domain
+
+### After Deployment:
+- [ ] Check deployment logs for successful migration
+- [ ] Test health endpoint: `https://your-domain.railway.app/health`
+- [ ] Test API endpoints: `https://your-domain.railway.app/api/auth/health`
+- [ ] Seed production data if needed
+
+## 🔧 Database Setup
+
+Railway will automatically:
+1. Create PostgreSQL database
+2. Provide `DATABASE_URL` environment variable
+3. Run migrations during build process (`postbuild` script)
+
+## 🚨 Common Issues & Solutions
+
+### Issue: "platform_configs table does not exist"
+**Solution**: Ensure PostgreSQL service is added and `DATABASE_URL` is available during build
+
+### Issue: "JWT_SECRET is required"
+**Solution**: Add all JWT environment variables from the list above
+
+### Issue: "SMTP configuration missing"
+**Solution**: Configure email settings (use Gmail with App Password for testing)
+
+### Issue: "Port already in use"
+**Solution**: Railway automatically handles port assignment, ensure `PORT=8080` is set
+
+## 📞 Next Steps After Setup
+
+1. **Add all environment variables** from the list above
+2. **Add PostgreSQL database service** in Railway dashboard
+3. **Redeploy** - Railway will automatically redeploy with new configuration
+4. **Test the deployment** using the health endpoints
+5. **Seed production data** if needed
+
+## 🎉 Success Indicators
+
+When deployment is successful, you should see:
+- ✅ Build completes without errors
+- ✅ Database migrations run successfully
+- ✅ Server starts on port 8080
+- ✅ Health endpoint responds: `/health`
+- ✅ API endpoints respond: `/api/auth/health`
+
+---
+
+**Need Help?** Check the deployment logs in Railway dashboard for specific error messages.
