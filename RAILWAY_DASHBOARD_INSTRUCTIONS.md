@@ -1,182 +1,137 @@
-# 📋 Railway Dashboard - Step-by-Step Instructions
+# 🚂 Railway Dashboard Setup Instructions
 
-**Goal**: Change the builder from Nixpacks to Dockerfile
+## 🎯 Current Issue Fix
 
-## Visual Guide
+The deployment error shows: **"The table 'public.platform_configs' does not exist"**
 
-### Step 1: Access Your Service
+This means database migrations haven't run. I've fixed this with a new startup script.
+
+## 🔧 What I Fixed
+
+1. **Updated `railway.json`** - Now runs migrations before starting
+2. **Created `scripts/railway-start.sh`** - Handles migrations + seeding
+3. **Added `start:railway` script** - Railway-specific startup
+
+## 📋 Railway Dashboard Setup
+
+### Step 1: Add Required Services
+
+In your Railway project dashboard:
+
+1. **Add PostgreSQL Database**
+   - Click **"+ New"** → **"Database"** → **"Add PostgreSQL"**
+   - This automatically provides `DATABASE_URL`
+
+2. **Add Redis Cache**
+   - Click **"+ New"** → **"Database"** → **"Add Redis"**  
+   - This automatically provides `REDIS_URL`
+
+### Step 2: Environment Variables
+
+Go to **Variables** tab and add these **one by one**:
+
+#### 🔐 JWT & Security (Required)
 ```
-https://railway.app
-  └─ Login
-      └─ Select "Vider Transport Marketplace" project
-          └─ Click on your backend service (the one that's crashing)
-```
-
-### Step 2: Navigate to Settings
-```
-Top Navigation Bar:
-[Deployments] [Metrics] [Variables] [Settings] [Logs]
-                                      ^^^^^^^^
-                                   Click here
-```
-
-### Step 3: Find Build Configuration
-
-Scroll down on the Settings page until you see:
-
-```
-┌─────────────────────────────────────────┐
-│ Build                                    │
-├─────────────────────────────────────────┤
-│                                          │
-│ Builder: [Nixpacks ▼]  ← CHANGE THIS   │
-│                                          │
-│ Change to: [Dockerfile ▼]               │
-│                                          │
-│ Dockerfile Path: [Dockerfile]           │
-│                                          │
-│ [Save Changes]                           │
-└─────────────────────────────────────────┘
-```
-
-### Step 4: What to Look For
-
-The setting might be labeled as:
-- "Builder"
-- "Build Method"
-- "Build Provider"
-- "Buildpack"
-
-Current value will show:
-- ❌ "Nixpacks" (wrong)
-- ❌ "Auto" (might default to Nixpacks)
-
-Change it to:
-- ✅ "Dockerfile"
-- ✅ "Docker"
-
-### Step 5: Additional Settings to Check
-
-While in Settings, also verify:
-
-```
-┌─────────────────────────────────────────┐
-│ Deploy                                   │
-├─────────────────────────────────────────┤
-│                                          │
-│ Start Command: [Leave empty]            │
-│   ↑ Should be empty - Dockerfile        │
-│     handles this with CMD                │
-│                                          │
-│ Build Command: [Leave empty]            │
-│   ↑ Should be empty - Dockerfile        │
-│     handles this                         │
-└─────────────────────────────────────────┘
+JWT_SECRET=nA0gZ6/7A270dekoIjznuKWgQ7HqMaebD9V9pdeaMpg=
+JWT_REFRESH_SECRET=f32I6jFsMwj0pW8Mgs0fqaU1FC5KLWsxlNLjP7MgBv4=
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
-### Step 6: Save and Redeploy
-
-After changing the builder:
-
-1. **Click "Save" or "Update"** at the bottom of the Settings page
-
-2. **Go to Deployments tab**:
-   ```
-   [Deployments] [Metrics] [Variables] [Settings] [Logs]
-    ^^^^^^^^^^^
-    Click here
-   ```
-
-3. **Trigger new deployment**:
-   - Option A: Click "Redeploy" button on latest deployment
-   - Option B: Click "Deploy" button to create new deployment
-   - Option C: Wait for automatic deployment (may take a few minutes)
-
-### Step 7: Monitor the Build
-
-Click on the new deployment to watch logs in real-time.
-
-#### What You Should See (Correct):
+#### 🌐 Application Config (Required)
 ```
-[Build]
-Building with Dockerfile...
-Step 1/15 : FROM node:20-alpine AS base
- ---> Running in abc123...
-Step 2/15 : RUN apk add --no-cache openssl
- ---> Running in def456...
-...
-npm run build:production
-Compiling TypeScript...
-✓ Compilation successful
-=== Checking dist/ contents ===
--rw-r--r-- app.js
--rw-r--r-- index.js
-...
-Docker image built successfully
-
-[Deploy]
-Starting container...
-✓ Database connected successfully
-🚀 Vider Platform API running on port 3000
-📝 Environment: production
+NODE_ENV=production
+PORT=8080
+FRONTEND_URL=https://vider-transport-marketplace.vercel.app
 ```
 
-#### What You'll See If Still Wrong:
+#### 💰 Platform Settings (Required)
 ```
-[Build]
-Building with Nixpacks...
-npm ci
-npm start
-Error: Cannot find module './app.ts'
+PLATFORM_COMMISSION_RATE=5
+PLATFORM_TAX_RATE=25
+BOOKING_TIMEOUT_HOURS=24
+DEFAULT_CURRENCY=NOK
+MIN_BOOKING_AMOUNT=500
+MAX_BOOKING_AMOUNT=100000
 ```
 
-## Troubleshooting
+#### 📁 File Upload (Required)
+```
+MAX_FILE_SIZE=10485760
+UPLOAD_PATH=./uploads
+ALLOWED_FILE_TYPES=jpg,jpeg,png,pdf,doc,docx
+```
 
-### If You Can't Find the Builder Setting
+#### 🔒 Security Limits (Required)
+```
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+SESSION_TIMEOUT_MINUTES=60
+MAX_LOGIN_ATTEMPTS=5
+PASSWORD_MIN_LENGTH=8
+```
 
-1. **Check Service Type**: Make sure you're looking at the backend service, not the database
-2. **Check Railway Version**: Railway UI might look different, look for any "Build" or "Docker" related settings
-3. **Try Railway CLI**: Use `railway up` command as alternative
+#### 📧 Email Config (Optional but Recommended)
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-gmail-app-password
+FROM_EMAIL=noreply@vider.no
+```
 
-### If Builder Setting Doesn't Exist
+### Step 3: Redeploy
 
-Some Railway projects might not show this setting if:
-- It's auto-detected from `railway.json` (should work)
-- The project is too old (might need to recreate service)
+After adding all variables:
+1. Railway will **automatically redeploy**
+2. The new startup script will:
+   - ✅ Generate Prisma client
+   - ✅ Run database migrations
+   - ✅ Seed database if empty
+   - ✅ Start the server
 
-In this case, try:
-1. Delete the service
-2. Create a new service
-3. Connect it to your GitHub repo
-4. It should auto-detect the Dockerfile
+### Step 4: Verify Success
 
-### If Changes Don't Take Effect
+Check the deployment logs for:
+- ✅ "Generating Prisma client..."
+- ✅ "Running database migrations..."
+- ✅ "Database already has data" or "seeding with production data..."
+- ✅ "Starting application..."
+- ✅ "Vider Platform API running on port 8080"
 
-1. **Clear Railway cache**: In Settings, look for "Clear Build Cache" button
-2. **Force rebuild**: Delete the latest deployment and create a new one
-3. **Check railway.json**: Ensure it's in the root of your repo
+## 🧪 Test Your Deployment
 
-## Quick Checklist
+Once deployed successfully, test these endpoints:
 
-Before you leave the Railway dashboard, verify:
+```bash
+# Health check
+curl https://your-railway-domain.railway.app/health
 
-- [ ] Builder is set to "Dockerfile" (not Nixpacks)
-- [ ] Dockerfile Path is "Dockerfile"
-- [ ] Start Command is empty (or removed)
-- [ ] Build Command is empty (or removed)
-- [ ] Changes are saved
-- [ ] New deployment is triggered
-- [ ] Build logs show "Building with Dockerfile"
+# API health  
+curl https://your-railway-domain.railway.app/api/auth/health
 
-## What to Report Back
+# Platform config (should work now)
+curl https://your-railway-domain.railway.app/api/platform/config
+```
 
-Once you've made the changes, let me know:
+## ✅ Success Checklist
 
-1. ✅ Did you find the Builder setting?
-2. ✅ Did you change it to Dockerfile?
-3. ✅ Did you save and trigger redeploy?
-4. ✅ What do the build logs show now?
+- [ ] PostgreSQL database service added
+- [ ] Redis cache service added
+- [ ] All 22 environment variables added
+- [ ] Deployment shows "Deployed" status
+- [ ] Logs show successful migration
+- [ ] Health endpoints respond
+- [ ] No "platform_configs" errors
+
+## 🚨 If Still Having Issues
+
+1. **Check Railway logs** for specific error messages
+2. **Verify DATABASE_URL** is automatically provided by PostgreSQL service
+3. **Ensure all environment variables** are added correctly
+4. **Try manual redeploy** if automatic didn't trigger
 
 ---
 
-**Next**: Watch the deployment and share the logs with me so I can confirm it's working correctly.
+**The migration issue should be fixed with the new startup script!**

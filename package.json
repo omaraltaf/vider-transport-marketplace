@@ -10,6 +10,7 @@
     "postbuild": "npx prisma migrate deploy",
     "start": "node dist/index.js",
     "start:compiled": "node dist/index.js",
+    "start:railway": "bash scripts/railway-start.sh",
     "start:dev": "npx prisma db push --accept-data-loss && tsx src/index.ts",
     "test": "vitest --run",
     "test:watch": "vitest",
