@@ -909,4 +909,99 @@ function getSeedingErrorSuggestion(errorCode: string): string {
   }
 }
 
+/**
+ * POST /api/seed/platform-admin
+ * Create platform administrator account
+ * Protected by a secret key
+ */
+router.post('/platform-admin', async (req: Request, res: Response): Promise<void> => {
+  try {
+    // Check for secret key in header
+    const secretKey = req.headers['x-seed-secret'];
+    
+    if (!secretKey || secretKey !== config.JWT_SECRET) {
+      res.status(403).json({
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Invalid seed secret',
+        },
+      });
+      return;
+    }
+
+    console.log('🔧 Creating platform administrator...');
+
+    // Check if platform admin already exists
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: 'admin@vider.no' }
+    });
+
+    if (existingAdmin) {
+      res.status(200).json({
+        message: 'Platform admin already exists',
+        account: {
+          email: 'admin@vider.no',
+          role: 'PLATFORM_ADMIN',
+          status: 'existing'
+        }
+      });
+      return;
+    }
+
+    // Hash password
+    const passwordHash = await bcrypt.hash('password123', 12);
+
+    // Find an existing company to use for platform admin
+    const existingCompany = await prisma.company.findFirst();
+    
+    if (!existingCompany) {
+      res.status(400).json({
+        error: {
+          code: 'NO_COMPANIES_FOUND',
+          message: 'No companies found. Please seed the database first.',
+        },
+      });
+      return;
+    }
+
+    // Create platform admin user
+    const platformAdmin = await prisma.user.create({
+      data: {
+        email: 'admin@vider.no',
+        passwordHash,
+        role: 'PLATFORM_ADMIN',
+        companyId: existingCompany.id,
+        firstName: 'Platform',
+        lastName: 'Administrator',
+        phone: '+47 12345678',
+        emailVerified: true,
+      },
+    });
+
+    console.log('✅ Platform administrator created successfully!');
+
+    res.status(201).json({
+      message: 'Platform administrator created successfully!',
+      account: {
+        email: 'admin@vider.no',
+        password: 'password123',
+        role: 'PLATFORM_ADMIN',
+        status: 'created'
+      },
+      warning: 'IMPORTANT: Change the default password after first login!'
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating platform admin:', error);
+    
+    res.status(500).json({
+      error: {
+        code: 'ADMIN_CREATION_FAILED',
+        message: error instanceof Error ? error.message : 'Failed to create platform admin',
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+});
+
 export default router;
