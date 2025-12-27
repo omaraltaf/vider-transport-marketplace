@@ -2,9 +2,11 @@
 
 ## 🎯 Essential Variables (Copy & Paste Ready)
 
-### Step 1: Add PostgreSQL Database
-1. In Railway dashboard: **+ New** → **Database** → **Add PostgreSQL**
-2. This automatically adds `DATABASE_URL`
+### Step 1: Add Database Services
+1. **PostgreSQL**: **+ New** → **Database** → **Add PostgreSQL**
+   - This automatically adds `DATABASE_URL`
+2. **Redis**: **+ New** → **Database** → **Add Redis**  
+   - This automatically adds `REDIS_URL`
 
 ### Step 2: Add These Environment Variables
 
@@ -35,7 +37,7 @@ PORT=8080
 ```
 
 ```
-FRONTEND_URL=https://your-railway-domain.railway.app
+FRONTEND_URL=https://vider-transport-marketplace.vercel.app
 ```
 
 ```
@@ -125,6 +127,7 @@ FROM_EMAIL=noreply@vider.no
 ## ✅ Checklist
 
 - [ ] PostgreSQL database service added
+- [ ] Redis cache service added
 - [ ] All JWT variables added (4 variables)
 - [ ] Application config added (12 variables)  
 - [ ] Email config added (6 variables) - Optional
@@ -137,7 +140,9 @@ FROM_EMAIL=noreply@vider.no
 1. Railway will automatically redeploy
 2. Check logs for successful migration
 3. Test: `https://your-domain.railway.app/health`
+4. **Next**: Deploy frontend to Vercel (see FULL_STACK_DEPLOYMENT_GUIDE.md)
 
 ---
 
 **Total Required Variables: 16 minimum (22 with email)**
+**Services Required: PostgreSQL + Redis**
