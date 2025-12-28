@@ -119,8 +119,49 @@ export default function BookingDetailPage() {
     proposeMutation.mutate(terms);
   };
 
-  const handleDownloadContract = () => {
-    window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/bookings/${id}/contract`, '_blank');
+  const handleDownloadContract = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/bookings/${id}/contract`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to download contract');
+      }
+
+      // Get the filename from the response headers or use a default
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = `contract-${booking?.bookingNumber || id}.pdf`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading contract:', error);
+      // You might want to show a toast notification here
+      alert('Failed to download contract. Please try again.');
+    }
   };
 
   const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'info' | 'neutral' => {
