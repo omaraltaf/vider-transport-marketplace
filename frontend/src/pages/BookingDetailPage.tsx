@@ -121,7 +121,11 @@ export default function BookingDetailPage() {
 
   const handleDownloadContract = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      // Try multiple token storage keys used by the app
+      const token = localStorage.getItem('auth_token') || 
+                   localStorage.getItem('accessToken') || 
+                   localStorage.getItem('token');
+      
       if (!token) {
         throw new Error('No authentication token found');
       }
