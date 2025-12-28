@@ -272,6 +272,7 @@ router.post('/admins', async (req: Request, res: Response) => {
  * Get companies for user creation dropdown
  */
 router.get('/companies/options', async (req: Request, res: Response) => {
+  console.log('🔍 PROPER ROUTE: /companies/options called with query:', req.query);
   try {
     const { search, limit = '50' } = req.query;
 
@@ -288,6 +289,8 @@ router.get('/companies/options', async (req: Request, res: Response) => {
         { city: { contains: search as string, mode: 'insensitive' } }
       ];
     }
+
+    console.log('🔍 Querying companies with where clause:', where);
 
     const companies = await prisma.company.findMany({
       where,
@@ -306,6 +309,8 @@ router.get('/companies/options', async (req: Request, res: Response) => {
 
     const total = await prisma.company.count({ where });
 
+    console.log('🔍 Found companies:', companies.length, 'total:', total);
+
     res.json({
       success: true,
       data: {
@@ -315,7 +320,7 @@ router.get('/companies/options', async (req: Request, res: Response) => {
     });
 
   } catch (error) {
-    console.error('Error fetching company options:', error);
+    console.error('❌ Error fetching company options:', error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch company options'

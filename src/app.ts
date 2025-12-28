@@ -179,13 +179,8 @@ export function createApp(): Application {
   app.use('/api/admin-setup', adminSetupRoutes);
   app.use('/api/debug', debugRoutes);
   
-  // Debug routes for platform admin (temporary fix) - RE-ENABLED WITH FIXES
-  try {
-    const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
-    app.use('/api/platform-admin', platformAdminDebugRoutes);
-  } catch (error) {
-    console.warn('Platform admin debug routes not available:', error.message);
-  }
+  // Debug routes COMPLETELY REMOVED - they were causing API conflicts
+  // All debug functionality has been moved to proper routes
   
   // Platform Admin routes (mount in specific order to avoid conflicts)
   app.use('/api/platform-admin/security', securityMonitoringRoutes);
