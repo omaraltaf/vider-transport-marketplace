@@ -268,6 +268,67 @@ router.post('/admins', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/platform-admin/users/companies/list
+ * Get companies for user creation dropdown (alternative endpoint)
+ */
+router.get('/companies/list', async (req: Request, res: Response) => {
+  console.log('🔍 NEW ENDPOINT: /companies/list called with query:', req.query);
+  try {
+    const { search, limit = '50' } = req.query;
+
+    // Build where clause for search
+    const where: any = {
+      status: 'ACTIVE',
+      verified: true
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search as string, mode: 'insensitive' } },
+        { organizationNumber: { contains: search as string } },
+        { city: { contains: search as string, mode: 'insensitive' } }
+      ];
+    }
+
+    console.log('🔍 Querying companies with where clause:', where);
+
+    const companies = await prisma.company.findMany({
+      where,
+      take: parseInt(limit as string),
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        organizationNumber: true,
+        city: true,
+        fylke: true,
+        status: true,
+        verified: true
+      }
+    });
+
+    const total = await prisma.company.count({ where });
+
+    console.log('🔍 Found companies:', companies.length, 'total:', total);
+
+    res.json({
+      success: true,
+      data: {
+        companies,
+        total
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching company list:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to fetch company list'
+    });
+  }
+});
+
+/**
  * GET /api/platform-admin/users/companies/options
  * Get companies for user creation dropdown
  */
@@ -276,10 +337,9 @@ router.get('/companies/options', async (req: Request, res: Response) => {
   try {
     const { search, limit = '50' } = req.query;
 
-    // Build where clause for search
+    // Build where clause for search - allow verified companies regardless of status
     const where: any = {
-      status: 'ACTIVE',
-      verified: true
+      verified: true  // Only require verification, not specific status
     };
 
     if (search) {
