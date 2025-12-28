@@ -1,6 +1,6 @@
 /**
  * Vider Transport Marketplace API
- * Build: 2025-12-17T17:35:00Z - Entry Point Fix (dist/index.js)
+ * Build: 2025-12-28T17:00:00Z - Companies API Fix (FINAL)
  */
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
