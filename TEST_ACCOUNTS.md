@@ -6,8 +6,8 @@ All accounts use the following passwords:
 
 ## 🌐 Live Production URLs
 - **Frontend:** https://vider-transport-marketplace.vercel.app
-- **Backend API:** https://vider-transport-marketplace-production.up.railway.app
-- **Health Check:** https://vider-transport-marketplace-production.up.railway.app/health
+- **Backend API:** https://vider-transport-marketplace-production-bd63.up.railway.app
+- **Health Check:** https://vider-transport-marketplace-production-bd63.up.railway.app/health
 
 ## ✅ VERIFIED WORKING ACCOUNTS
 
@@ -65,12 +65,12 @@ Test with any verified account above using email and password123.
 
 **Search Vehicles:**
 ```bash
-curl "https://vider-transport-marketplace-production.up.railway.app/api/listings/search?type=vehicle&limit=5"
+curl "https://vider-transport-marketplace-production-bd63.up.railway.app/api/listings/search?type=vehicle&limit=5"
 ```
 
 **Login Test:**
 ```bash
-curl -X POST "https://vider-transport-marketplace-production.up.railway.app/api/auth/login" \
+curl -X POST "https://vider-transport-marketplace-production-bd63.up.railway.app/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@oslotransport.no", "password": "password123"}'
 ```
