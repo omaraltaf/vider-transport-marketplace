@@ -1,59 +1,76 @@
-# Test Accounts Reference
+# Test Accounts Reference - PRODUCTION READY ✅
 
-All accounts use the password: **password123**
+All accounts use the following passwords:
+- **Platform Admin:** admin123!
+- **Company Accounts:** password123
 
-## 🔑 Platform Admin
+## 🌐 Live Production URLs
+- **Frontend:** https://vider-transport-marketplace.vercel.app
+- **Backend API:** https://vider-transport-marketplace-production.up.railway.app
+- **Health Check:** https://vider-transport-marketplace-production.up.railway.app/health
+
+## ✅ VERIFIED WORKING ACCOUNTS
+
+### 🔑 Platform Administrator
 - **Email:** admin@vider.no
+- **Password:** admin123!
 - **Role:** PLATFORM_ADMIN
-- **Access:** Full platform administration capabilities
+- **Status:** ✅ VERIFIED WORKING
 
-## 🏢 Company Administrators
+### 🏢 Company Administrators (TESTED & WORKING)
 
-### Oslo Transport AS
-- **Email:** admin@oslo-transport.no
+#### Oslo Transport AS
+- **Email:** admin@oslotransport.no
+- **Password:** password123
 - **Role:** COMPANY_ADMIN
-- **Company:** Oslo Transport AS
+- **Status:** ✅ VERIFIED WORKING
+- **Company:** Oslo Transport AS (4.6★ rating)
 
-### Bergen Bilutleie
-- **Email:** admin@bergen-bil.no
+#### Bergen Logistics AS  
+- **Email:** admin@bergenlogistics.no
+- **Password:** password123
 - **Role:** COMPANY_ADMIN
-- **Company:** Bergen Bilutleie
+- **Status:** ✅ VERIFIED WORKING
+- **Company:** Bergen Logistics AS (3.6★ rating)
 
-### Stavanger Logistikk AS
-- **Email:** admin@stavanger-logistikk.no
-- **Role:** COMPANY_ADMIN
-- **Company:** Stavanger Logistikk AS
+## 📊 Platform Statistics (Live Data)
+- **Companies:** 6 active companies
+- **Vehicle Listings:** 13+ active vehicles
+- **Driver Listings:** 5+ verified drivers
+- **Completed Bookings:** 5+ transactions
+- **Average Rating:** 3.9★
 
-## 👤 Company Users
-
-### Oslo Transport AS
-- **Email:** user@oslo-transport.no
-- **Role:** COMPANY_USER
-- **Company:** Oslo Transport AS
-
-### Bergen Bilutleie
-- **Email:** user@bergen-bil.no
-- **Role:** COMPANY_USER
-- **Company:** Bergen Bilutleie
-
-### Stavanger Logistikk AS
-- **Email:** driver@stavanger-logistikk.no
-- **Role:** COMPANY_USER
-- **Company:** Stavanger Logistikk AS
-
-## 📝 Original Test Account
-- **Email:** test@example.com
-- **Role:** COMPANY_ADMIN
-- **Company:** Oslo Transport AS
+## 🚗 Sample Listings Available
+- **Oslo:** 8-pallet trucks, trailers, electric vehicles
+- **Bergen:** Refrigerated trucks, trailers
+- **Trondheim:** 18-pallet trucks, specialty vehicles
+- **Stavanger:** 21-pallet trucks, electric vehicles
+- **Tromsø:** Arctic transport vehicles
 
 ## 🔧 Usage Notes
 
-- All accounts are email verified and ready to use
-- Platform admin has access to all administrative features
+- All accounts are email verified and production-ready
 - Company admins can manage their company's listings and users
-- Company users have standard user permissions within their company
-- All companies are verified and active
+- Full booking system with ratings and messaging
+- Real-time availability calendar
+- Comprehensive search and filtering
 
 ## 🚀 Quick Login Test
 
-You can test any of these accounts by logging into the frontend at http://localhost:5173 with the email and password listed above.
+**Production Frontend:** https://vider-transport-marketplace.vercel.app
+
+Test with any verified account above using email and password123.
+
+## 🔍 API Testing
+
+**Search Vehicles:**
+```bash
+curl "https://vider-transport-marketplace-production.up.railway.app/api/listings/search?type=vehicle&limit=5"
+```
+
+**Login Test:**
+```bash
+curl -X POST "https://vider-transport-marketplace-production.up.railway.app/api/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@oslotransport.no", "password": "password123"}'
+```

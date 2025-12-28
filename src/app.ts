@@ -179,13 +179,13 @@ export function createApp(): Application {
   app.use('/api/admin-setup', adminSetupRoutes);
   app.use('/api/debug', debugRoutes);
   
-  // Debug routes for platform admin (temporary fix) - MOUNT FIRST, NO AUTH
-  try {
-    const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
-    app.use('/api/platform-admin', platformAdminDebugRoutes);
-  } catch (error) {
-    console.warn('Platform admin debug routes not available:', error.message);
-  }
+  // Debug routes for platform admin (temporary fix) - DISABLED to avoid conflicts
+  // try {
+  //   const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
+  //   app.use('/api/platform-admin-debug', platformAdminDebugRoutes); // Changed path to avoid conflicts
+  // } catch (error) {
+  //   console.warn('Platform admin debug routes not available:', error.message);
+  // }
   
   // Platform Admin routes (mount in specific order to avoid conflicts)
   app.use('/api/platform-admin/security', securityMonitoringRoutes);
