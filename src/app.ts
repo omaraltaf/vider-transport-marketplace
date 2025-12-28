@@ -179,10 +179,11 @@ export function createApp(): Application {
   app.use('/api/admin-setup', adminSetupRoutes);
   app.use('/api/debug', debugRoutes);
   
-  // Debug routes for platform admin (temporary fix) - DISABLED to avoid conflicts
+  // Debug routes for platform admin (temporary fix) - COMPLETELY DISABLED
+  // These routes were causing conflicts with proper API endpoints
   // try {
   //   const platformAdminDebugRoutes = require('./routes/platform-admin-debug.routes').default;
-  //   app.use('/api/platform-admin-debug', platformAdminDebugRoutes); // Changed path to avoid conflicts
+  //   app.use('/api/platform-admin-debug', platformAdminDebugRoutes);
   // } catch (error) {
   //   console.warn('Platform admin debug routes not available:', error.message);
   // }
