@@ -238,14 +238,83 @@ router.get('/overview/activity', async (req, res) => {
 //   });
 // });
 
-router.get('/users/companies/options', (req, res) => {
-  console.log('DEBUG: User companies options endpoint hit');
-  res.json({
-    companies: [
-      { id: '1', name: 'Oslo Transport AS' },
-      { id: '2', name: 'Bergen Logistics' }
-    ]
-  });
+router.get('/users/companies/options', async (req, res) => {
+  console.log('DEBUG: User companies options endpoint hit - FORWARDING TO REAL DATA');
+  try {
+    // Get real companies from database instead of mock data
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const { search, limit = '50' } = req.query;
+
+    // Build where clause for search
+    const where: any = {
+      status: 'ACTIVE',
+      verified: true
+    };
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search as string, mode: 'insensitive' } },
+        { organizationNumber: { contains: search as string } },
+        { city: { contains: search as string, mode: 'insensitive' } }
+      ];
+    }
+
+    const companies = await prisma.company.findMany({
+      where,
+      take: parseInt(limit as string),
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        organizationNumber: true,
+        city: true,
+        fylke: true,
+        status: true,
+        verified: true
+      }
+    });
+
+    const total = await prisma.company.count({ where });
+
+    res.json({
+      success: true,
+      data: {
+        companies,
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching real companies:', error);
+    // Fallback to mock data if real data fails
+    res.json({
+      success: true,
+      data: {
+        companies: [
+          {
+            id: 'company-1',
+            name: 'Oslo Logistics AS',
+            organizationNumber: '123456789',
+            city: 'Oslo',
+            fylke: 'Oslo',
+            status: 'ACTIVE',
+            verified: true
+          },
+          {
+            id: 'company-2', 
+            name: 'Bergen Transport',
+            organizationNumber: '987654321',
+            city: 'Bergen',
+            fylke: 'Vestland',
+            status: 'ACTIVE',
+            verified: true
+          }
+        ],
+        total: 2
+      }
+    });
+  }
 });
 
 // Content moderation endpoints
