@@ -1121,7 +1121,7 @@ export class BookingService {
    * Generate a PDF contract for a booking
    * Returns the file path where the contract was saved
    */
-  private async generateContract(bookingId: string, booking?: any): Promise<string> {
+  async generateContract(bookingId: string, booking?: any): Promise<string> {
     // Fetch booking with relations if not provided
     if (!booking) {
       booking = await prisma.booking.findUnique({

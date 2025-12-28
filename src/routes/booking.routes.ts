@@ -546,16 +546,32 @@ router.get(
         });
       }
 
-      if (!booking.contractPdfPath) {
-        return res.status(404).json({
-          error: {
-            code: 'CONTRACT_NOT_FOUND',
-            message: 'Contract has not been generated yet',
-          },
-        });
+      // Check if contract exists, if not generate it
+      if (!booking.contractPdfPath || !require('fs').existsSync(booking.contractPdfPath)) {
+        try {
+          console.log('Contract file missing, regenerating...');
+          const newContractPath = await bookingService.generateContract(req.params.id);
+          
+          // Update booking with new contract path
+          await prisma.booking.update({
+            where: { id: req.params.id },
+            data: { contractPdfPath: newContractPath },
+          });
+          
+          // Send the newly generated PDF file
+          return res.download(newContractPath, `contract-${booking.bookingNumber}.pdf`);
+        } catch (error) {
+          console.error('Failed to regenerate contract:', error);
+          return res.status(500).json({
+            error: {
+              code: 'CONTRACT_GENERATION_FAILED',
+              message: 'Failed to generate contract PDF',
+            },
+          });
+        }
       }
 
-      // Send the PDF file
+      // Send the existing PDF file
       res.download(booking.contractPdfPath, `contract-${booking.bookingNumber}.pdf`);
     } catch (error) {
       logError({ error: error as Error, request: req });
