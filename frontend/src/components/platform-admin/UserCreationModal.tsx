@@ -102,8 +102,16 @@ const UserCreationModal: React.FC<UserCreationModalProps> = ({
 
       if (response.ok) {
         const data = await response.json();
-        if (data.success) {
-          setCompanies(data.data.companies || []);
+        // Handle both API response formats
+        if (data.success && data.data && data.data.companies) {
+          // Standard API format: {success: true, data: {companies: [...]}}
+          setCompanies(data.data.companies);
+        } else if (data.companies) {
+          // Debug/fallback format: {companies: [...]}
+          setCompanies(data.companies);
+        } else {
+          console.warn('Unexpected API response format:', data);
+          setCompanies([]);
         }
       }
     } catch (error) {
