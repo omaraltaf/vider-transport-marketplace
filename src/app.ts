@@ -39,6 +39,7 @@ import listingAnalyticsRoutes from './routes/listing-analytics.routes';
 import seedRoutes from './routes/seed.routes';
 import adminSetupRoutes from './routes/admin-setup.routes';
 import debugRoutes from './routes/debug.routes';
+import errorTrackingRoutes from './routes/error-tracking.routes';
 
 export function createApp(): Application {
   const app = express();
@@ -182,6 +183,7 @@ export function createApp(): Application {
   app.use('/api/seed', seedRoutes);
   app.use('/api/admin-setup', adminSetupRoutes);
   app.use('/api/debug', debugRoutes);
+  app.use('/api/errors', errorTrackingRoutes);
   
   // Debug routes COMPLETELY REMOVED - they were causing API conflicts
   // All debug functionality has been moved to proper routes
