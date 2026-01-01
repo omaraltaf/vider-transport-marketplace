@@ -11,8 +11,24 @@ const prisma = new PrismaClient({
   },
 });
 
+// Add connection pooling configuration to prevent memory issues
+const connectionString = new URL(config.DATABASE_URL);
+connectionString.searchParams.set('connection_limit', '10');
+connectionString.searchParams.set('pool_timeout', '20');
+connectionString.searchParams.set('connect_timeout', '60');
+
+// Create optimized client for production
+const optimizedPrisma = new PrismaClient({
+  log: config.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  datasources: {
+    db: {
+      url: connectionString.toString(),
+    },
+  },
+});
+
 export function getDatabaseClient(): PrismaClient {
-  return prisma;
+  return config.NODE_ENV === 'production' ? optimizedPrisma : prisma;
 }
 
 export async function connectDatabase(): Promise<void> {
@@ -28,8 +44,9 @@ export async function connectDatabase(): Promise<void> {
 
 export async function disconnectDatabase(): Promise<void> {
   try {
-    if (prisma) {
-      await prisma.$disconnect();
+    const client = getDatabaseClient();
+    if (client) {
+      await client.$disconnect();
       console.log('✓ Database disconnected');
     }
   } catch (error) {

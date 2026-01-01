@@ -1,11 +1,12 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient, Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { config } from '../config/env';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface CompanyRegistrationData {
   // User data
