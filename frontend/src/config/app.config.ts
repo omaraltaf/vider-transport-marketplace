@@ -23,7 +23,7 @@ export interface AppConfig {
 // Default configuration
 const defaultConfig: AppConfig = {
   api: {
-    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api',
+    baseUrl: 'https://vider-transport-marketplace-production-bd63.up.railway.app/api', // Hardcoded for immediate fix
     timeout: 30000, // 30 seconds
   },
   ui: {
@@ -32,9 +32,9 @@ const defaultConfig: AppConfig = {
     autoRefresh: import.meta.env.VITE_AUTO_REFRESH !== 'false', // Default true
   },
   deployment: {
-    environment: (import.meta.env.VITE_ENVIRONMENT || 'development') as 'development' | 'staging' | 'production',
-    frontendUrl: import.meta.env.VITE_FRONTEND_URL || 'http://localhost:5173',
-    backendUrl: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+    environment: 'production', // Hardcoded for immediate fix
+    frontendUrl: 'https://vider.no', // Hardcoded for immediate fix
+    backendUrl: 'https://vider-transport-marketplace-production-bd63.up.railway.app', // Hardcoded for immediate fix
   },
 };
 
