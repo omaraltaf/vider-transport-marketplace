@@ -50,18 +50,39 @@ router.get('/overview/metrics', async (req: Request, res: Response) => {
   try {
     const { range = '30d' } = req.query;
     
-    // Mock metrics data for now
+    // Mock metrics data matching frontend expectations
     const metrics = {
-      totalUsers: 156,
-      activeUsers: 89,
-      totalCompanies: 23,
-      activeCompanies: 18,
-      totalBookings: 342,
-      completedBookings: 298,
-      totalRevenue: 125000,
-      monthlyGrowth: 15.3,
-      averageRating: 4.2,
-      range: range
+      users: {
+        total: 156,
+        active: 89,
+        growth: 12.5
+      },
+      companies: {
+        total: 23,
+        active: 18,
+        verified: 15,
+        growth: 8.7
+      },
+      bookings: {
+        total: 342,
+        completed: 298,
+        pending: 12,
+        cancelled: 32,
+        growth: 15.3
+      },
+      revenue: {
+        total: 125000,
+        monthly: 45000,
+        growth: 18.2,
+        currency: 'NOK'
+      },
+      performance: {
+        averageRating: 4.2,
+        responseTime: 245,
+        uptime: 99.8
+      },
+      range: range,
+      lastUpdated: new Date().toISOString()
     };
     
     res.json(metrics);
