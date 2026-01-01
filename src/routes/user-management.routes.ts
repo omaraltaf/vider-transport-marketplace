@@ -11,6 +11,7 @@ import { requirePlatformAdmin } from '../middleware/platform-admin.middleware';
 import { platformAdminUserService } from '../services/platform-admin-user.service';
 import { bulkUserOperationsService } from '../services/bulk-user-operations.service';
 import { userActivityMonitoringService } from '../services/user-activity-monitoring.service';
+import { getDatabaseClient } from '../config/database';
 
 const router = Router();
 const prisma = getDatabaseClient();
