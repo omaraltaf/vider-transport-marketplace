@@ -5,8 +5,9 @@
 
 import { PrismaClient } from '@prisma/client';
 import { redis } from '../config/redis';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface PlatformUser {
   id: string;

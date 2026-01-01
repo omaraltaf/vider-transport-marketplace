@@ -9,8 +9,9 @@ import { availabilityService } from './availability.service';
 import { notificationService } from './notification.service';
 import { featureToggleService } from './feature-toggle.service';
 import { FeatureToggle } from '../middleware/feature-toggle.middleware';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface BookingRequestData {
   renterCompanyId: string;

@@ -4,6 +4,14 @@ import { logger } from '../config/logger';
 const router = Router();
 
 /**
+ * OPTIONS /api/errors/track
+ * Handle CORS preflight for error tracking
+ */
+router.options('/track', (req: Request, res: Response) => {
+  res.status(200).end();
+});
+
+/**
  * POST /api/errors/track
  * Track frontend errors
  */

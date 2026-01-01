@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../utils/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface Dispute {
   id: string;

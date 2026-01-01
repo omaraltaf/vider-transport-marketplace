@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { auditLogService, AuditAction, AuditSeverity } from './audit-log.service';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export enum SecurityEventType {
   BRUTE_FORCE_ATTACK = 'BRUTE_FORCE_ATTACK',

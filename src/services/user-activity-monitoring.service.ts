@@ -6,8 +6,9 @@
 import { PrismaClient } from '@prisma/client';
 import { redis } from '../config/redis';
 import { UserActivity, PlatformUser } from './platform-admin-user.service';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 
 export interface ActivityPattern {

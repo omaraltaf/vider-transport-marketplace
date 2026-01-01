@@ -6,8 +6,9 @@
 import bcrypt from 'bcrypt';
 import { PrismaClient, Role } from '@prisma/client';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface UserProfile {
   id: string;

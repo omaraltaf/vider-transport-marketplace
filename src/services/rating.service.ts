@@ -1,7 +1,8 @@
 import { PrismaClient, Rating, BookingStatus } from '@prisma/client';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface RatingData {
   companyStars: number; // 1-5

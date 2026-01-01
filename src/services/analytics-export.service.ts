@@ -12,8 +12,9 @@ import { growthAnalyticsService } from './growth-analytics.service';
 import { geographicAnalyticsService } from './geographic-analytics.service';
 import { logger } from '../config/logger';
 import { PrismaClient } from '@prisma/client';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface ExportRequest {
   reportType: 'kpis' | 'growth' | 'geographic' | 'cohorts' | 'comprehensive';

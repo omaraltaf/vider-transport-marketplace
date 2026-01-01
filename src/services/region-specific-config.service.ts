@@ -4,9 +4,11 @@
  */
 
 import { PrismaClient, RegionType } from '@prisma/client';
-import { prisma } from '../config/database';
+import { getDatabaseClient } from '../config/database';
 import { logError } from '../utils/logging.utils';
 import { FeatureToggle } from '../middleware/feature-toggle.middleware';
+
+const prisma = getDatabaseClient();
 
 export interface RegionSpecificFeatureConfig {
   id: string;

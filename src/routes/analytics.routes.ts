@@ -14,8 +14,9 @@ import { analyticsExportService } from '../services/analytics-export.service';
 import { authenticate } from '../middleware/auth.middleware';
 import { requirePlatformAdmin } from '../middleware/platform-admin.middleware';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 const router = Router();
 

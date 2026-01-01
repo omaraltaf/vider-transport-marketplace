@@ -1,7 +1,9 @@
-import { prisma } from '../config/database';
+import { getDatabaseClient } from '../config/database';
 import { Role, Company, User, CompanyStatus } from '@prisma/client';
 import { logger } from '../config/logger';
 import { notificationService } from './notification.service';
+
+const prisma = getDatabaseClient();
 
 export interface CreateCompanyData {
   name: string;

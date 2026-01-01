@@ -8,8 +8,9 @@ import {
 import { logger } from '../config/logger';
 import nodemailer from 'nodemailer';
 import { config } from '../config/env';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface NotificationData {
   type: NotificationType;

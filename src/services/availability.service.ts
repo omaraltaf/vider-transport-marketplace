@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
-import { prisma } from '../config/database';
+import { getDatabaseClient } from '../config/database';
+
+const prisma = getDatabaseClient();
 
 export interface AvailabilityBlock {
   id: string;

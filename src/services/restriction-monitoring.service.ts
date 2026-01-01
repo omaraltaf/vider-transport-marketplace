@@ -4,8 +4,10 @@
  */
 
 import { PrismaClient, RestrictionType, RegionType, PaymentMethod } from '@prisma/client';
-import { prisma } from '../config/database';
+import { getDatabaseClient } from '../config/database';
 import { logError } from '../utils/logging.utils';
+
+const prisma = getDatabaseClient();
 
 export interface RestrictionViolation {
   id: string;
