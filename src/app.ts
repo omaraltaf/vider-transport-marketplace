@@ -49,6 +49,7 @@ export function createApp(): Application {
     config.FRONTEND_URL, // This will use the environment variable
     'https://vider.no',
     'https://www.vider.no',
+    'https://api.vider.no', // Custom domain pointing to Railway
     'https://vider-transport-marketplace.vercel.app',
     'https://vider-transport-marketplace-production-bd63.up.railway.app',
     'http://localhost:5173',
