@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export enum AuditAction {
   // User Management Actions

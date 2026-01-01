@@ -3,8 +3,10 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { config } from '../config/env';
 
+import { getDatabaseClient } from '../config/database';
+
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 /**
  * POST /api/admin-setup

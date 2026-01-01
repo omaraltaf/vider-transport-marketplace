@@ -13,7 +13,7 @@ import { bulkUserOperationsService } from '../services/bulk-user-operations.serv
 import { userActivityMonitoringService } from '../services/user-activity-monitoring.service';
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 // Apply authentication and platform admin authorization to all routes
 router.use(authenticate);

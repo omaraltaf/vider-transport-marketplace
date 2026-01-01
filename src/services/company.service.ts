@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 
 type Company = {
   id: string;
@@ -21,7 +22,7 @@ type Company = {
   updatedAt: Date;
 };
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface CompanyProfileUpdateData {
   name?: string;
