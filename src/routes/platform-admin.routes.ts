@@ -43,6 +43,123 @@ router.get('/overview', async (req: Request, res: Response) => {
 });
 
 /**
+ * Get platform overview metrics with date range
+ * GET /api/platform-admin/overview/metrics
+ */
+router.get('/overview/metrics', async (req: Request, res: Response) => {
+  try {
+    const { range = '30d' } = req.query;
+    
+    // Mock metrics data for now
+    const metrics = {
+      totalUsers: 156,
+      activeUsers: 89,
+      totalCompanies: 23,
+      activeCompanies: 18,
+      totalBookings: 342,
+      completedBookings: 298,
+      totalRevenue: 125000,
+      monthlyGrowth: 15.3,
+      averageRating: 4.2,
+      range: range
+    };
+    
+    res.json(metrics);
+  } catch (error) {
+    logError({ error: error as Error, request: req });
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred while fetching platform metrics',
+      },
+    });
+  }
+});
+
+/**
+ * Get platform overview activity
+ * GET /api/platform-admin/overview/activity
+ */
+router.get('/overview/activity', async (req: Request, res: Response) => {
+  try {
+    const { range = '30d' } = req.query;
+    
+    // Mock activity data for now
+    const activities = [
+      {
+        id: '1',
+        type: 'user_registration',
+        description: 'New user registered: john@example.com',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        severity: 'info'
+      },
+      {
+        id: '2',
+        type: 'company_verification',
+        description: 'Company verified: Transport AS',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+        severity: 'success'
+      },
+      {
+        id: '3',
+        type: 'booking_completed',
+        description: 'Booking completed: #BK-2024-001',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 4).toISOString(),
+        severity: 'info'
+      }
+    ];
+    
+    res.json({ activities, range });
+  } catch (error) {
+    logError({ error: error as Error, request: req });
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred while fetching platform activity',
+      },
+    });
+  }
+});
+
+/**
+ * Get system alerts
+ * GET /api/platform-admin/system/alerts
+ */
+router.get('/system/alerts', async (req: Request, res: Response) => {
+  try {
+    // Mock alerts data for now
+    const alerts = [
+      {
+        id: '1',
+        type: 'warning',
+        title: 'High API Usage',
+        message: 'API usage is approaching rate limits',
+        timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
+        resolved: false
+      },
+      {
+        id: '2',
+        type: 'info',
+        title: 'Scheduled Maintenance',
+        message: 'System maintenance scheduled for next week',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+        resolved: false
+      }
+    ];
+    
+    res.json({ alerts });
+  } catch (error) {
+    logError({ error: error as Error, request: req });
+    res.status(500).json({
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'An error occurred while fetching system alerts',
+      },
+    });
+  }
+});
+
+/**
  * Get all companies with filtering and pagination
  * GET /api/platform-admin/companies
  * Query parameters:
