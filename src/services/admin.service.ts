@@ -1,7 +1,8 @@
 import { PrismaClient, ListingStatus, User, Company, VehicleListing, DriverListing, Booking, Transaction, Dispute, DisputeStatus, BookingStatus, TransactionType, TransactionStatus } from '@prisma/client';
 import { logger } from '../config/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface PlatformConfig {
   commissionRate: number; // percentage (e.g., 5 for 5%)

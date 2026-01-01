@@ -1,8 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 import { cacheService } from './cache.service';
 import { logger } from '../utils/logger';
+import { getDatabaseClient } from '../config/database';
 
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 export interface PlatformMetrics {
   users: {

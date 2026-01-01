@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticate } from '../middleware/auth.middleware';
 import { requirePlatformAdmin } from '../middleware/platform-admin.middleware';
+import { getDatabaseClient } from '../config/database';
 
 const router = Router();
-const prisma = new PrismaClient();
+const prisma = getDatabaseClient();
 
 // Apply authentication and platform admin role requirement to all routes
 router.use(authenticate);
