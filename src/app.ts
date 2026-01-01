@@ -46,8 +46,11 @@ export function createApp(): Application {
 
   // Middleware
   const allowedOrigins = [
+    config.FRONTEND_URL, // This will use the environment variable
+    'https://vider.no',
+    'https://www.vider.no',
     'https://vider-transport-marketplace.vercel.app',
-    'https://vider-transport-marketplace-production.up.railway.app',
+    'https://vider-transport-marketplace-production-bd63.up.railway.app',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
