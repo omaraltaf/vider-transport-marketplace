@@ -76,10 +76,10 @@ router.get('/overview/metrics', async (req: Request, res: Response) => {
         growth: 18.2,
         currency: 'NOK'
       },
-      performance: {
-        averageRating: 4.2,
+      system: {
+        uptime: 99.8,
         responseTime: 245,
-        uptime: 99.8
+        averageRating: 4.2
       },
       range: range,
       lastUpdated: new Date().toISOString()
