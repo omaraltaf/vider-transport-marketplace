@@ -79,7 +79,8 @@ router.get('/overview/metrics', async (req: Request, res: Response) => {
       system: {
         uptime: 99.8,
         responseTime: 245,
-        averageRating: 4.2
+        averageRating: 4.2,
+        activeConnections: 1247
       },
       range: range,
       lastUpdated: new Date().toISOString()
