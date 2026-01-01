@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from './env';
 
-// Create a singleton instance of PrismaClient with connection pooling
+// Create a singleton instance of PrismaClient with proper configuration
 const prisma = new PrismaClient({
   log: config.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   datasources: {
@@ -11,24 +11,8 @@ const prisma = new PrismaClient({
   },
 });
 
-// Add connection pooling configuration to prevent memory issues
-const connectionString = new URL(config.DATABASE_URL);
-connectionString.searchParams.set('connection_limit', '10');
-connectionString.searchParams.set('pool_timeout', '20');
-connectionString.searchParams.set('connect_timeout', '60');
-
-// Create optimized client for production
-const optimizedPrisma = new PrismaClient({
-  log: config.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: connectionString.toString(),
-    },
-  },
-});
-
 export function getDatabaseClient(): PrismaClient {
-  return config.NODE_ENV === 'production' ? optimizedPrisma : prisma;
+  return prisma;
 }
 
 export async function connectDatabase(): Promise<void> {
