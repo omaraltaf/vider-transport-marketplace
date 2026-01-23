@@ -1,0 +1,176 @@
+generator client {
+  provider   = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+model User {
+  id            String   @id // Firebase UID
+  email         String   @unique
+  firstName     String
+  lastName      String
+  phone         String?
+  role          Role     @default(COMPANY_USER)
+  companyId     String?
+  company       Company? @relation(fields: [companyId], references: [id])
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([email])
+  @@index([companyId])
+}
+
+model Company {
+  id                 String          @id @default(uuid())
+  name               String
+  organizationNumber String          @unique
+  businessAddress    String
+  city               String
+  postalCode         String
+  fylke              String
+  kommune            String
+  vatRegistered      Boolean         @default(false)
+  status             CompanyStatus   @default(PENDING_VERIFICATION)
+  verified           Boolean         @default(false)
+  verifiedAt         DateTime?
+  users              User[]
+  vehicles           Vehicle[]
+  shipments          Shipment[]
+  bookingsRequested  Booking[]       @relation("RequestedBookings")
+  bookingsProvided   Booking[]       @relation("ProvidedBookings")
+  reviewsReceived    Review[]        @relation("ReviewsReceived")
+  reviewsGiven       Review[]        @relation("ReviewsGiven")
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  @@index([organizationNumber])
+  @@index([status])
+}
+
+model Vehicle {
+  id                 String        @id @default(uuid())
+  companyId          String
+  company            Company       @relation(fields: [companyId], references: [id])
+  type               VehicleType
+  make               String
+  model              String
+  year               Int?
+  registrationNumber String        @unique
+  capacityKg         Float
+  volumeM3           Float?
+  hourlyRate         Float?
+  dailyRate          Float?
+  status             VehicleStatus @default(AVAILABLE)
+  imageUrl           String?
+  bookings           Booking[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([companyId])
+  @@index([type])
+  @@index([status])
+}
+
+model Shipment {
+  id               String         @id @default(uuid())
+  shipperId        String
+  shipper          Company        @relation(fields: [shipperId], references: [id])
+  title            String
+  description      String?
+  pickupLocation   String
+  deliveryLocation String
+  pickupDate       DateTime
+  deliveryDate     DateTime?
+  status           ShipmentStatus @default(OPEN)
+  budget           Float?
+  bookings         Booking[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([shipperId])
+  @@index([status])
+}
+
+model Booking {
+  id            String        @id @default(uuid())
+  requesterId   String
+  requester     Company       @relation("RequestedBookings", fields: [requesterId], references: [id])
+  providerId    String
+  provider      Company       @relation("ProvidedBookings", fields: [providerId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle?      @relation(fields: [vehicleId], references: [id])
+  shipmentId    String?
+  shipment      Shipment?     @relation(fields: [shipmentId], references: [id])
+  startDate     DateTime
+  endDate       DateTime?
+  totalAmount   Float
+  status        BookingStatus @default(PENDING)
+  review        Review?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([requesterId])
+  @@index([providerId])
+  @@index([status])
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  reviewerId    String
+  reviewer      Company  @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId    String
+  reviewee      Company  @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating        Int
+  comment       String?
+  createdAt     DateTime @default(now())
+
+  @@index([revieweeId])
+}
+
+enum Role {
+  PLATFORM_ADMIN
+  COMPANY_ADMIN
+  COMPANY_USER
+}
+
+enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum VehicleType {
+  TRUCK
+  VAN
+  TRAILER
+  SPECIAL
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+  INACTIVE
+}
+
+enum ShipmentStatus {
+  OPEN
+  BOOKED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
