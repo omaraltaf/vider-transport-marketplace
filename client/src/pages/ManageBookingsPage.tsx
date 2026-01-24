@@ -36,7 +36,7 @@ export const ManageBookingsPage: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
             <header>
                 <h1 className="text-4xl font-bold tracking-tight">Manage <span className="text-primary italic">Bookings</span></h1>
                 <p className="text-slate-400 font-medium mt-1">Review and manage your incoming and outgoing requests</p>

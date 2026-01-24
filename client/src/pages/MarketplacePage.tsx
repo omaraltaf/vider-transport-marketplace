@@ -37,7 +37,7 @@ export const MarketplacePage: React.FC = () => {
     });
 
     return (
-        <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
             <header className="space-y-4">
                 <div className="flex justify-between items-end">
                     <div>

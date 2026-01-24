@@ -7,6 +7,7 @@ import { FleetPage } from './pages/FleetPage';
 import { ManageBookingsPage } from './pages/ManageBookingsPage';
 import { UsersPage } from './pages/UsersPage';
 import { useAuth } from './contexts/AuthContext';
+import { DashboardLayout } from './components/layout/DashboardLayout';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, requireAdmin = false }: { children: React.ReactNode, requireAdmin?: boolean }) => {
@@ -45,7 +46,9 @@ function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DashboardLayout>
+              <DashboardPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -53,7 +56,9 @@ function App() {
         path="/marketplace"
         element={
           <ProtectedRoute>
-            <MarketplacePage />
+            <DashboardLayout>
+              <MarketplacePage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -61,7 +66,9 @@ function App() {
         path="/fleet"
         element={
           <ProtectedRoute>
-            <FleetPage />
+            <DashboardLayout>
+              <FleetPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -69,7 +76,9 @@ function App() {
         path="/bookings"
         element={
           <ProtectedRoute>
-            <ManageBookingsPage />
+            <DashboardLayout>
+              <ManageBookingsPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />
@@ -77,7 +86,9 @@ function App() {
         path="/admin/users"
         element={
           <ProtectedRoute requireAdmin>
-            <UsersPage />
+            <DashboardLayout>
+              <UsersPage />
+            </DashboardLayout>
           </ProtectedRoute>
         }
       />

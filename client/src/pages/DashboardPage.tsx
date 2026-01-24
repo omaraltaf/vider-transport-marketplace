@@ -1,11 +1,8 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { auth } from '../config/firebase';
-import { motion } from 'framer-motion';
+import { Truck, Package, ChevronRight, Activity, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Truck, Package, LayoutDashboard, LogOut, ChevronRight, Activity, TrendingUp } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { config } from '../config/config';
@@ -28,27 +25,11 @@ export const DashboardPage: React.FC = () => {
     const totalRevenue = bookings?.reduce((acc: number, b: any) => b.status === 'COMPLETED' ? acc + b.totalAmount : acc, 0) || 0;
 
     return (
-        <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
-            <header className="flex justify-between items-center bg-slate-900/50 backdrop-blur-md p-6 rounded-3xl border border-white/5">
-                <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-4"
-                >
-                    <div className="bg-primary/20 p-3 rounded-2xl text-primary">
-                        <LayoutDashboard size={28} />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Vider <span className="text-primary italic">Dashboard</span></h1>
-                        <p className="text-slate-400 font-medium">Welcome back, {user?.displayName || user?.email}</p>
-                    </div>
-                </motion.div>
-
-                <Button variant="outline" onClick={() => auth.signOut()} className="border-white/10 hover:bg-white/5 gap-2">
-                    <LogOut size={18} />
-                    Sign Out
-                </Button>
-            </header>
+        <div className="space-y-8">
+            <div className="flex flex-col gap-1">
+                <h1 className="text-4xl font-bold tracking-tight">Overview</h1>
+                <p className="text-slate-400 font-medium">Welcome back, {user?.displayName || user?.email}</p>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="p-6 space-y-4" hoverable>

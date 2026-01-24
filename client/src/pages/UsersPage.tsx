@@ -3,7 +3,7 @@ import { UserManagementPanel } from '../components/features/platform-admin/UserM
 
 export const UsersPage: React.FC = () => {
     return (
-        <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
             <UserManagementPanel />
         </div>
     );

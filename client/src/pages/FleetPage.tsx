@@ -41,7 +41,7 @@ export const FleetPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="space-y-8">
             <header className="flex justify-between items-end">
                 <div>
                     <h1 className="text-4xl font-bold tracking-tight">My <span className="text-primary italic">Fleet</span></h1>
