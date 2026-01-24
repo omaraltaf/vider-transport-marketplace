@@ -109,7 +109,7 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
     try {
         // Ensure the vehicle belongs to the user's company
         const existingVehicle = await prisma.vehicle.findFirst({
-            where: { id, companyId: req.user.companyId },
+            where: { id: id as string, companyId: req.user.companyId as string },
         });
 
         if (!existingVehicle) {
@@ -117,7 +117,7 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
         }
 
         const updatedVehicle = await prisma.vehicle.update({
-            where: { id },
+            where: { id: id as string },
             data: updateData,
         });
 

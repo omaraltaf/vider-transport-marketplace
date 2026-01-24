@@ -118,7 +118,7 @@ router.patch('/users/:id/status', authenticate, requirePlatformAdmin, async (req
         }
 
         const user = await prisma.user.update({
-            where: { id },
+            where: { id: id as string },
             data: updateData,
         });
 

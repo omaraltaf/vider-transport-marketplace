@@ -84,7 +84,7 @@ router.patch('/:id/status', authenticate, async (req: AuthenticatedRequest, res:
 
     try {
         const booking = await prisma.booking.findUnique({
-            where: { id },
+            where: { id: id as string },
         });
 
         if (!booking) {
@@ -98,7 +98,7 @@ router.patch('/:id/status', authenticate, async (req: AuthenticatedRequest, res:
 
         const updatedBooking = await prisma.$transaction(async (tx) => {
             const updated = await tx.booking.update({
-                where: { id },
+                where: { id: id as string },
                 data: { status: status as BookingStatus },
             });
 
