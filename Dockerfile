@@ -1,64 +1,42 @@
-# Production Dockerfile for Vider Transport Marketplace
+# Production Dockerfile for Vider 2.0 Backend
+FROM node:20-alpine AS builder
 
-FROM node:20-alpine AS base
+WORKDIR /app
 
-# Install OpenSSL for Prisma
+# Install build dependencies
 RUN apk add --no-cache openssl
 
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Copy root files for context
+COPY package.json package-lock.json ./
+COPY server/package.json ./server/
+COPY server/prisma ./server/prisma/
+
+# Install dependencies for both root and server
+RUN npm install
+RUN cd server && npm install
+
+# Copy server source
+COPY server/ ./server/
+
+# Generate Prisma client and build
+RUN cd server && npx prisma generate && npm run build
+
+# Runner stage
+FROM node:20-alpine AS runner
+
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production
-
-# Install all dependencies for building (including devDependencies)
-FROM base AS build-deps
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm ci
-
-# Build the application
-FROM base AS builder
-WORKDIR /app
-COPY --from=build-deps /app/node_modules ./node_modules
-COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build the application
-RUN npm run build:production
-
-# Debug: List dist contents
-RUN echo "=== Checking dist/ contents ===" && ls -la dist/ && echo "=== Checking dist/app.js ===" && ls -la dist/app.js && echo "=== Checking dist/index.js ===" && ls -la dist/index.js
-
-# Production image
-FROM base AS runner
-WORKDIR /app
+# Install runtime dependencies for Prisma
+RUN apk add --no-cache openssl
 
 ENV NODE_ENV=production
+ENV PORT=8080
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Copy built app and production dependencies
+COPY --from=builder /app/server/dist ./dist
+COPY --from=builder /app/server/node_modules ./node_modules
+COPY --from=builder /app/server/package.json ./package.json
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
+EXPOSE 8080
 
-# Create uploads and logs directories with proper permissions
-RUN mkdir -p uploads logs && chown nextjs:nodejs uploads logs
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT=3000
-
-# Start the application using compiled JavaScript
-CMD ["npm", "run", "start:compiled"]
+CMD ["node", "dist/server.js"]
