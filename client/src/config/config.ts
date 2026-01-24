@@ -28,6 +28,11 @@ export const config = {
             base: `${API_BASE_URL}/bookings`,
             myBookings: `${API_BASE_URL}/bookings/my-bookings`,
         },
+        platformAdmin: {
+            users: `${API_BASE_URL}/platform-admin/users`,
+            stats: `${API_BASE_URL}/platform-admin/users/stats`,
+            bulkStatus: `${API_BASE_URL}/platform-admin/users/bulk-status`,
+        },
     },
     version: '2.0.0-alpha',
 };

@@ -1,13 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { adminAuth } from '../config/firebase.js';
 import prisma from '../config/database.js';
+import { Role } from '@prisma/client';
 
 export interface AuthenticatedRequest extends Request {
     user?: {
         id: string;
         email: string;
         companyId: string | null;
-        role: string;
+        role: Role;
     };
 }
 
@@ -38,3 +39,19 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
         res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
+
+export const requireRole = (role: Role) => {
+    return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        if (!req.user) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        if (req.user.role !== role) {
+            return res.status(403).json({ message: 'Insufficient permissions' });
+        }
+
+        next();
+    };
+};
+
+export const requirePlatformAdmin = requireRole(Role.PLATFORM_ADMIN);

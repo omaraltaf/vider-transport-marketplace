@@ -5,6 +5,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { FleetPage } from './pages/FleetPage';
 import { ManageBookingsPage } from './pages/ManageBookingsPage';
+import { UsersPage } from './pages/UsersPage';
 import { useAuth } from './contexts/AuthContext';
 
 // Protected Route Component
@@ -69,6 +70,14 @@ function App() {
         element={
           <ProtectedRoute>
             <ManageBookingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <ProtectedRoute requireAdmin>
+            <UsersPage />
           </ProtectedRoute>
         }
       />

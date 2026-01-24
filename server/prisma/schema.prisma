@@ -16,12 +16,17 @@ model User {
   role          Role     @default(COMPANY_USER)
   companyId     String?
   company       Company? @relation(fields: [companyId], references: [id])
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  emailVerified    Boolean    @default(false)
+  status           UserStatus @default(PENDING_VERIFICATION)
+  suspendedAt      DateTime?
+  suspendedBy      String?
+  suspensionReason String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([email])
   @@index([companyId])
+  @@index([status])
 }
 
 model Company {
@@ -140,6 +145,12 @@ enum Role {
 }
 
 enum CompanyStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum UserStatus {
   ACTIVE
   SUSPENDED
   PENDING_VERIFICATION
