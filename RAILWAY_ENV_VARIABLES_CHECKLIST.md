@@ -96,7 +96,22 @@ MAX_LOGIN_ATTEMPTS=5
 PASSWORD_MIN_LENGTH=8
 ```
 
-### Step 3: Email Configuration (Optional but Recommended)
+### Step 3: Firebase Configuration (Required for Admin/Auth)
+**Get these from your Firebase Service Account JSON file:**
+
+```
+FIREBASE_PROJECT_ID=your-project-id
+```
+
+```
+FIREBASE_CLIENT_EMAIL=your-service-account-email
+```
+
+```
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
+```
+
+### Step 4: Email Configuration (Optional but Recommended)
 
 **For Gmail (recommended for testing):**
 
@@ -129,7 +144,8 @@ FROM_EMAIL=noreply@vider.no
 - [ ] PostgreSQL database service added
 - [ ] Redis cache service added
 - [ ] All JWT variables added (4 variables)
-- [ ] Application config added (12 variables)  
+- [ ] Application config added (12 variables)
+- [ ] Firebase config added (3 variables)
 - [ ] Email config added (6 variables) - Optional
 - [ ] Redeploy triggered
 - [ ] Check deployment logs

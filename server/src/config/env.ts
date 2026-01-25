@@ -20,6 +20,14 @@ const envSchema = z.object({
     PLATFORM_COMMISSION_RATE: z.string().default('10').transform(Number),
     PLATFORM_TAX_RATE: z.string().default('25').transform(Number),
     DEFAULT_CURRENCY: z.string().default('NOK'),
+}).refine((data) => {
+    if (data.NODE_ENV === 'production') {
+        return !!data.FIREBASE_PROJECT_ID && !!data.FIREBASE_CLIENT_EMAIL && !!data.FIREBASE_PRIVATE_KEY;
+    }
+    return true;
+}, {
+    message: "Firebase configuration (PROJECT_ID, CLIENT_EMAIL, PRIVATE_KEY) is required in production",
+    path: ["FIREBASE_PROJECT_ID"]
 });
 
 const _env = envSchema.safeParse(process.env);
