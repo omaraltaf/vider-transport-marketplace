@@ -69,7 +69,14 @@ export const FleetPage: React.FC = () => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-        const data = Object.fromEntries(formData.entries());
+        const data: any = Object.fromEntries(formData.entries());
+
+        // Ensure numeric fields are numbers
+        if (data.capacityKg) data.capacityKg = parseFloat(data.capacityKg);
+        if (data.dailyRate) data.dailyRate = parseFloat(data.dailyRate);
+        if (data.hourlyRate) data.hourlyRate = parseFloat(data.hourlyRate);
+        if (data.volumeM3) data.volumeM3 = parseFloat(data.volumeM3);
+        if (data.year) data.year = parseInt(data.year);
 
         if (editingVehicle) {
             updateVehicleMutation.mutate({ id: editingVehicle.id, ...data });
