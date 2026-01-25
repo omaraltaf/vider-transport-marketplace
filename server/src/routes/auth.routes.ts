@@ -3,7 +3,13 @@ import { adminAuth } from '../config/firebase.js';
 import { Role } from '@prisma/client';
 import prisma from '../config/database.js';
 
+import { authenticate, AuthenticatedRequest } from '../middleware/auth.middleware.js';
+
 const router = Router();
+
+router.get('/me', authenticate, (req: AuthenticatedRequest, res: Response) => {
+    res.json(req.user);
+});
 
 router.post('/register', async (req: Request, res: Response) => {
     const {

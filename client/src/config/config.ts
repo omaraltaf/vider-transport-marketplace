@@ -16,6 +16,7 @@ export const config = {
         auth: {
             register: `${API_BASE_URL}/auth/register`,
             login: `${API_BASE_URL}/auth/login`,
+            me: `${API_BASE_URL}/auth/me`,
         },
         vehicles: {
             base: `${API_BASE_URL}/vehicles`,
