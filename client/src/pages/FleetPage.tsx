@@ -50,8 +50,14 @@ export const FleetPage: React.FC = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['my-fleet'] });
             closeForm();
+        },
+        onError: (error) => {
+            console.error("Error updating vehicle:", error);
         }
     });
+
+    const mutationError = (addVehicleMutation.error as any)?.response?.data?.message ||
+        (updateVehicleMutation.error as any)?.response?.data?.message;
 
     const openAddForm = () => {
         setEditingVehicle(null);
@@ -66,6 +72,8 @@ export const FleetPage: React.FC = () => {
     const closeForm = () => {
         setIsFormOpen(false);
         setEditingVehicle(null);
+        addVehicleMutation.reset();
+        updateVehicleMutation.reset();
     };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -79,7 +87,11 @@ export const FleetPage: React.FC = () => {
             'dailyKmsAllowed', 'additionalPricePerKm', 'priceWithDriver', 'priceWithoutDriver'
         ];
         numericFields.forEach(field => {
-            if (data[field]) data[field] = parseFloat(data[field]);
+            if (data[field] !== undefined && data[field] !== '') {
+                data[field] = parseFloat(data[field]);
+            } else {
+                delete data[field];
+            }
         });
 
         data.rentWithDriver = data.rentWithDriver === 'on';
@@ -179,6 +191,17 @@ export const FleetPage: React.FC = () => {
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     />
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-400">Base Daily Rate (NOK)</label>
+                                    <input
+                                        name="dailyRate"
+                                        type="number"
+                                        required
+                                        defaultValue={editingVehicle?.dailyRate}
+                                        placeholder="e.g. 5000"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                    />
+                                </div>
 
                                 <div className="lg:col-span-3 border-t border-white/5 my-4 pt-4">
                                     <h3 className="text-sm font-bold uppercase tracking-wider text-primary mb-4">Location & Logistics</h3>
@@ -260,6 +283,13 @@ export const FleetPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {mutationError && (
+                                    <div className="lg:col-span-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm flex items-center gap-3">
+                                        <X size={18} />
+                                        {mutationError}
+                                    </div>
+                                )}
 
                                 <div className="lg:col-span-3 flex justify-end gap-4 mt-4">
                                     <Button type="button" variant="outline" onClick={closeForm}>Cancel</Button>
