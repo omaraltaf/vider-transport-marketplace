@@ -9,10 +9,23 @@ if (!getApps().length) {
         if (env.NODE_ENV === 'development' && !env.FIREBASE_PROJECT_ID) {
             console.warn('⚠️ Firebase Admin not initialized: Missing environment variables.');
         } else {
+            // Robust private key parsing
+            let privateKey = env.FIREBASE_PRIVATE_KEY;
+
+            if (privateKey) {
+                // Remove wrapping quotes if they exist
+                privateKey = privateKey.trim();
+                if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+                    privateKey = privateKey.slice(1, -1);
+                }
+                // Replace escaped newlines with actual newlines
+                privateKey = privateKey.replace(/\\n/g, '\n');
+            }
+
             const serviceAccount: ServiceAccount = {
                 projectId: env.FIREBASE_PROJECT_ID,
                 clientEmail: env.FIREBASE_CLIENT_EMAIL,
-                privateKey: env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+                privateKey: privateKey,
             };
 
             initializeApp({
