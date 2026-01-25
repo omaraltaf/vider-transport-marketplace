@@ -74,11 +74,15 @@ export const FleetPage: React.FC = () => {
         const data: any = Object.fromEntries(formData.entries());
 
         // Ensure numeric fields are numbers
-        if (data.capacityKg) data.capacityKg = parseFloat(data.capacityKg);
-        if (data.dailyRate) data.dailyRate = parseFloat(data.dailyRate);
-        if (data.hourlyRate) data.hourlyRate = parseFloat(data.hourlyRate);
-        if (data.volumeM3) data.volumeM3 = parseFloat(data.volumeM3);
-        if (data.year) data.year = parseInt(data.year);
+        const numericFields = [
+            'capacityKg', 'dailyRate', 'hourlyRate', 'volumeM3', 'year',
+            'dailyKmsAllowed', 'additionalPricePerKm', 'priceWithDriver', 'priceWithoutDriver'
+        ];
+        numericFields.forEach(field => {
+            if (data[field]) data[field] = parseFloat(data[field]);
+        });
+
+        data.rentWithDriver = data.rentWithDriver === 'on';
 
         if (editingVehicle) {
             updateVehicleMutation.mutate({ id: editingVehicle.id, ...data });
@@ -126,7 +130,7 @@ export const FleetPage: React.FC = () => {
                                         name="type"
                                         required
                                         defaultValue={editingVehicle?.type || "TRUCK"}
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     >
                                         <option value="TRUCK">Truck</option>
                                         <option value="VAN">Van</option>
@@ -141,7 +145,7 @@ export const FleetPage: React.FC = () => {
                                         required
                                         defaultValue={editingVehicle?.make}
                                         placeholder="e.g. Volvo"
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -151,7 +155,7 @@ export const FleetPage: React.FC = () => {
                                         required
                                         defaultValue={editingVehicle?.model}
                                         placeholder="e.g. FH16"
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -161,7 +165,7 @@ export const FleetPage: React.FC = () => {
                                         required
                                         defaultValue={editingVehicle?.registrationNumber}
                                         placeholder="e.g. AB 12345"
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -172,19 +176,89 @@ export const FleetPage: React.FC = () => {
                                         required
                                         defaultValue={editingVehicle?.capacityKg}
                                         placeholder="e.g. 24000"
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Daily Rate (NOK)</label>
-                                    <input
-                                        name="dailyRate"
-                                        type="number"
-                                        required
-                                        defaultValue={editingVehicle?.dailyRate}
-                                        placeholder="e.g. 5000"
-                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
-                                    />
+
+                                <div className="lg:col-span-3 border-t border-white/5 my-4 pt-4">
+                                    <h3 className="text-sm font-bold uppercase tracking-wider text-primary mb-4">Location & Logistics</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Fylke</label>
+                                            <input
+                                                name="fylke"
+                                                defaultValue={editingVehicle?.fylke}
+                                                placeholder="e.g. Viken"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Kommune</label>
+                                            <input
+                                                name="kommune"
+                                                defaultValue={editingVehicle?.kommune}
+                                                placeholder="e.g. Asker"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Daily KMs Allowed</label>
+                                            <input
+                                                name="dailyKmsAllowed"
+                                                type="number"
+                                                defaultValue={editingVehicle?.dailyKmsAllowed}
+                                                placeholder="e.g. 300"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Price per Extra KM</label>
+                                            <input
+                                                name="additionalPricePerKm"
+                                                type="number"
+                                                defaultValue={editingVehicle?.additionalPricePerKm}
+                                                placeholder="e.g. 15"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="lg:col-span-3 border-t border-white/5 my-4 pt-4">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <h3 className="text-sm font-bold uppercase tracking-wider text-primary">Driver Options</h3>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                name="rentWithDriver"
+                                                defaultChecked={editingVehicle?.rentWithDriver}
+                                                className="w-4 h-4 rounded border-white/10 bg-slate-900 text-primary focus:ring-primary"
+                                            />
+                                            <span className="text-sm text-slate-400">Available with driver</span>
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Price with Driver (Daily)</label>
+                                            <input
+                                                name="priceWithDriver"
+                                                type="number"
+                                                defaultValue={editingVehicle?.priceWithDriver}
+                                                placeholder="e.g. 8000"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-slate-400">Price without Driver (Daily)</label>
+                                            <input
+                                                name="priceWithoutDriver"
+                                                type="number"
+                                                defaultValue={editingVehicle?.priceWithoutDriver}
+                                                placeholder="e.g. 5000"
+                                                className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="lg:col-span-3 flex justify-end gap-4 mt-4">

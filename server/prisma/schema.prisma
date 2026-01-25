@@ -69,6 +69,13 @@ model Vehicle {
   volumeM3           Float?
   hourlyRate         Float?
   dailyRate          Float?
+  fylke              String?
+  kommune            String?
+  dailyKmsAllowed    Float?
+  additionalPricePerKm Float?
+  rentWithDriver     Boolean       @default(false)
+  priceWithDriver    Float?
+  priceWithoutDriver Float?
   status             VehicleStatus @default(AVAILABLE)
   imageUrl           String?
   bookings           Booking[]
@@ -127,6 +134,7 @@ model Booking {
   startDate     DateTime
   endDate       DateTime?
   totalAmount   Float
+  withDriver    Boolean @default(false)
   status        BookingStatus @default(PENDING)
   review        Review?
   createdAt     DateTime      @default(now())

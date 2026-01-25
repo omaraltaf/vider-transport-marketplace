@@ -5,13 +5,10 @@ import { VehicleType, VehicleStatus } from '@prisma/client';
 
 const router = Router();
 
-// 1. Get all available vehicles (Marketplace)
+// 1. Get all vehicles (Marketplace)
 router.get('/', async (req: AuthenticatedRequest, res: Response) => {
     try {
         const vehicles = await prisma.vehicle.findMany({
-            where: {
-                status: VehicleStatus.AVAILABLE,
-            },
             include: {
                 company: {
                     select: {
@@ -69,13 +66,20 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         volumeM3,
         hourlyRate,
         dailyRate,
+        fylke,
+        kommune,
+        dailyKmsAllowed,
+        additionalPricePerKm,
+        rentWithDriver,
+        priceWithDriver,
+        priceWithoutDriver,
     } = req.body;
 
     try {
         const vehicle = await prisma.vehicle.create({
             data: {
                 companyId: req.user.companyId,
-                type: type as VehicleType,
+                type: type as any,
                 make,
                 model,
                 year: year ? parseInt(year) : undefined,
@@ -84,6 +88,13 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
                 volumeM3: volumeM3 ? parseFloat(volumeM3) : undefined,
                 hourlyRate: hourlyRate ? parseFloat(hourlyRate) : undefined,
                 dailyRate: dailyRate ? parseFloat(dailyRate) : undefined,
+                fylke,
+                kommune,
+                dailyKmsAllowed: dailyKmsAllowed ? parseFloat(dailyKmsAllowed) : undefined,
+                additionalPricePerKm: additionalPricePerKm ? parseFloat(additionalPricePerKm) : undefined,
+                rentWithDriver: !!rentWithDriver,
+                priceWithDriver: priceWithDriver ? parseFloat(priceWithDriver) : undefined,
+                priceWithoutDriver: priceWithoutDriver ? parseFloat(priceWithoutDriver) : undefined,
                 status: VehicleStatus.AVAILABLE,
             },
         });
@@ -93,6 +104,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         if (error.code === 'P2002') {
             return res.status(400).json({ message: 'Registration number already exists' });
         }
+        console.error('Create Vehicle Error:', error);
         res.status(500).json({ message: 'Error creating vehicle' });
     }
 });
@@ -123,6 +135,11 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
         if (updateData.hourlyRate) updateData.hourlyRate = parseFloat(updateData.hourlyRate);
         if (updateData.volumeM3) updateData.volumeM3 = parseFloat(updateData.volumeM3);
         if (updateData.year) updateData.year = parseInt(updateData.year);
+        if (updateData.dailyKmsAllowed) updateData.dailyKmsAllowed = parseFloat(updateData.dailyKmsAllowed);
+        if (updateData.additionalPricePerKm) updateData.additionalPricePerKm = parseFloat(updateData.additionalPricePerKm);
+        if (updateData.priceWithDriver) updateData.priceWithDriver = parseFloat(updateData.priceWithDriver);
+        if (updateData.priceWithoutDriver) updateData.priceWithoutDriver = parseFloat(updateData.priceWithoutDriver);
+        if (updateData.rentWithDriver !== undefined) updateData.rentWithDriver = !!updateData.rentWithDriver;
 
         const updatedVehicle = await prisma.vehicle.update({
             where: { id: id as string },

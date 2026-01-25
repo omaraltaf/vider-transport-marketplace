@@ -18,6 +18,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         startDate,
         endDate,
         totalAmount,
+        withDriver,
     } = req.body;
 
     try {
@@ -70,6 +71,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
                 startDate: start,
                 endDate: endDate ? end : undefined,
                 totalAmount: parseFloat(totalAmount),
+                withDriver: !!withDriver,
                 status: BookingStatus.PENDING,
             },
         });

@@ -5,7 +5,7 @@ import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, Package, MapPin, Calendar } from 'lucide-react';
+import { Truck, Package, MapPin, Calendar, Shield } from 'lucide-react';
 import { BookingModal } from '../components/BookingModal';
 
 export const MarketplacePage: React.FC = () => {
@@ -99,7 +99,8 @@ export const MarketplacePage: React.FC = () => {
                                         <div>
                                             <h3 className="text-xl font-bold">{vehicle.make} {vehicle.model}</h3>
                                             <p className="text-slate-400 text-sm flex items-center gap-1">
-                                                <MapPin size={14} /> {vehicle.company.city} • {vehicle.company.name}
+                                                <MapPin size={14} />
+                                                {vehicle.kommune ? `${vehicle.kommune}, ` : ''}{vehicle.fylke || vehicle.company.city}
                                             </p>
                                         </div>
 
@@ -109,17 +110,29 @@ export const MarketplacePage: React.FC = () => {
                                                 <p className="font-semibold">{vehicle.capacityKg} kg</p>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Volume</p>
-                                                <p className="font-semibold">{vehicle.volumeM3 || '-'} m³</p>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Mileage Limit</p>
+                                                <p className="font-semibold">{vehicle.dailyKmsAllowed || 'Unlimited'} km/day</p>
                                             </div>
                                         </div>
 
+                                        {vehicle.rentWithDriver && (
+                                            <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 flex justify-between items-center">
+                                                <span className="text-xs font-bold text-primary flex items-center gap-2">
+                                                    <Shield size={14} /> Driver Available
+                                                </span>
+                                                <span className="text-xs text-slate-400">+{vehicle.additionalPricePerKm || 0} NOK/extra KM</span>
+                                            </div>
+                                        )}
+
                                         <div className="flex justify-between items-center">
                                             <div>
-                                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Daily Rate</p>
-                                                <p className="text-xl font-bold text-primary">{vehicle.dailyRate || 'Ask'} <span className="text-sm font-normal text-slate-400">NOK</span></p>
+                                                <p className="text-[10px] text-slate-500 uppercase tracking-wider">Start Price</p>
+                                                <p className="text-xl font-bold text-primary">
+                                                    {vehicle.priceWithoutDriver || vehicle.dailyRate || 'Ask'}
+                                                    <span className="text-sm font-normal text-slate-400"> NOK/day</span>
+                                                </p>
                                             </div>
-                                            <Button size="sm" onClick={() => openBooking(vehicle)}>Request Booking</Button>
+                                            <Button size="sm" onClick={() => openBooking(vehicle)}>Book Now</Button>
                                         </div>
                                     </div>
                                 </Card>

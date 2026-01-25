@@ -19,7 +19,23 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
     const queryClient = useQueryClient();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [withDriver, setWithDriver] = useState(false);
     const [success, setSuccess] = useState(false);
+
+    const calculateDays = () => {
+        if (!startDate || !endDate) return 1;
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end.getTime() - start.getTime());
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return diffDays > 0 ? diffDays : 1;
+    };
+
+    const days = calculateDays();
+    const basePrice = type === 'vehicle'
+        ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0))
+        : (item.budget || 0);
+    const totalAmount = basePrice * days;
 
     const bookingMutation = useMutation({
         mutationFn: async (bookingData: any) => {
@@ -36,6 +52,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
                 setSuccess(false);
                 setStartDate('');
                 setEndDate('');
+                setWithDriver(false);
             }, 2000);
         }
     });
@@ -49,7 +66,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
             shipmentId: type === 'shipment' ? item.id : undefined,
             startDate: new Date(startDate),
             endDate: endDate ? new Date(endDate) : undefined,
-            totalAmount: type === 'vehicle' ? (item.dailyRate || 0) : (item.budget || 0),
+            totalAmount,
+            withDriver: type === 'vehicle' ? withDriver : undefined,
         };
 
         bookingMutation.mutate(bookingData);
@@ -84,6 +102,24 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Listing Details</p>
                             <h4 className="font-bold text-lg">{type === 'vehicle' ? `${item.make} ${item.model}` : item.title}</h4>
                             <p className="text-sm text-slate-400">{type === 'vehicle' ? item.company.name : item.shipper.name}</p>
+
+                            {type === 'vehicle' && item.rentWithDriver && (
+                                <div className="mt-4 p-3 bg-slate-900 rounded-xl border border-white/5 flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <p className="text-xs font-bold text-white">Hire with Driver?</p>
+                                        <p className="text-[10px] text-slate-500">Includes professional transport operator</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={withDriver}
+                                            onChange={(e) => setWithDriver(e.target.checked)}
+                                        />
+                                        <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                    </label>
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -124,8 +160,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
 
                         <div className="pt-4 flex flex-col space-y-3">
                             <div className="flex justify-between items-center text-lg font-bold">
-                                <span>Estimated Total:</span>
-                                <span className="text-primary">{type === 'vehicle' ? (item.dailyRate || 0) : (item.budget || 0)} NOK</span>
+                                <span>Estimated Total ({days} {days === 1 ? 'day' : 'days'}):</span>
+                                <span className="text-primary">{totalAmount.toLocaleString()} NOK</span>
                             </div>
                             <Button
                                 type="submit"
