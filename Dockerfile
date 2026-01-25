@@ -32,11 +32,12 @@ RUN apk add --no-cache openssl
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy built app, prisma schema/migrations and production dependencies
+# Copy built app, prisma schema/migrations, config and production dependencies
 COPY --from=builder /app/server/dist ./dist
 COPY --from=builder /app/server/node_modules ./node_modules
 COPY --from=builder /app/server/package.json ./package.json
 COPY --from=builder /app/server/prisma ./prisma
+COPY --from=builder /app/server/prisma.config.ts ./prisma.config.ts
 
 EXPOSE 8080
 
