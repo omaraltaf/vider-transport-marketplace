@@ -5,7 +5,7 @@ import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 // import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Clock, Package, Truck, Calendar, ArrowRightLeft, Inbox, Send } from 'lucide-react';
+import { Check, X, Package, Truck, Calendar, Inbox, Send } from 'lucide-react';
 
 export const ManageBookingsPage: React.FC = () => {
     const queryClient = useQueryClient();
