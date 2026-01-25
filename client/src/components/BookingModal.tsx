@@ -31,14 +31,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
         return diffDays > 0 ? diffDays : 1;
     };
 
-    if (!item) return null;
-
-    const days = calculateDays();
-    const basePrice = type === 'vehicle'
-        ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0))
-        : (item.budget || 0);
-    const totalAmount = basePrice * days;
-
     const bookingMutation = useMutation({
         mutationFn: async (bookingData: any) => {
             const token = await (await import('../config/firebase')).auth.currentUser?.getIdToken();
@@ -58,6 +50,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
             }, 2000);
         }
     });
+
+    if (!item) return null;
+
+    const days = calculateDays();
+    const basePrice = type === 'vehicle'
+        ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0))
+        : (item.budget || 0);
+    const totalAmount = basePrice * days;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
