@@ -147,7 +147,7 @@ router.post('/:id/block-dates', authenticate, async (req: AuthenticatedRequest, 
 
         const blockedPeriod = await prisma.vehicleBlockedPeriod.create({
             data: {
-                vehicleId: id,
+                vehicleId: id as string,
                 startDate: new Date(startDate),
                 endDate: new Date(endDate),
                 reason,
