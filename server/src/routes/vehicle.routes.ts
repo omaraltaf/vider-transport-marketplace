@@ -104,7 +104,7 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
     }
 
     const { id } = req.params;
-    const updateData = req.body;
+    const body = req.body;
 
     try {
         // Ensure the vehicle belongs to the user's company
@@ -115,6 +115,14 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
         if (!existingVehicle) {
             return res.status(404).json({ message: 'Vehicle not found or unauthorized' });
         }
+
+        // Parse numeric fields for Prisma
+        const updateData: any = { ...body };
+        if (updateData.capacityKg) updateData.capacityKg = parseFloat(updateData.capacityKg);
+        if (updateData.dailyRate) updateData.dailyRate = parseFloat(updateData.dailyRate);
+        if (updateData.hourlyRate) updateData.hourlyRate = parseFloat(updateData.hourlyRate);
+        if (updateData.volumeM3) updateData.volumeM3 = parseFloat(updateData.volumeM3);
+        if (updateData.year) updateData.year = parseInt(updateData.year);
 
         const updatedVehicle = await prisma.vehicle.update({
             where: { id: id as string },
