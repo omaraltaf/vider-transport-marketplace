@@ -21,14 +21,54 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
     } = req.body;
 
     try {
+        // Validation: Cannot book your own fleet/shipments
+        if (req.user.companyId === providerId) {
+            return res.status(400).json({ message: 'You cannot book your own fleet vehicles or shipments' });
+        }
+
+        const start = new Date(startDate);
+        const end = endDate ? new Date(endDate) : start;
+
+        // Validation: Overlap check for vehicles
+        if (vehicleId) {
+            // Check for existing ACCEPTED bookings during this period
+            const existingBooking = await prisma.booking.findFirst({
+                where: {
+                    vehicleId,
+                    status: BookingStatus.ACCEPTED,
+                    OR: [
+                        { startDate: { lte: end }, endDate: { gte: start } },
+                    ]
+                }
+            });
+
+            if (existingBooking) {
+                return res.status(400).json({ message: 'Vehicle is already booked for this period' });
+            }
+
+            // Check for manually blocked periods
+            const blockedPeriod = await prisma.vehicleBlockedPeriod.findFirst({
+                where: {
+                    vehicleId,
+                    OR: [
+                        { startDate: { lte: end }, endDate: { gte: start } },
+                    ]
+                }
+            });
+
+            if (blockedPeriod) {
+                return res.status(400).json({ message: `Vehicle is unavailable: ${blockedPeriod.reason || 'Blocked by owner'}` });
+            }
+        }
+
         const booking = await prisma.booking.create({
             data: {
-                requesterId: req.user.companyId,
-                providerId,
-                vehicleId,
-                shipmentId,
-                startDate: new Date(startDate),
-                endDate: endDate ? new Date(endDate) : undefined,
+                requesterId: req.user.companyId as string,
+                providerId: providerId as string,
+                vehicleId: vehicleId as string,
+                shipmentId: shipmentId as string,
+                startDate: start,
+                endDate: endDate ? end : undefined,
                 totalAmount: parseFloat(totalAmount),
                 status: BookingStatus.PENDING,
             },
@@ -36,6 +76,7 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 
         res.status(201).json(booking);
     } catch (error) {
+        console.error('Booking Error:', error);
         res.status(500).json({ message: 'Error creating booking request' });
     }
 });

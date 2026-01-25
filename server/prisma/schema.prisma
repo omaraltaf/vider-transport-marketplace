@@ -72,12 +72,26 @@ model Vehicle {
   status             VehicleStatus @default(AVAILABLE)
   imageUrl           String?
   bookings           Booking[]
+  blockedPeriods     VehicleBlockedPeriod[]
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
   @@index([companyId])
   @@index([type])
   @@index([status])
+}
+
+model VehicleBlockedPeriod {
+  id        String   @id @default(uuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  startDate DateTime
+  endDate   DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([vehicleId])
 }
 
 model Shipment {

@@ -127,4 +127,85 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
     }
 });
 
+// 5. Block dates for a vehicle
+router.post('/:id/block-dates', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user?.companyId) {
+        return res.status(403).json({ message: 'User not associated with a company' });
+    }
+
+    const { id } = req.params;
+    const { startDate, endDate, reason } = req.body;
+
+    try {
+        const vehicle = await prisma.vehicle.findFirst({
+            where: { id: id as string, companyId: req.user.companyId as string },
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ message: 'Vehicle not found or unauthorized' });
+        }
+
+        const blockedPeriod = await prisma.vehicleBlockedPeriod.create({
+            data: {
+                vehicleId: id,
+                startDate: new Date(startDate),
+                endDate: new Date(endDate),
+                reason,
+            },
+        });
+
+        res.status(201).json(blockedPeriod);
+    } catch (error) {
+        res.status(500).json({ message: 'Error blocking vehicle dates' });
+    }
+});
+
+// 6. Get blocked dates for a vehicle
+router.get('/:id/blocked-dates', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    const { id } = req.params;
+
+    try {
+        const blockedPeriods = await prisma.vehicleBlockedPeriod.findMany({
+            where: { vehicleId: id as string },
+            orderBy: { startDate: 'asc' },
+        });
+
+        res.json(blockedPeriods);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching blocked periods' });
+    }
+});
+
+// 7. Delete a blocked period
+router.delete('/blocked-dates/:blockId', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user?.companyId) {
+        return res.status(403).json({ message: 'User not associated with a company' });
+    }
+
+    const { blockId } = req.params;
+
+    try {
+        const blockedPeriod = await prisma.vehicleBlockedPeriod.findUnique({
+            where: { id: blockId as string },
+            include: { vehicle: true },
+        });
+
+        if (!blockedPeriod) {
+            return res.status(404).json({ message: 'Blocked period not found' });
+        }
+
+        if (blockedPeriod.vehicle.companyId !== req.user.companyId) {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        await prisma.vehicleBlockedPeriod.delete({
+            where: { id: blockId as string },
+        });
+
+        res.json({ message: 'Blocked period removed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error removing blocked period' });
+    }
+});
+
 export default router;
