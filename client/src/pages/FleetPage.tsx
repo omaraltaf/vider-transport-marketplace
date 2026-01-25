@@ -8,14 +8,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Truck, Plus, X } from 'lucide-react';
 
 export const FleetPage: React.FC = () => {
-    const [isAdding, setIsAdding] = useState(false);
+    const [isFormOpen, setIsFormOpen] = useState(false);
+    const [editingVehicle, setEditingVehicle] = useState<any>(null);
     const queryClient = useQueryClient();
+
+    const getAuthToken = async () => {
+        return await (await import('../config/firebase')).auth.currentUser?.getIdToken();
+    };
 
     const { data: fleet, isLoading } = useQuery({
         queryKey: ['my-fleet'],
         queryFn: async () => {
             const res = await axios.get(config.api.vehicles.myFleet, {
-                headers: { Authorization: `Bearer ${await (await import('../config/firebase')).auth.currentUser?.getIdToken()}` }
+                headers: { Authorization: `Bearer ${await getAuthToken()}` }
             });
             return res.data;
         }
@@ -24,20 +29,53 @@ export const FleetPage: React.FC = () => {
     const addVehicleMutation = useMutation({
         mutationFn: async (newVehicle: any) => {
             return axios.post(config.api.vehicles.base, newVehicle, {
-                headers: { Authorization: `Bearer ${await (await import('../config/firebase')).auth.currentUser?.getIdToken()}` }
+                headers: { Authorization: `Bearer ${await getAuthToken()}` }
             });
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['my-fleet'] });
-            setIsAdding(false);
+            closeForm();
         }
     });
+
+    const updateVehicleMutation = useMutation({
+        mutationFn: async (updatedData: any) => {
+            const { id, ...data } = updatedData;
+            return axios.patch(`${config.api.vehicles.base}/${id}`, data, {
+                headers: { Authorization: `Bearer ${await getAuthToken()}` }
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['my-fleet'] });
+            closeForm();
+        }
+    });
+
+    const openAddForm = () => {
+        setEditingVehicle(null);
+        setIsFormOpen(true);
+    };
+
+    const openEditForm = (vehicle: any) => {
+        setEditingVehicle(vehicle);
+        setIsFormOpen(true);
+    };
+
+    const closeForm = () => {
+        setIsFormOpen(false);
+        setEditingVehicle(null);
+    };
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
-        addVehicleMutation.mutate(data);
+
+        if (editingVehicle) {
+            updateVehicleMutation.mutate({ id: editingVehicle.id, ...data });
+        } else {
+            addVehicleMutation.mutate(data);
+        }
     };
 
     return (
@@ -48,14 +86,14 @@ export const FleetPage: React.FC = () => {
                     <p className="text-slate-400 font-medium mt-1">Manage your company's transport resources</p>
                 </div>
 
-                <Button onClick={() => setIsAdding(true)} className="gap-2">
+                <Button onClick={openAddForm} className="gap-2">
                     <Plus size={18} />
                     Add Vehicle
                 </Button>
             </header>
 
             <AnimatePresence>
-                {isAdding && (
+                {isFormOpen && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -64,8 +102,10 @@ export const FleetPage: React.FC = () => {
                     >
                         <Card className="p-8 border-primary/20">
                             <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-2xl font-bold">Register New Vehicle</h2>
-                                <button onClick={() => setIsAdding(false)} className="text-slate-500 hover:text-white">
+                                <h2 className="text-2xl font-bold">
+                                    {editingVehicle ? 'Edit Vehicle Details' : 'Register New Vehicle'}
+                                </h2>
+                                <button onClick={closeForm} className="text-slate-500 hover:text-white">
                                     <X size={24} />
                                 </button>
                             </div>
@@ -73,7 +113,12 @@ export const FleetPage: React.FC = () => {
                             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Vehicle Type</label>
-                                    <select name="type" required className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary">
+                                    <select
+                                        name="type"
+                                        required
+                                        defaultValue={editingVehicle?.type || "TRUCK"}
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    >
                                         <option value="TRUCK">Truck</option>
                                         <option value="VAN">Van</option>
                                         <option value="TRAILER">Trailer</option>
@@ -82,28 +127,65 @@ export const FleetPage: React.FC = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Make</label>
-                                    <input name="make" required placeholder="e.g. Volvo" className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary" />
+                                    <input
+                                        name="make"
+                                        required
+                                        defaultValue={editingVehicle?.make}
+                                        placeholder="e.g. Volvo"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Model</label>
-                                    <input name="model" required placeholder="e.g. FH16" className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary" />
+                                    <input
+                                        name="model"
+                                        required
+                                        defaultValue={editingVehicle?.model}
+                                        placeholder="e.g. FH16"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Registration Number</label>
-                                    <input name="registrationNumber" required placeholder="e.g. AB 12345" className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary" />
+                                    <input
+                                        name="registrationNumber"
+                                        required
+                                        defaultValue={editingVehicle?.registrationNumber}
+                                        placeholder="e.g. AB 12345"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Capacity (kg)</label>
-                                    <input name="capacityKg" type="number" required placeholder="e.g. 24000" className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary" />
+                                    <input
+                                        name="capacityKg"
+                                        type="number"
+                                        required
+                                        defaultValue={editingVehicle?.capacityKg}
+                                        placeholder="e.g. 24000"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-400">Daily Rate (NOK)</label>
-                                    <input name="dailyRate" type="number" required placeholder="e.g. 5000" className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary" />
+                                    <input
+                                        name="dailyRate"
+                                        type="number"
+                                        required
+                                        defaultValue={editingVehicle?.dailyRate}
+                                        placeholder="e.g. 5000"
+                                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary"
+                                    />
                                 </div>
 
                                 <div className="lg:col-span-3 flex justify-end gap-4 mt-4">
-                                    <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Cancel</Button>
-                                    <Button type="submit" isLoading={addVehicleMutation.isPending}>Register Vehicle</Button>
+                                    <Button type="button" variant="outline" onClick={closeForm}>Cancel</Button>
+                                    <Button
+                                        type="submit"
+                                        isLoading={addVehicleMutation.isPending || updateVehicleMutation.isPending}
+                                    >
+                                        {editingVehicle ? 'Update Vehicle' : 'Register Vehicle'}
+                                    </Button>
                                 </div>
                             </form>
                         </Card>
@@ -121,7 +203,7 @@ export const FleetPage: React.FC = () => {
                         </div>
                         <h2 className="text-xl font-bold">No vehicles yet</h2>
                         <p className="text-slate-400 max-w-sm mx-auto">Start by adding your first vehicle to the marketplace to begin earning.</p>
-                        <Button onClick={() => setIsAdding(true)} variant="outline">Add Your First Vehicle</Button>
+                        <Button onClick={openAddForm} variant="outline">Add Your First Vehicle</Button>
                     </Card>
                 ) : (
                     fleet?.map((vehicle: any) => (
@@ -148,7 +230,13 @@ export const FleetPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <Button variant="outline" className="w-full text-xs">Edit Details</Button>
+                            <Button
+                                onClick={() => openEditForm(vehicle)}
+                                variant="outline"
+                                className="w-full text-xs"
+                            >
+                                Edit Details
+                            </Button>
                         </Card>
                     ))
                 )}
