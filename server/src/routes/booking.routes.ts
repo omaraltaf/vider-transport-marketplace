@@ -81,18 +81,20 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
     }
 });
 
-// 2. Get my bookings (as requester or provider)
+// 2. Get my bookings (as requester or provider, or all for platform admins)
 router.get('/my-bookings', authenticate, async (req: AuthenticatedRequest, res: Response) => {
-    if (!req.user?.companyId) {
-        return res.status(403).json({ message: 'User not associated with a company' });
+    if (!req.user) {
+        return res.status(401).json({ message: 'Authentication required' });
     }
 
     try {
+        const isAdmin = req.user.role === 'PLATFORM_ADMIN';
+
         const bookings = await prisma.booking.findMany({
-            where: {
+            where: isAdmin ? {} : {
                 OR: [
-                    { requesterId: req.user.companyId },
-                    { providerId: req.user.companyId },
+                    { requesterId: req.user.companyId || '' },
+                    { providerId: req.user.companyId || '' },
                 ],
             },
             include: {
@@ -106,6 +108,7 @@ router.get('/my-bookings', authenticate, async (req: AuthenticatedRequest, res: 
 
         res.json(bookings);
     } catch (error) {
+        console.error('Fetch Bookings Error:', error);
         res.status(500).json({ message: 'Error fetching bookings' });
     }
 });
@@ -132,8 +135,9 @@ router.patch('/:id/status', authenticate, async (req: AuthenticatedRequest, res:
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        // Only the provider can accept/reject pending bookings
-        if (booking.providerId !== req.user.companyId) {
+        // Only the provider or platform admin can accept/reject pending bookings
+        const isAdmin = req.user.role === 'PLATFORM_ADMIN';
+        if (!isAdmin && booking.providerId !== req.user.companyId) {
             return res.status(403).json({ message: 'Unauthorized to update this booking' });
         }
 
@@ -186,8 +190,9 @@ router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Respon
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        if (booking.requesterId !== req.user.companyId) {
-            return res.status(403).json({ message: 'Only the requester can modify this booking' });
+        const isAdmin = req.user.role === 'PLATFORM_ADMIN';
+        if (!isAdmin && booking.requesterId !== req.user.companyId) {
+            return res.status(403).json({ message: 'Only the requester or platform admin can modify this booking' });
         }
 
         if (booking.status !== BookingStatus.PENDING) {
@@ -226,8 +231,9 @@ router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res: Respo
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        if (booking.requesterId !== req.user.companyId) {
-            return res.status(403).json({ message: 'Only the requester can cancel this booking' });
+        const isAdmin = req.user.role === 'PLATFORM_ADMIN';
+        if (!isAdmin && booking.requesterId !== req.user.companyId) {
+            return res.status(403).json({ message: 'Only the requester or platform admin can cancel this booking' });
         }
 
         if (booking.status !== BookingStatus.PENDING) {
