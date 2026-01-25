@@ -168,4 +168,80 @@ router.patch('/:id/status', authenticate, async (req: AuthenticatedRequest, res:
     }
 });
 
+// 4. Update a booking (only if PENDING and by requester)
+router.patch('/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user?.companyId) {
+        return res.status(403).json({ message: 'User not associated with a company' });
+    }
+
+    const { id } = req.params;
+    const { startDate, endDate, totalAmount } = req.body;
+
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id: id as string },
+        });
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        if (booking.requesterId !== req.user.companyId) {
+            return res.status(403).json({ message: 'Only the requester can modify this booking' });
+        }
+
+        if (booking.status !== BookingStatus.PENDING) {
+            return res.status(400).json({ message: 'Only pending bookings can be modified' });
+        }
+
+        const updatedBooking = await prisma.booking.update({
+            where: { id: id as string },
+            data: {
+                startDate: startDate ? new Date(startDate) : undefined,
+                endDate: endDate ? new Date(endDate) : undefined,
+                totalAmount: totalAmount ? parseFloat(totalAmount) : undefined,
+            },
+        });
+
+        res.json(updatedBooking);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating booking' });
+    }
+});
+
+// 5. Cancel a booking (only if PENDING and by requester)
+router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res: Response) => {
+    if (!req.user?.companyId) {
+        return res.status(403).json({ message: 'User not associated with a company' });
+    }
+
+    const { id } = req.params;
+
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id: id as string },
+        });
+
+        if (!booking) {
+            return res.status(404).json({ message: 'Booking not found' });
+        }
+
+        if (booking.requesterId !== req.user.companyId) {
+            return res.status(403).json({ message: 'Only the requester can cancel this booking' });
+        }
+
+        if (booking.status !== BookingStatus.PENDING) {
+            return res.status(400).json({ message: 'Only pending bookings can be cancelled' });
+        }
+
+        await prisma.booking.delete({
+            where: { id: id as string },
+        });
+
+        res.json({ message: 'Booking cancelled successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error cancelling booking' });
+    }
+});
+
 export default router;
