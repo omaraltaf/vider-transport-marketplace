@@ -5,11 +5,13 @@ import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Truck, Plus, X } from 'lucide-react';
+import { Truck, Plus, X, Calendar } from 'lucide-react';
+import { AvailabilityModal } from '../components/AvailabilityModal';
 
 export const FleetPage: React.FC = () => {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingVehicle, setEditingVehicle] = useState<any>(null);
+    const [availabilityVehicle, setAvailabilityVehicle] = useState<any>(null);
     const queryClient = useQueryClient();
 
     const getAuthToken = async () => {
@@ -237,17 +239,33 @@ export const FleetPage: React.FC = () => {
                                 </div>
                             </div>
 
-                            <Button
-                                onClick={() => openEditForm(vehicle)}
-                                variant="outline"
-                                className="w-full text-xs"
-                            >
-                                Edit Details
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button
+                                    onClick={() => openEditForm(vehicle)}
+                                    variant="outline"
+                                    className="flex-1 text-xs px-3"
+                                >
+                                    Edit Details
+                                </Button>
+                                <Button
+                                    onClick={() => setAvailabilityVehicle(vehicle)}
+                                    variant="outline"
+                                    className="flex-1 text-xs px-3 hover:border-primary/50 text-slate-300 hover:text-primary"
+                                >
+                                    <Calendar size={14} className="mr-1.5" />
+                                    Availability
+                                </Button>
+                            </div>
                         </Card>
                     ))
                 )}
             </div>
+
+            <AvailabilityModal
+                isOpen={!!availabilityVehicle}
+                onClose={() => setAvailabilityVehicle(null)}
+                vehicle={availabilityVehicle}
+            />
         </div>
     );
 };
