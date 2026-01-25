@@ -101,11 +101,15 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
 
         res.status(201).json(vehicle);
     } catch (error: any) {
+        console.error('Create Vehicle Error:', error);
         if (error.code === 'P2002') {
             return res.status(400).json({ message: 'Registration number already exists' });
         }
-        console.error('Create Vehicle Error:', error);
-        res.status(500).json({ message: 'Error creating vehicle' });
+        res.status(500).json({
+            message: 'Error creating vehicle',
+            details: error.message,
+            code: error.code
+        });
     }
 });
 

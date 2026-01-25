@@ -56,7 +56,9 @@ export const FleetPage: React.FC = () => {
         }
     });
 
-    const mutationError = (addVehicleMutation.error as any)?.response?.data?.message ||
+    const mutationError = (addVehicleMutation.error as any)?.response?.data?.details ||
+        (addVehicleMutation.error as any)?.response?.data?.message ||
+        (updateVehicleMutation.error as any)?.response?.data?.details ||
         (updateVehicleMutation.error as any)?.response?.data?.message;
 
     const openAddForm = () => {
