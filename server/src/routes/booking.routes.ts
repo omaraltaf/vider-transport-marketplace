@@ -92,13 +92,15 @@ router.get('/my-bookings', authenticate, async (req: AuthenticatedRequest, res: 
     try {
         const isAdmin = req.user.role === 'PLATFORM_ADMIN';
 
+        const whereClause = isAdmin ? {} : (req.user.companyId ? {
+            OR: [
+                { requesterId: req.user.companyId },
+                { providerId: req.user.companyId },
+            ],
+        } : { id: 'none' });
+
         const bookings = await prisma.booking.findMany({
-            where: isAdmin ? {} : {
-                OR: [
-                    { requesterId: req.user.companyId || '' },
-                    { providerId: req.user.companyId || '' },
-                ],
-            },
+            where: whereClause,
             include: {
                 requester: { select: { name: true } },
                 provider: { select: { name: true } },
@@ -109,9 +111,13 @@ router.get('/my-bookings', authenticate, async (req: AuthenticatedRequest, res: 
         });
 
         res.json(bookings);
-    } catch (error) {
+    } catch (error: any) {
         console.error('Fetch Bookings Error:', error);
-        res.status(500).json({ message: 'Error fetching bookings' });
+        res.status(500).json({
+            message: 'Error fetching bookings',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 

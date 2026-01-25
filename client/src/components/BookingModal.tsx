@@ -31,6 +31,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
         return diffDays > 0 ? diffDays : 1;
     };
 
+    if (!item) return null;
+
     const days = calculateDays();
     const basePrice = type === 'vehicle'
         ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0))
@@ -72,8 +74,6 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
 
         bookingMutation.mutate(bookingData);
     };
-
-    if (!item) return null;
 
     return (
         <Modal
