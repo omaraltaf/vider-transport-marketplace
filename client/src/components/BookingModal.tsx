@@ -115,7 +115,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
                         {bookingMutation.isError && (
                             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500 text-sm">
                                 <AlertCircle size={18} />
-                                <p>Error creating request. Please try again.</p>
+                                <p>
+                                    {(bookingMutation.error as any)?.response?.data?.message ||
+                                        'Error creating request. Please try again.'}
+                                </p>
                             </div>
                         )}
 
