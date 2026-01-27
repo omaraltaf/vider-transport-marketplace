@@ -100,11 +100,15 @@ export const MarketplacePage: React.FC = () => {
                                         <div>
                                             <div className="flex justify-between items-start mb-1">
                                                 <h3 className="text-xl font-bold">{vehicle.make} {vehicle.model}</h3>
-                                                {vehicle.company.reviewCount > 0 && (
+                                                {vehicle.company.reviewCount > 0 ? (
                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded-xl border border-yellow-500/20 shadow-lg shadow-yellow-500/5">
                                                         <Star size={12} className="fill-yellow-500" />
                                                         {vehicle.company.avgRating.toFixed(1)}
                                                         <span className="text-slate-500 font-normal ml-0.5">({vehicle.company.reviewCount})</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
+                                                        NEW
                                                     </div>
                                                 )}
                                             </div>
@@ -165,11 +169,15 @@ export const MarketplacePage: React.FC = () => {
                                             <div className="flex flex-col gap-1">
                                                 <div className="flex items-center gap-2">
                                                     <p className="text-primary text-xs font-bold uppercase tracking-wider">{shipment.shipper.name}</p>
-                                                    {shipment.shipper.reviewCount > 0 && (
+                                                    {shipment.shipper.reviewCount > 0 ? (
                                                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
                                                             <Star size={10} className="fill-yellow-500" />
                                                             {shipment.shipper.avgRating.toFixed(1)}
                                                             <span className="text-slate-500 font-normal">({shipment.shipper.reviewCount})</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1 text-[8px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/20">
+                                                            NEW
                                                         </div>
                                                     )}
                                                 </div>

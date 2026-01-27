@@ -291,28 +291,35 @@ export const ManageBookingsPage: React.FC = () => {
     };
 
     return (
-        <div className="space-y-12 pb-20">
-            {/* ... header ... */}
-            <header className="space-y-4">
-                <div className="flex justify-between items-end">
-                    <div>
+        <div className="space-y-8 pb-32">
+            <header className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div className="space-y-1">
                         <h1 className="text-4xl font-bold tracking-tight">Booking <span className="text-primary italic">Management</span></h1>
-                        <p className="text-slate-400 font-medium mt-1">Track and manage your transport agreements</p>
+                        <p className="text-slate-400 font-medium">Track, manage and review your transport agreements</p>
                     </div>
 
-                    <div className="flex bg-slate-900/50 p-1 rounded-2xl border border-white/5 backdrop-blur-md">
+                    <div className="flex bg-slate-900/80 p-1.5 rounded-2xl border border-white/10 backdrop-blur-xl shadow-2xl shadow-black/50">
                         <button
                             onClick={() => setActiveSection('incoming')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'incoming' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-wider ${activeSection === 'incoming'
+                                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             <ArrowLeft size={16} />
                             Incoming
-                            {incomingRequests.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{incomingRequests.length}</span>}
+                            {incomingRequests.length > 0 && (
+                                <span className={`${activeSection === 'incoming' ? 'bg-black/20' : 'bg-red-500'} text-white text-[10px] px-2 py-0.5 rounded-full font-black`}>
+                                    {incomingRequests.length}
+                                </span>
+                            )}
                         </button>
                         <button
                             onClick={() => setActiveSection('outgoing')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'outgoing' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-wider ${activeSection === 'outgoing'
+                                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             <ArrowRight size={16} />
@@ -320,7 +327,9 @@ export const ManageBookingsPage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => setActiveSection('history')}
-                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'history' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all font-bold text-xs uppercase tracking-wider ${activeSection === 'history'
+                                ? 'bg-primary text-black shadow-lg shadow-primary/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
                                 }`}
                         >
                             <History size={16} />
@@ -328,33 +337,44 @@ export const ManageBookingsPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
+
                 {isAdmin && (
-                    <div className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-2 rounded-2xl flex items-center gap-2 h-fit">
+                    <div className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 w-fit animate-in fade-in slide-in-from-left-4 duration-500">
                         <Shield size={18} />
-                        <span className="text-xs font-bold uppercase tracking-wider">Platform Admin Mode</span>
+                        <span className="text-xs font-black uppercase tracking-widest">Platform Admin Oversight Mode</span>
                     </div>
                 )}
             </header>
 
-            <section className="space-y-4">
+            <main className="min-h-[400px] relative">
                 {isLoading ? (
-                    <div className="py-20 text-center text-slate-500">Loading bookings...</div>
-                ) : currentBookings.length === 0 ? (
-                    <Card className="p-12 text-center space-y-4 border-dashed border-white/10 bg-transparent">
-                        <div className="h-16 w-16 bg-white/5 text-slate-500 mx-auto rounded-full flex items-center justify-center">
-                            {activeSection === 'incoming' ? <ArrowLeft size={32} /> : activeSection === 'outgoing' ? <ArrowRight size={32} /> : <History size={32} />}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="h-10 w-10 border-4 border-primary border-t-transparent animate-spin rounded-full" />
+                            <p className="text-slate-500 font-medium animate-pulse">Fetching {activeSection} bookings...</p>
                         </div>
-                        <h2 className="text-xl font-bold">
-                            {activeSection === 'incoming' ? 'No incoming requests' : activeSection === 'outgoing' ? 'No outgoing requests' : 'No history found'}
-                        </h2>
-                        <p className="text-slate-400 max-w-sm mx-auto">
-                            {activeSection === 'history'
-                                ? 'Completed, cancelled, or rejected bookings will appear here.'
-                                : 'Active pending requests will appear here until they are accepted or rejected.'}
-                        </p>
-                    </Card>
+                    </div>
+                ) : currentBookings.index === 0 && currentBookings.length === 0 ? (
+                    <div className="py-20 animate-in fade-in zoom-in-95 duration-500">
+                        <Card className="p-16 text-center space-y-6 border-dashed border-white/10 bg-transparent overflow-hidden relative">
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-primary/5 blur-[100px] -z-10 rounded-full" />
+                            <div className="h-20 w-20 bg-white/5 text-slate-500 mx-auto rounded-3xl flex items-center justify-center rotate-3 border border-white/5 shadow-inner">
+                                {activeSection === 'incoming' ? <ArrowLeft size={40} /> : activeSection === 'outgoing' ? <ArrowRight size={40} /> : <History size={40} />}
+                            </div>
+                            <div className="space-y-2">
+                                <h2 className="text-2xl font-bold">
+                                    {activeSection === 'incoming' ? 'No incoming requests' : activeSection === 'outgoing' ? 'No outgoing requests' : 'Empty history'}
+                                </h2>
+                                <p className="text-slate-500 max-w-sm mx-auto font-medium">
+                                    {activeSection === 'history'
+                                        ? 'Your completed, cancelled, or rejected transport agreements will be archived here.'
+                                        : 'Pending requests will appear here once they are initiated. Check your other tabs for updates.'}
+                                </p>
+                            </div>
+                        </Card>
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {currentBookings.map((booking: any) => (
                             <BookingCard
                                 key={booking.id}
@@ -365,7 +385,7 @@ export const ManageBookingsPage: React.FC = () => {
                         ))}
                     </div>
                 )}
-            </section>
+            </main>
 
             {selectedBookingForReview && (
                 <ReviewModal
