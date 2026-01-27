@@ -187,29 +187,44 @@ export const ManageBookingsPage: React.FC = () => {
                     </div>
 
                     <div className="flex gap-2">
-                        {/* Provider Controls (Accept/Reject) */}
-                        {(isAdmin || isIncoming) && booking.status === 'PENDING' && (
+                        {/* Provider Controls (Accept/Reject/Complete) */}
+                        {(isAdmin || isIncoming) && (
                             <>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="text-red-500 hover:bg-red-500 group border-red-500/20"
-                                    onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'REJECTED' })}
-                                    isLoading={updateStatusMutation.isPending}
-                                    title="Reject on behalf of provider"
-                                >
-                                    <X size={16} className="group-hover:text-white" />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    className="bg-primary text-black"
-                                    onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'ACCEPTED' })}
-                                    isLoading={updateStatusMutation.isPending}
-                                    title="Accept on behalf of provider"
-                                >
-                                    <Check size={16} />
-                                    Accept
-                                </Button>
+                                {booking.status === 'PENDING' && (
+                                    <>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-red-500 hover:bg-red-500 group border-red-500/20"
+                                            onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'REJECTED' })}
+                                            isLoading={updateStatusMutation.isPending}
+                                            title="Reject on behalf of provider"
+                                        >
+                                            <X size={16} className="group-hover:text-white" />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            className="bg-primary text-black"
+                                            onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'ACCEPTED' })}
+                                            isLoading={updateStatusMutation.isPending}
+                                            title="Accept on behalf of provider"
+                                        >
+                                            <Check size={16} />
+                                            Accept
+                                        </Button>
+                                    </>
+                                )}
+                                {booking.status === 'ACCEPTED' && (
+                                    <Button
+                                        size="sm"
+                                        className="bg-primary text-black gap-2 font-bold"
+                                        onClick={() => updateStatusMutation.mutate({ id: booking.id, status: 'COMPLETED' })}
+                                        isLoading={updateStatusMutation.isPending}
+                                    >
+                                        <Check size={16} />
+                                        Mark as Completed
+                                    </Button>
+                                )}
                             </>
                         )}
 
@@ -261,7 +276,7 @@ export const ManageBookingsPage: React.FC = () => {
                         )}
 
                         {/* Review Button */}
-                        {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED') && (
+                        {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED' || booking.status === 'REJECTED') && (
                             <div className="flex items-center gap-2">
                                 {booking.reviews?.some((r: any) => r.reviewerId === currentUser?.companyId) ? (
                                     <div className="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase">

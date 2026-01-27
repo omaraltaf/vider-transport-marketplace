@@ -28,9 +28,10 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
             return res.status(404).json({ message: 'Booking not found' });
         }
 
-        // Only COMPLETED or CANCELLED bookings can be reviewed
-        if (booking.status !== BookingStatus.COMPLETED && booking.status !== BookingStatus.CANCELLED) {
-            return res.status(400).json({ message: 'Can only review completed or cancelled bookings' });
+        // Only COMPLETED, CANCELLED, or REJECTED bookings can be reviewed
+        const reviewableStatuses: string[] = [BookingStatus.COMPLETED, BookingStatus.CANCELLED, BookingStatus.REJECTED];
+        if (!reviewableStatuses.includes(booking.status)) {
+            return res.status(400).json({ message: 'Can only review completed, cancelled, or rejected bookings' });
         }
 
         // Check if the user's company is either the requester or provider
