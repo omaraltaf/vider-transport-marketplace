@@ -314,7 +314,12 @@ export const ManageBookingsPage: React.FC = () => {
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {pendingBookings.map((booking: any) => (
-                                        <BookingCard key={booking.id} booking={booking} isIncoming={isAdmin || true} showAdminControls={isAdmin} />
+                                        <BookingCard
+                                            key={booking.id}
+                                            booking={booking}
+                                            isIncoming={isAdmin || booking.providerId === currentUser?.companyId}
+                                            showAdminControls={isAdmin}
+                                        />
                                     ))}
                                 </div>
                             )}
@@ -338,7 +343,12 @@ export const ManageBookingsPage: React.FC = () => {
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {otherBookings.map((booking: any) => (
-                                        <BookingCard key={booking.id} booking={booking} isIncoming={isAdmin ? false : false} showAdminControls={isAdmin} />
+                                        <BookingCard
+                                            key={booking.id}
+                                            booking={booking}
+                                            isIncoming={booking.providerId === currentUser?.companyId}
+                                            showAdminControls={isAdmin}
+                                        />
                                     ))}
                                 </div>
                             )}

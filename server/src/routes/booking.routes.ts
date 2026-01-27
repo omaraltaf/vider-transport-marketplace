@@ -106,6 +106,7 @@ router.get('/my-bookings', authenticate, async (req: AuthenticatedRequest, res: 
                 provider: { select: { name: true } },
                 vehicle: true,
                 shipment: true,
+                reviews: true,
             },
             orderBy: { createdAt: 'desc' },
         });
