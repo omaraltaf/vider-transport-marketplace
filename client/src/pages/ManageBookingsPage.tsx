@@ -5,7 +5,8 @@ import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, X, Package, Truck, Calendar, Inbox, Send, Trash2, Pencil, Save, Shield } from 'lucide-react';
+import { Check, X, Package, Truck, Calendar, Inbox, Send, Trash2, Pencil, Save, Shield, Star } from 'lucide-react';
+import { ReviewModal } from '../components/ReviewModal';
 
 export const ManageBookingsPage: React.FC = () => {
     const queryClient = useQueryClient();
@@ -13,6 +14,8 @@ export const ManageBookingsPage: React.FC = () => {
     const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
     const [editStartDate, setEditStartDate] = useState('');
     const [editEndDate, setEditEndDate] = useState('');
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [selectedBookingForReview, setSelectedBookingForReview] = useState<any>(null);
 
     // 1. Fetch current user info to get companyId
     const { data: currentUser } = useQuery({
@@ -239,6 +242,31 @@ export const ManageBookingsPage: React.FC = () => {
                                 )}
                             </>
                         )}
+
+                        {/* Review Button */}
+                        {(booking.status === 'COMPLETED' || booking.status === 'CANCELLED') && (
+                            <div className="flex items-center gap-2">
+                                {booking.reviews?.some((r: any) => r.reviewerId === currentUser?.companyId) ? (
+                                    <div className="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase">
+                                        <Star size={10} className="fill-yellow-500" />
+                                        Reviewed
+                                    </div>
+                                ) : (
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="text-primary hover:bg-primary hover:text-black border-primary/20"
+                                        onClick={() => {
+                                            setSelectedBookingForReview(booking);
+                                            setIsReviewModalOpen(true);
+                                        }}
+                                    >
+                                        <Star size={16} />
+                                        Rate {isIncoming ? 'Client' : 'Supplier'}
+                                    </Button>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </Card>
@@ -247,6 +275,7 @@ export const ManageBookingsPage: React.FC = () => {
 
     return (
         <div className="space-y-12 pb-20">
+            {/* ... header ... */}
             <header className="flex justify-between items-end">
                 <div>
                     <h1 className="text-4xl font-bold tracking-tight">Manage <span className="text-primary italic">Bookings</span></h1>
@@ -317,6 +346,17 @@ export const ManageBookingsPage: React.FC = () => {
                     </>
                 )}
             </div>
+
+            {selectedBookingForReview && (
+                <ReviewModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => {
+                        setIsReviewModalOpen(false);
+                        setSelectedBookingForReview(null);
+                    }}
+                    booking={selectedBookingForReview}
+                />
+            )}
         </div>
     );
 };

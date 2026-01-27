@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { Star } from 'lucide-react';
 import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -98,10 +99,19 @@ export const MarketplacePage: React.FC = () => {
                                     <div className="p-6 space-y-4 flex-1">
                                         <div>
                                             <h3 className="text-xl font-bold">{vehicle.make} {vehicle.model}</h3>
-                                            <p className="text-slate-400 text-sm flex items-center gap-1">
-                                                <MapPin size={14} />
-                                                {vehicle.kommune ? `${vehicle.kommune}, ` : ''}{vehicle.fylke || vehicle.company.city}
-                                            </p>
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-slate-400 text-sm flex items-center gap-1">
+                                                    <MapPin size={14} />
+                                                    {vehicle.kommune ? `${vehicle.kommune}, ` : ''}{vehicle.fylke || vehicle.company.city}
+                                                </p>
+                                                {vehicle.company.reviewCount > 0 && (
+                                                    <div className="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
+                                                        <Star size={10} className="fill-yellow-500" />
+                                                        {vehicle.company.avgRating.toFixed(1)}
+                                                        <span className="text-slate-500 font-normal">({vehicle.company.reviewCount})</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
 
                                         <div className="flex gap-4 border-y border-white/5 py-3">
@@ -149,7 +159,16 @@ export const MarketplacePage: React.FC = () => {
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1">
                                             <h3 className="text-xl font-bold">{shipment.title}</h3>
-                                            <p className="text-slate-400 text-sm">{shipment.shipper.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-slate-400 text-sm">{shipment.shipper.name}</p>
+                                                {shipment.shipper.reviewCount > 0 && (
+                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
+                                                        <Star size={8} className="fill-yellow-500" />
+                                                        {shipment.shipper.avgRating.toFixed(1)}
+                                                        <span className="text-slate-500 font-normal">({shipment.shipper.reviewCount})</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                         <div className="bg-slate-800 p-2 rounded-xl text-primary">
                                             <Package size={20} />

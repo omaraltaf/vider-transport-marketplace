@@ -17,6 +17,11 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
                     select: {
                         name: true,
                         city: true,
+                        reviewsReceived: {
+                            select: {
+                                rating: true
+                            }
+                        }
                     },
                 },
             },
@@ -25,7 +30,24 @@ router.get('/', async (req: AuthenticatedRequest, res: Response) => {
             },
         });
 
-        res.json(shipments);
+        // Add average rating and review count to each shipment's shipper
+        const shipmentsWithRatings = shipments.map(shipment => {
+            const reviews = shipment.shipper.reviewsReceived;
+            const avgRating = reviews.length > 0
+                ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
+                : 0;
+
+            return {
+                ...shipment,
+                shipper: {
+                    ...shipment.shipper,
+                    avgRating,
+                    reviewCount: reviews.length
+                }
+            };
+        });
+
+        res.json(shipmentsWithRatings);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching shipments' });
     }
