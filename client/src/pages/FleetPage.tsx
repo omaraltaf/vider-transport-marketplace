@@ -209,16 +209,32 @@ export const FleetPage: React.FC = () => {
                                     <h3 className="text-sm font-bold uppercase tracking-wider text-primary mb-4">Location & Logistics</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-400">Fylke</label>
-                                            <input
+                                            <label className="text-sm font-medium text-slate-400">Fylke (County)</label>
+                                            <select
                                                 name="fylke"
                                                 defaultValue={editingVehicle?.fylke}
-                                                placeholder="e.g. Viken"
                                                 className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-white focus:outline-none focus:border-primary transition-colors"
-                                            />
+                                            >
+                                                <option value="">Select Fylke...</option>
+                                                <option value="Agder">Agder</option>
+                                                <option value="Akershus">Akershus</option>
+                                                <option value="Buskerud">Buskerud</option>
+                                                <option value="Finnmark">Finnmark</option>
+                                                <option value="Innlandet">Innlandet</option>
+                                                <option value="Møre og Romsdal">Møre og Romsdal</option>
+                                                <option value="Nordland">Nordland</option>
+                                                <option value="Oslo">Oslo</option>
+                                                <option value="Rogaland">Rogaland</option>
+                                                <option value="Telemark">Telemark</option>
+                                                <option value="Troms">Troms</option>
+                                                <option value="Trøndelag">Trøndelag</option>
+                                                <option value="Vestfold">Vestfold</option>
+                                                <option value="Vestland">Vestland</option>
+                                                <option value="Østfold">Østfold</option>
+                                            </select>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm font-medium text-slate-400">Kommune</label>
+                                            <label className="text-sm font-medium text-slate-400">Kommune (Municipality)</label>
                                             <input
                                                 name="kommune"
                                                 defaultValue={editingVehicle?.kommune}
