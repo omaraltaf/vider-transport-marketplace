@@ -5,7 +5,7 @@ import { config } from '../config/config';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useAuth } from '../contexts/AuthContext';
-import { Check, X, Package, Truck, Calendar, Inbox, Send, Trash2, Pencil, Save, Shield, Star } from 'lucide-react';
+import { Truck, Package, Calendar, Check, X, Shield, Pencil, Trash2, Save, Star, History, ArrowRight, ArrowLeft } from 'lucide-react';
 import { ReviewModal } from '../components/ReviewModal';
 
 export const ManageBookingsPage: React.FC = () => {
@@ -96,9 +96,26 @@ export const ManageBookingsPage: React.FC = () => {
         });
     };
 
-    // If admin, they see all. We split them into "Action Required" (Pending) and "Others"
-    const pendingBookings = isAdmin ? bookings?.filter((b: any) => b.status === 'PENDING') || [] : bookings?.filter((b: any) => b.providerId === currentUser?.companyId) || [];
-    const otherBookings = isAdmin ? bookings?.filter((b: any) => b.status !== 'PENDING') || [] : bookings?.filter((b: any) => b.requesterId === currentUser?.companyId) || [];
+    const [activeSection, setActiveSection] = useState<'incoming' | 'outgoing' | 'history'>('incoming');
+
+    // Categorization logic
+    const incomingRequests = bookings?.filter((b: any) =>
+        b.status === 'PENDING' && (isAdmin || b.providerId === currentUser?.companyId)
+    ) || [];
+
+    const outgoingRequests = bookings?.filter((b: any) =>
+        b.status === 'PENDING' && (isAdmin || b.requesterId === currentUser?.companyId)
+    ) || [];
+
+    const historyBookings = bookings?.filter((b: any) =>
+        b.status !== 'PENDING' && (isAdmin || b.providerId === currentUser?.companyId || b.requesterId === currentUser?.companyId)
+    ) || [];
+
+    const currentBookings = activeSection === 'incoming'
+        ? incomingRequests
+        : activeSection === 'outgoing'
+            ? outgoingRequests
+            : historyBookings;
 
     const BookingCard = ({ booking, isIncoming, showAdminControls = false }: { booking: any, isIncoming: boolean, showAdminControls?: boolean }) => {
         const isEditing = editingBookingId === booking.id;
@@ -255,14 +272,14 @@ export const ManageBookingsPage: React.FC = () => {
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        className="text-primary hover:bg-primary hover:text-black border-primary/20"
+                                        className="text-yellow-500 hover:bg-yellow-500 hover:text-black border-yellow-500/20 gap-2 font-bold uppercase transition-all"
                                         onClick={() => {
                                             setSelectedBookingForReview(booking);
                                             setIsReviewModalOpen(true);
                                         }}
                                     >
-                                        <Star size={16} />
-                                        Rate {isIncoming ? 'Client' : 'Supplier'}
+                                        <Star size={14} className="fill-current" />
+                                        {isIncoming ? 'Rate Client' : 'Rate Supplier'}
                                     </Button>
                                 )}
                             </div>
@@ -276,12 +293,40 @@ export const ManageBookingsPage: React.FC = () => {
     return (
         <div className="space-y-12 pb-20">
             {/* ... header ... */}
-            <header className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight">Manage <span className="text-primary italic">Bookings</span></h1>
-                    <p className="text-slate-400 font-medium mt-1">
-                        {isAdmin ? 'System-wide booking management for platform administrators' : 'Review and manage your incoming and outgoing requests'}
-                    </p>
+            <header className="space-y-4">
+                <div className="flex justify-between items-end">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight">Booking <span className="text-primary italic">Management</span></h1>
+                        <p className="text-slate-400 font-medium mt-1">Track and manage your transport agreements</p>
+                    </div>
+
+                    <div className="flex bg-slate-900/50 p-1 rounded-2xl border border-white/5 backdrop-blur-md">
+                        <button
+                            onClick={() => setActiveSection('incoming')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'incoming' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            <ArrowLeft size={16} />
+                            Incoming
+                            {incomingRequests.length > 0 && <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-1">{incomingRequests.length}</span>}
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('outgoing')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'outgoing' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            <ArrowRight size={16} />
+                            Outgoing
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('history')}
+                            className={`flex items-center gap-2 px-6 py-2.5 rounded-xl transition-all font-semibold text-xs ${activeSection === 'history' ? 'bg-primary text-black' : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            <History size={16} />
+                            History
+                        </button>
+                    </div>
                 </div>
                 {isAdmin && (
                     <div className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-2 rounded-2xl flex items-center gap-2 h-fit">
@@ -291,71 +336,36 @@ export const ManageBookingsPage: React.FC = () => {
                 )}
             </header>
 
-            <div className="space-y-12">
+            <section className="space-y-4">
                 {isLoading ? (
                     <div className="py-20 text-center text-slate-500">Loading bookings...</div>
+                ) : currentBookings.length === 0 ? (
+                    <Card className="p-12 text-center space-y-4 border-dashed border-white/10 bg-transparent">
+                        <div className="h-16 w-16 bg-white/5 text-slate-500 mx-auto rounded-full flex items-center justify-center">
+                            {activeSection === 'incoming' ? <ArrowLeft size={32} /> : activeSection === 'outgoing' ? <ArrowRight size={32} /> : <History size={32} />}
+                        </div>
+                        <h2 className="text-xl font-bold">
+                            {activeSection === 'incoming' ? 'No incoming requests' : activeSection === 'outgoing' ? 'No outgoing requests' : 'No history found'}
+                        </h2>
+                        <p className="text-slate-400 max-w-sm mx-auto">
+                            {activeSection === 'history'
+                                ? 'Completed, cancelled, or rejected bookings will appear here.'
+                                : 'Active pending requests will appear here until they are accepted or rejected.'}
+                        </p>
+                    </Card>
                 ) : (
-                    <>
-                        {/* Primary Section */}
-                        <section className="space-y-4">
-                            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                                <Inbox size={20} className="text-primary" />
-                                <h2 className="text-xl font-bold">
-                                    {isAdmin ? 'Action Required' : 'Incoming'}
-                                    <span className="text-slate-500 font-medium text-sm ml-1">
-                                        {isAdmin ? 'Requests pending system-wide' : 'Requests from clients'}
-                                    </span>
-                                </h2>
-                            </div>
-                            {pendingBookings.length === 0 ? (
-                                <p className="text-slate-500 italic py-8 text-center bg-white/5 rounded-3xl border border-dashed border-white/5">
-                                    {isAdmin ? 'No pending bookings found.' : 'No incoming requests yet.'}
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-1 gap-4">
-                                    {pendingBookings.map((booking: any) => (
-                                        <BookingCard
-                                            key={booking.id}
-                                            booking={booking}
-                                            isIncoming={isAdmin || booking.providerId === currentUser?.companyId}
-                                            showAdminControls={isAdmin}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-
-                        {/* Secondary Section */}
-                        <section className="space-y-4">
-                            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                                <Send size={20} className="text-blue-500" />
-                                <h2 className="text-xl font-bold">
-                                    {isAdmin ? 'Archived / Settled' : 'Outgoing'}
-                                    <span className="text-slate-500 font-medium text-sm ml-1">
-                                        {isAdmin ? 'Historical data' : 'Requests you sent'}
-                                    </span>
-                                </h2>
-                            </div>
-                            {otherBookings.length === 0 ? (
-                                <p className="text-slate-500 italic py-8 text-center bg-white/5 rounded-3xl border border-dashed border-white/5">
-                                    {isAdmin ? 'No historical bookings found.' : 'No outgoing requests yet.'}
-                                </p>
-                            ) : (
-                                <div className="grid grid-cols-1 gap-4">
-                                    {otherBookings.map((booking: any) => (
-                                        <BookingCard
-                                            key={booking.id}
-                                            booking={booking}
-                                            isIncoming={booking.providerId === currentUser?.companyId}
-                                            showAdminControls={isAdmin}
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    </>
+                    <div className="grid grid-cols-1 gap-4">
+                        {currentBookings.map((booking: any) => (
+                            <BookingCard
+                                key={booking.id}
+                                booking={booking}
+                                isIncoming={isAdmin || booking.providerId === currentUser?.companyId}
+                                showAdminControls={isAdmin}
+                            />
+                        ))}
+                    </div>
                 )}
-            </div>
+            </section>
 
             {selectedBookingForReview && (
                 <ReviewModal

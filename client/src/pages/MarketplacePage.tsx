@@ -98,19 +98,22 @@ export const MarketplacePage: React.FC = () => {
                                     </div>
                                     <div className="p-6 space-y-4 flex-1">
                                         <div>
-                                            <h3 className="text-xl font-bold">{vehicle.make} {vehicle.model}</h3>
-                                            <div className="flex items-center justify-between">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h3 className="text-xl font-bold">{vehicle.make} {vehicle.model}</h3>
+                                                {vehicle.company.reviewCount > 0 && (
+                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2.5 py-1 rounded-xl border border-yellow-500/20 shadow-lg shadow-yellow-500/5">
+                                                        <Star size={12} className="fill-yellow-500" />
+                                                        {vehicle.company.avgRating.toFixed(1)}
+                                                        <span className="text-slate-500 font-normal ml-0.5">({vehicle.company.reviewCount})</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex flex-col gap-1">
+                                                <p className="text-primary text-xs font-bold uppercase tracking-wider">{vehicle.company.name}</p>
                                                 <p className="text-slate-400 text-sm flex items-center gap-1">
                                                     <MapPin size={14} />
                                                     {vehicle.kommune ? `${vehicle.kommune}, ` : ''}{vehicle.fylke || vehicle.company.city}
                                                 </p>
-                                                {vehicle.company.reviewCount > 0 && (
-                                                    <div className="flex items-center gap-1 text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
-                                                        <Star size={10} className="fill-yellow-500" />
-                                                        {vehicle.company.avgRating.toFixed(1)}
-                                                        <span className="text-slate-500 font-normal">({vehicle.company.reviewCount})</span>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
@@ -159,15 +162,17 @@ export const MarketplacePage: React.FC = () => {
                                     <div className="flex justify-between items-start">
                                         <div className="space-y-1">
                                             <h3 className="text-xl font-bold">{shipment.title}</h3>
-                                            <div className="flex items-center gap-2">
-                                                <p className="text-slate-400 text-sm">{shipment.shipper.name}</p>
-                                                {shipment.shipper.reviewCount > 0 && (
-                                                    <div className="flex items-center gap-1 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
-                                                        <Star size={8} className="fill-yellow-500" />
-                                                        {shipment.shipper.avgRating.toFixed(1)}
-                                                        <span className="text-slate-500 font-normal">({shipment.shipper.reviewCount})</span>
-                                                    </div>
-                                                )}
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-primary text-xs font-bold uppercase tracking-wider">{shipment.shipper.name}</p>
+                                                    {shipment.shipper.reviewCount > 0 && (
+                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-lg border border-yellow-500/20">
+                                                            <Star size={10} className="fill-yellow-500" />
+                                                            {shipment.shipper.avgRating.toFixed(1)}
+                                                            <span className="text-slate-500 font-normal">({shipment.shipper.reviewCount})</span>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="bg-slate-800 p-2 rounded-xl text-primary">
