@@ -208,15 +208,17 @@ router.post('/users/bulk-status', authenticate, requirePlatformAdmin, async (req
 // List companies
 router.get('/companies', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { status, search } = req.query;
+        const status = req.query.status as string;
+        const search = req.query.search as string;
+
         const companies = await prisma.company.findMany({
             where: {
                 AND: [
                     status ? { status: status as any } : {},
                     search ? {
                         OR: [
-                            { name: { contains: search as string, mode: 'insensitive' } },
-                            { organizationNumber: { contains: search as string, mode: 'insensitive' } },
+                            { name: { contains: search, mode: 'insensitive' } },
+                            { organizationNumber: { contains: search, mode: 'insensitive' } },
                         ],
                     } : {},
                 ],
@@ -261,7 +263,7 @@ router.post('/companies', authenticate, requirePlatformAdmin, async (req: Authen
 // Update company
 router.patch('/companies/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         const company = await prisma.company.update({
             where: { id },
             data: req.body
@@ -275,7 +277,7 @@ router.patch('/companies/:id', authenticate, requirePlatformAdmin, async (req: A
 // Update company status
 router.patch('/companies/:id/status', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         const { status } = req.body;
         const company = await prisma.company.update({
             where: { id },
@@ -290,7 +292,7 @@ router.patch('/companies/:id/status', authenticate, requirePlatformAdmin, async 
 // Delete company
 router.delete('/companies/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         // Check for dependencies (simplified: Prisma will throw if foreign keys exist)
         await prisma.company.delete({ where: { id } });
         res.json({ success: true, message: 'Company deleted successfully' });
@@ -304,7 +306,10 @@ router.delete('/companies/:id', authenticate, requirePlatformAdmin, async (req: 
 // List all vehicles
 router.get('/vehicles', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { status, type, search } = req.query;
+        const status = req.query.status as string;
+        const type = req.query.type as string;
+        const search = req.query.search as string;
+
         const vehicles = await prisma.vehicle.findMany({
             where: {
                 AND: [
@@ -312,9 +317,9 @@ router.get('/vehicles', authenticate, requirePlatformAdmin, async (req: Authenti
                     type ? { type: type as any } : {},
                     search ? {
                         OR: [
-                            { make: { contains: search as string, mode: 'insensitive' } },
-                            { model: { contains: search as string, mode: 'insensitive' } },
-                            { registrationNumber: { contains: search as string, mode: 'insensitive' } },
+                            { make: { contains: search, mode: 'insensitive' } },
+                            { model: { contains: search, mode: 'insensitive' } },
+                            { registrationNumber: { contains: search, mode: 'insensitive' } },
                         ],
                     } : {},
                 ],
@@ -345,7 +350,7 @@ router.post('/vehicles', authenticate, requirePlatformAdmin, async (req: Authent
 // Update vehicle
 router.patch('/vehicles/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         const vehicle = await prisma.vehicle.update({
             where: { id },
             data: req.body
@@ -359,7 +364,7 @@ router.patch('/vehicles/:id', authenticate, requirePlatformAdmin, async (req: Au
 // Delete vehicle
 router.delete('/vehicles/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = req.params.id as string;
         await prisma.vehicle.delete({ where: { id } });
         res.json({ success: true, message: 'Vehicle deleted successfully' });
     } catch (error: any) {
