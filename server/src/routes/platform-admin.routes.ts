@@ -203,4 +203,168 @@ router.post('/users/bulk-status', authenticate, requirePlatformAdmin, async (req
     }
 });
 
+// --- Company Management ---
+
+// List companies
+router.get('/companies', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { status, search } = req.query;
+        const companies = await prisma.company.findMany({
+            where: {
+                AND: [
+                    status ? { status: status as any } : {},
+                    search ? {
+                        OR: [
+                            { name: { contains: search as string, mode: 'insensitive' } },
+                            { organizationNumber: { contains: search as string, mode: 'insensitive' } },
+                        ],
+                    } : {},
+                ],
+            },
+            include: {
+                _count: {
+                    select: { users: true, vehicles: true, shipments: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json({ success: true, data: companies });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to list companies' });
+    }
+});
+
+// Create company
+router.post('/companies', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { name, organizationNumber, businessAddress, city, postalCode, fylke, kommune } = req.body;
+        const company = await prisma.company.create({
+            data: {
+                name,
+                organizationNumber,
+                businessAddress,
+                city,
+                postalCode,
+                fylke,
+                kommune,
+                status: 'ACTIVE',
+                verified: true,
+                verifiedAt: new Date(),
+            }
+        });
+        res.status(201).json({ success: true, data: company });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: error.message || 'Failed to create company' });
+    }
+});
+
+// Update company
+router.patch('/companies/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const company = await prisma.company.update({
+            where: { id },
+            data: req.body
+        });
+        res.json({ success: true, data: company });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to update company' });
+    }
+});
+
+// Update company status
+router.patch('/companies/:id/status', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const company = await prisma.company.update({
+            where: { id },
+            data: { status }
+        });
+        res.json({ success: true, data: company });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to update company status' });
+    }
+});
+
+// Delete company
+router.delete('/companies/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        // Check for dependencies (simplified: Prisma will throw if foreign keys exist)
+        await prisma.company.delete({ where: { id } });
+        res.json({ success: true, message: 'Company deleted successfully' });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to delete company. Ensure it has no active users or data.' });
+    }
+});
+
+// --- Vehicle Management ---
+
+// List all vehicles
+router.get('/vehicles', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { status, type, search } = req.query;
+        const vehicles = await prisma.vehicle.findMany({
+            where: {
+                AND: [
+                    status ? { status: status as any } : {},
+                    type ? { type: type as any } : {},
+                    search ? {
+                        OR: [
+                            { make: { contains: search as string, mode: 'insensitive' } },
+                            { model: { contains: search as string, mode: 'insensitive' } },
+                            { registrationNumber: { contains: search as string, mode: 'insensitive' } },
+                        ],
+                    } : {},
+                ],
+            },
+            include: {
+                company: { select: { name: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        res.json({ success: true, data: vehicles });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to list vehicles' });
+    }
+});
+
+// Create vehicle
+router.post('/vehicles', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const vehicle = await prisma.vehicle.create({
+            data: req.body
+        });
+        res.status(201).json({ success: true, data: vehicle });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to create vehicle' });
+    }
+});
+
+// Update vehicle
+router.patch('/vehicles/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const vehicle = await prisma.vehicle.update({
+            where: { id },
+            data: req.body
+        });
+        res.json({ success: true, data: vehicle });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to update vehicle' });
+    }
+});
+
+// Delete vehicle
+router.delete('/vehicles/:id', authenticate, requirePlatformAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        await prisma.vehicle.delete({ where: { id } });
+        res.json({ success: true, message: 'Vehicle deleted successfully' });
+    } catch (error: any) {
+        res.status(500).json({ success: false, error: 'Failed to delete vehicle.' });
+    }
+});
+
 export default router;

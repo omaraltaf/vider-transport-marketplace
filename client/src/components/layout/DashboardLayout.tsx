@@ -11,7 +11,8 @@ import {
     Menu,
     X,
     ClipboardList,
-    Settings
+    Settings,
+    Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
@@ -38,7 +39,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     ];
 
     if (isAdmin) {
-        navigation.push({ name: 'User Management', href: '/admin/users', icon: Users });
+        navigation.push({ name: 'Users', href: '/admin/users', icon: Users });
+        navigation.push({ name: 'Companies', href: '/admin/companies', icon: Building2 });
+        navigation.push({ name: 'Global Fleet', href: '/admin/fleet', icon: Truck });
         navigation.push({ name: 'Platform Config', href: '/admin/config', icon: Settings });
     }
 

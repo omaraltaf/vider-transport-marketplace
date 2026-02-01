@@ -33,6 +33,8 @@ export const config = {
             users: `${API_BASE_URL}/platform-admin/users`,
             stats: `${API_BASE_URL}/platform-admin/users/stats`,
             bulkStatus: `${API_BASE_URL}/platform-admin/users/bulk-status`,
+            companies: `${API_BASE_URL}/platform-admin/companies`,
+            vehicles: `${API_BASE_URL}/platform-admin/vehicles`,
         },
     },
     version: '2.0.0-alpha',

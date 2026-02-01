@@ -5,8 +5,10 @@ import { DashboardPage } from './pages/DashboardPage';
 import { MarketplacePage } from './pages/MarketplacePage';
 import { FleetPage } from './pages/FleetPage';
 import { ManageBookingsPage } from './pages/ManageBookingsPage';
-import { UsersPage } from './pages/UsersPage';
+import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { PlatformConfigPage } from './pages/PlatformConfigPage';
+import { CompanyManagementPage } from './pages/admin/CompanyManagementPage';
+import { GlobalFleetPage } from './pages/admin/GlobalFleetPage';
 import { useAuth } from './contexts/AuthContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -88,7 +90,7 @@ function App() {
         element={
           <ProtectedRoute requireAdmin>
             <DashboardLayout>
-              <UsersPage />
+              <UserManagementPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
