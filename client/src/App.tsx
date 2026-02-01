@@ -6,6 +6,7 @@ import { MarketplacePage } from './pages/MarketplacePage';
 import { FleetPage } from './pages/FleetPage';
 import { ManageBookingsPage } from './pages/ManageBookingsPage';
 import { UsersPage } from './pages/UsersPage';
+import { PlatformConfigPage } from './pages/PlatformConfigPage';
 import { useAuth } from './contexts/AuthContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
@@ -88,6 +89,16 @@ function App() {
           <ProtectedRoute requireAdmin>
             <DashboardLayout>
               <UsersPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/config"
+        element={
+          <ProtectedRoute requireAdmin>
+            <DashboardLayout>
+              <PlatformConfigPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

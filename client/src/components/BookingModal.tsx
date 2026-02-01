@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
 import { config } from '../config/config';
@@ -53,11 +53,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
 
     if (!item) return null;
 
+    const { data: platformConfig } = useQuery({
+        queryKey: ['platform-config-public'],
+        queryFn: async () => {
+            const res = await axios.get(`${config.api.baseUrl}/platform-config/public`);
+            return res.data.data;
+        }
+    });
+
     const days = calculateDays();
-    const basePrice = type === 'vehicle'
-        ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0))
+    const subtotal = type === 'vehicle'
+        ? (withDriver ? (item.priceWithDriver || item.dailyRate || 0) : (item.priceWithoutDriver || item.dailyRate || 0)) * days
         : (item.budget || 0);
-    const totalAmount = basePrice * days;
+
+    const taxPercent = platformConfig?.taxPercent || 25;
+    const feePercent = platformConfig?.platformFeePercent || 5;
+    const discountPercent = platformConfig?.platformFeeDiscountPercent || 0;
+
+    const tax = subtotal * (taxPercent / 100);
+    const rawFee = subtotal * (feePercent / 100);
+    const platformFee = rawFee * (1 - (discountPercent / 100));
+    const totalAmount = subtotal + tax + platformFee;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -159,9 +175,23 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
                         )}
 
                         <div className="pt-4 flex flex-col space-y-3">
-                            <div className="flex justify-between items-center text-lg font-bold">
-                                <span>Estimated Total ({days} {days === 1 ? 'day' : 'days'}):</span>
-                                <span className="text-primary">{totalAmount.toLocaleString()} NOK</span>
+                            <div className="space-y-2 text-sm bg-white/5 p-4 rounded-2xl border border-white/5">
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Baseline Price ({days} {days === 1 ? 'day' : 'days'}):</span>
+                                    <span>{subtotal.toLocaleString()} NOK</span>
+                                </div>
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Platform Fee ({feePercent}%{discountPercent > 0 ? ` - ${discountPercent}% Disc.` : ''}):</span>
+                                    <span>+ {platformFee.toLocaleString()} NOK</span>
+                                </div>
+                                <div className="flex justify-between text-slate-400">
+                                    <span>Tax ({taxPercent}%):</span>
+                                    <span>+ {tax.toLocaleString()} NOK</span>
+                                </div>
+                                <div className="flex justify-between items-center text-lg font-bold border-t border-white/10 pt-2 mt-2">
+                                    <span>Total to Pay:</span>
+                                    <span className="text-primary">{totalAmount.toLocaleString()} NOK</span>
+                                </div>
                             </div>
                             <Button
                                 type="submit"

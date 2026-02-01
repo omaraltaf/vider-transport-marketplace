@@ -36,6 +36,23 @@ router.get('/users/stats', authenticate, requirePlatformAdmin, async (req: Authe
             },
         });
 
+        // Financial Stats (Platform GMV and Revenue)
+        const completedBookings = await prisma.booking.findMany({
+            where: { status: 'COMPLETED' },
+            select: {
+                totalAmount: true,
+                platformFee: true,
+                subtotal: true,
+                tax: true
+            }
+        });
+
+        const totalGMV = completedBookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
+        const platformRevenue = completedBookings.reduce((acc, b) => acc + (b.platformFee || 0), 0);
+        const totalCompanies = await prisma.company.count();
+        const totalVehicles = await prisma.vehicle.count();
+        const totalShipments = await prisma.shipment.count();
+
         res.json({
             success: true,
             data: {
@@ -43,6 +60,13 @@ router.get('/users/stats', authenticate, requirePlatformAdmin, async (req: Authe
                 activeToday,
                 byStatus,
                 verifiedRate: totalUsers > 0 ? (byStatus.ACTIVE / totalUsers) * 100 : 0,
+                financials: {
+                    totalGMV,
+                    platformRevenue,
+                    totalCompanies,
+                    totalVehicles,
+                    totalShipments
+                }
             },
         });
     } catch (error: any) {

@@ -8,6 +8,7 @@ import vehicleRoutes from './routes/vehicle.routes.js';
 import shipmentRoutes from './routes/shipment.routes.js';
 import bookingRoutes from './routes/booking.routes.js';
 import platformAdminRoutes from './routes/platform-admin.routes.js';
+import platformConfigRoutes from './routes/platform-config.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 
 const app: Application = express();
@@ -25,6 +26,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/shipments', shipmentRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/platform-admin', platformAdminRoutes);
+app.use('/api/platform-config', platformConfigRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 // Health Check

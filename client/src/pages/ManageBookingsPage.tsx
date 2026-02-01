@@ -181,9 +181,26 @@ export const ManageBookingsPage: React.FC = () => {
                             </p>
                         )}
                     </div>
-                    <div className="space-y-1">
-                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">Amount</p>
-                        <p className="text-sm font-bold text-primary">{booking.totalAmount.toLocaleString()} NOK</p>
+                    <div className="space-y-1 min-w-[120px]">
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Financials</p>
+                        <div className="flex flex-col gap-0.5">
+                            <p className="text-[10px] items-center justify-between flex gap-4 text-slate-400">
+                                <span>Baseline:</span>
+                                <span className="font-bold">{(booking.subtotal || booking.totalAmount).toLocaleString()}</span>
+                            </p>
+                            <p className="text-[10px] items-center justify-between flex gap-4 text-slate-400">
+                                <span>Platform Fee:</span>
+                                <span className="font-bold">{(booking.platformFee || 0).toLocaleString()}</span>
+                            </p>
+                            <p className="text-[10px] items-center justify-between flex gap-4 text-slate-400">
+                                <span>Tax:</span>
+                                <span className="font-bold">{(booking.tax || 0).toLocaleString()}</span>
+                            </p>
+                            <div className="border-t border-white/5 pt-1 mt-1 flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-white uppercase tracking-tighter">Total:</span>
+                                <p className="text-sm font-bold text-primary">{booking.totalAmount.toLocaleString()} <span className="text-[10px] font-normal">NOK</span></p>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="flex gap-2">

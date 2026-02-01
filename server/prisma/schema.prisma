@@ -133,8 +133,11 @@ model Booking {
   shipment      Shipment?     @relation(fields: [shipmentId], references: [id])
   startDate     DateTime
   endDate       DateTime?
-  totalAmount   Float
-  withDriver    Boolean @default(false)
+  subtotal      Float         @default(0) // Baseline price
+  tax           Float         @default(0) // Calculated tax
+  platformFee   Float         @default(0) // Calculated platform fee
+  totalAmount   Float         // subtotal + tax + platformFee
+  withDriver    Boolean       @default(false)
   status        BookingStatus @default(PENDING)
   reviews       Review[]
   createdAt     DateTime      @default(now())
@@ -143,6 +146,14 @@ model Booking {
   @@index([requesterId])
   @@index([providerId])
   @@index([status])
+}
+
+model PlatformConfig {
+  id                        String   @id @default("default")
+  platformFeePercent        Float    @default(5.0)
+  taxPercent                Float    @default(25.0)
+  platformFeeDiscountPercent Float    @default(0.0)
+  updatedAt                 DateTime @updatedAt
 }
 
 model Review {

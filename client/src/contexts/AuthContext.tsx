@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import axios from 'axios';
+import { config } from '../config/config';
 
 interface AuthContextType {
     user: User | null;
@@ -29,11 +31,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(user);
 
             if (user) {
-                const idToken = await user.getIdToken();
-                setToken(idToken);
-                // Resolve claims to check for admin role
-                const idTokenResult = await user.getIdTokenResult();
-                setIsAdmin(!!idTokenResult.claims.admin || idTokenResult.claims.role === 'PLATFORM_ADMIN');
+                try {
+                    const idToken = await user.getIdToken();
+                    setToken(idToken);
+
+                    // Fetch profile from backend to get the source-of-truth role
+                    const response = await axios.get(`${config.api.baseUrl}/auth/me`, {
+                        headers: { Authorization: `Bearer ${idToken}` }
+                    });
+
+                    const dbUser = response.data;
+                    setIsAdmin(dbUser.role === 'PLATFORM_ADMIN');
+                } catch (err) {
+                    console.error('Failed to fetch user profile:', err);
+                    setIsAdmin(false);
+                }
             } else {
                 setIsAdmin(false);
                 setToken(null);

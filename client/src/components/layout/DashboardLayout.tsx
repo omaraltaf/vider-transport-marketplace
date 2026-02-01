@@ -10,7 +10,8 @@ import {
     LogOut,
     Menu,
     X,
-    ClipboardList
+    ClipboardList,
+    Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
@@ -32,13 +33,16 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     const navigation = [
         { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Marketplace', href: '/marketplace', icon: Truck },
-        { name: 'My Fleet', href: '/fleet', icon: ClipboardList },
+        { name: 'My Fleet', href: '/fleet', icon: ClipboardList, hideForAdmin: true },
         { name: 'Bookings', href: '/bookings', icon: Package },
     ];
 
     if (isAdmin) {
         navigation.push({ name: 'User Management', href: '/admin/users', icon: Users });
+        navigation.push({ name: 'Platform Config', href: '/admin/config', icon: Settings });
     }
+
+    const filteredNavigation = navigation.filter(item => !(item.hideForAdmin && isAdmin));
 
     return (
         <div className="min-h-screen bg-[#020617] text-white flex">
@@ -55,7 +59,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-2 mt-4">
-                    {navigation.map((item) => (
+                    {filteredNavigation.map((item) => (
                         <NavLink
                             key={item.name}
                             to={item.href}
@@ -141,7 +145,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                                     <span className="text-2xl font-bold tracking-tight">Vider</span>
                                 </div>
                                 <nav className="flex-1 px-4 space-y-2">
-                                    {navigation.map((item) => (
+                                    {filteredNavigation.map((item) => (
                                         <NavLink
                                             key={item.name}
                                             to={item.href}

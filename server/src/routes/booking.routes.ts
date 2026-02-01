@@ -30,37 +30,17 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         const start = new Date(startDate);
         const end = endDate ? new Date(endDate) : start;
 
-        // Validation: Overlap check for vehicles
-        if (vehicleId) {
-            // Check for existing ACCEPTED bookings during this period
-            const existingBooking = await prisma.booking.findFirst({
-                where: {
-                    vehicleId,
-                    status: BookingStatus.ACCEPTED,
-                    OR: [
-                        { startDate: { lte: end }, endDate: { gte: start } },
-                    ]
-                }
-            });
-
-            if (existingBooking) {
-                return res.status(400).json({ message: 'Vehicle is already booked for this period' });
-            }
-
-            // Check for manually blocked periods
-            const blockedPeriod = await prisma.vehicleBlockedPeriod.findFirst({
-                where: {
-                    vehicleId,
-                    OR: [
-                        { startDate: { lte: end }, endDate: { gte: start } },
-                    ]
-                }
-            });
-
-            if (blockedPeriod) {
-                return res.status(400).json({ message: `Vehicle is unavailable: ${blockedPeriod.reason || 'Blocked by owner'}` });
-            }
+        // Fetch platform configuration
+        let config = await prisma.platformConfig.findFirst();
+        if (!config) {
+            config = { platformFeePercent: 5.0, taxPercent: 25.0, platformFeeDiscountPercent: 0.0 } as any;
         }
+
+        const subtotal = parseFloat(totalAmount);
+        const tax = subtotal * (config.taxPercent / 100);
+        const rawPlatformFee = subtotal * (config.platformFeePercent / 100);
+        const platformFee = rawPlatformFee * (1 - (config.platformFeeDiscountPercent / 100));
+        const finalTotalAmount = subtotal + tax + platformFee;
 
         const booking = await prisma.booking.create({
             data: {
@@ -70,7 +50,10 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
                 shipmentId: shipmentId as string,
                 startDate: start,
                 endDate: endDate ? end : undefined,
-                totalAmount: parseFloat(totalAmount),
+                subtotal: subtotal,
+                tax: tax,
+                platformFee: platformFee,
+                totalAmount: finalTotalAmount,
                 withDriver: !!withDriver,
                 status: BookingStatus.PENDING,
             },
