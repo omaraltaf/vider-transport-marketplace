@@ -70,10 +70,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, ite
     const feePercent = platformConfig?.platformFeePercent || 5;
     const discountPercent = platformConfig?.platformFeeDiscountPercent || 0;
 
-    const tax = subtotal * (taxPercent / 100);
     const rawFee = subtotal * (feePercent / 100);
     const platformFee = rawFee * (1 - (discountPercent / 100));
-    const totalAmount = subtotal + tax + platformFee;
+    const tax = (subtotal + platformFee) * (taxPercent / 100);
+    const totalAmount = subtotal + platformFee + tax;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

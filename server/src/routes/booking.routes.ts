@@ -38,10 +38,10 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         };
 
         const subtotal = parseFloat(totalAmount);
-        const tax = subtotal * (platformConfig.taxPercent / 100);
         const rawPlatformFee = subtotal * (platformConfig.platformFeePercent / 100);
         const platformFee = rawPlatformFee * (1 - (platformConfig.platformFeeDiscountPercent / 100));
-        const finalTotalAmount = subtotal + tax + platformFee;
+        const tax = (subtotal + platformFee) * (platformConfig.taxPercent / 100);
+        const finalTotalAmount = subtotal + platformFee + tax;
 
         const booking = await prisma.booking.create({
             data: {

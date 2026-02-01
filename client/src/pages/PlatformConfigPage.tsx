@@ -170,20 +170,20 @@ export const PlatformConfigPage: React.FC = () => {
                                     <span>1,000 NOK</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span>Tax ({platformConfig?.taxPercent}%):</span>
-                                    <span>+{(1000 * (platformConfig?.taxPercent / 100)).toLocaleString()} NOK</span>
-                                </div>
-                                <div className="flex justify-between font-bold text-white pt-1 border-t border-white/5">
-                                    <span>Total to Company:</span>
-                                    <span>{(1000 * (1 + platformConfig?.taxPercent / 100)).toLocaleString()} NOK</span>
-                                </div>
-                                <div className="flex justify-between pt-2">
                                     <span>Platform Fee ({platformConfig?.platformFeePercent}%):</span>
                                     <span>+{(1000 * (platformConfig?.platformFeePercent / 100) * (1 - platformConfig?.platformFeeDiscountPercent / 100)).toFixed(2)} NOK</span>
                                 </div>
+                                <div className="flex justify-between pt-1 border-t border-white/5">
+                                    <span>Taxable Amount:</span>
+                                    <span>{(1000 + (1000 * (platformConfig?.platformFeePercent / 100) * (1 - platformConfig?.platformFeeDiscountPercent / 100))).toFixed(2)} NOK</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Tax ({platformConfig?.taxPercent}%):</span>
+                                    <span>+{((1000 + (1000 * (platformConfig?.platformFeePercent / 100) * (1 - platformConfig?.platformFeeDiscountPercent / 100))) * (platformConfig?.taxPercent / 100)).toFixed(2)} NOK</span>
+                                </div>
                                 <div className="flex justify-between font-bold text-primary pt-1 border-t border-primary/20 mt-1">
                                     <span>Total Requester Pays:</span>
-                                    <span>{(1000 * (1 + platformConfig?.taxPercent / 100) + 1000 * (platformConfig?.platformFeePercent / 100) * (1 - platformConfig?.platformFeeDiscountPercent / 100)).toFixed(2)} NOK</span>
+                                    <span>{((1000 + (1000 * (platformConfig?.platformFeePercent / 100) * (1 - platformConfig?.platformFeeDiscountPercent / 100))) * (1 + platformConfig?.taxPercent / 100)).toFixed(2)} NOK</span>
                                 </div>
                             </div>
                         </div>
