@@ -30,16 +30,17 @@ router.post('/', authenticate, async (req: AuthenticatedRequest, res: Response) 
         const start = new Date(startDate);
         const end = endDate ? new Date(endDate) : start;
 
-        // Fetch platform configuration
-        let config = await prisma.platformConfig.findFirst();
-        if (!config) {
-            config = { platformFeePercent: 5.0, taxPercent: 25.0, platformFeeDiscountPercent: 0.0 } as any;
-        }
+        // Fetch platform configuration or use defaults
+        const platformConfig = await prisma.platformConfig.findFirst() || {
+            platformFeePercent: 5.0,
+            taxPercent: 25.0,
+            platformFeeDiscountPercent: 0.0
+        };
 
         const subtotal = parseFloat(totalAmount);
-        const tax = subtotal * (config.taxPercent / 100);
-        const rawPlatformFee = subtotal * (config.platformFeePercent / 100);
-        const platformFee = rawPlatformFee * (1 - (config.platformFeeDiscountPercent / 100));
+        const tax = subtotal * (platformConfig.taxPercent / 100);
+        const rawPlatformFee = subtotal * (platformConfig.platformFeePercent / 100);
+        const platformFee = rawPlatformFee * (1 - (platformConfig.platformFeeDiscountPercent / 100));
         const finalTotalAmount = subtotal + tax + platformFee;
 
         const booking = await prisma.booking.create({
