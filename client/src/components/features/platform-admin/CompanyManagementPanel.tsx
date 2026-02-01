@@ -4,11 +4,7 @@ import {
     Building2,
     Search,
     Filter,
-    CheckCircle,
-    XCircle,
-    Clock,
     Plus,
-    MoreVertical,
     MapPin,
     Hash,
     Truck,
@@ -30,6 +26,9 @@ interface Company {
     city: string;
     status: 'ACTIVE' | 'SUSPENDED' | 'PENDING_VERIFICATION';
     verified: boolean;
+    postalCode?: string;
+    fylke?: string;
+    kommune?: string;
     _count: {
         users: number;
         vehicles: number;
@@ -191,7 +190,7 @@ export const CompanyManagementPanel: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {loading ? (
                     Array.from({ length: 4 }).map((_, i) => (
-                        <Card key={i} className="p-6 h-48 animate-pulse bg-white/5" />
+                        <Card key={i} className="p-6 h-48 animate-pulse bg-white/5"><div /></Card>
                     ))
                 ) : companies.length === 0 ? (
                     <div className="lg:col-span-2 py-20 text-center">

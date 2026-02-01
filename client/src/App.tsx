@@ -105,6 +105,26 @@ function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/admin/companies"
+        element={
+          <ProtectedRoute requireAdmin>
+            <DashboardLayout>
+              <CompanyManagementPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/fleet"
+        element={
+          <ProtectedRoute requireAdmin>
+            <DashboardLayout>
+              <GlobalFleetPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* 404 */}
       <Route path="*" element={<Navigate to="/" replace />} />

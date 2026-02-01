@@ -6,10 +6,7 @@ import {
     Filter,
     Plus,
     Building2,
-    Hash,
-    Calendar,
     Weight,
-    Maximize,
     CircleDollarSign,
     Trash2,
     Edit2,
@@ -204,7 +201,7 @@ export const GlobalFleetPanel: React.FC = () => {
             <div className="grid grid-cols-1 gap-4">
                 {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
-                        <Card key={i} className="h-20 animate-pulse bg-white/5" />
+                        <Card key={i} className="h-20 animate-pulse bg-white/5"><div /></Card>
                     ))
                 ) : vehicles.length === 0 ? (
                     <div className="py-20 text-center">
@@ -251,7 +248,7 @@ export const GlobalFleetPanel: React.FC = () => {
                                 <div className="space-y-1 text-right">
                                     <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Status</p>
                                     <p className={`text-[10px] font-black flex items-center gap-1 justify-end uppercase ${vehicle.status === 'AVAILABLE' ? 'text-green-400' :
-                                            vehicle.status === 'BOOKED' ? 'text-blue-400' : 'text-orange-400'
+                                        vehicle.status === 'BOOKED' ? 'text-blue-400' : 'text-orange-400'
                                         }`}>
                                         {getStatusIcon(vehicle.status)}
                                         {vehicle.status}
